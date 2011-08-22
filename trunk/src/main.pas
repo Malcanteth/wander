@@ -74,7 +74,6 @@ begin
   pc.id := 1;
   pc.idinlist := 1;
   MenuSelected := 1;
-  Run('test.pas');
 end;
 
 { Отрисовка }
