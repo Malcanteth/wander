@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 514
-  Top = 208
+  Left = 390
+  Top = 205
   BorderStyle = bsSingle
   Caption = 'WANDER'
   ClientHeight = 206
@@ -20,11 +20,22 @@ object MainForm: TMainForm
   OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
-  object GameTimer: TTimer
-    Enabled = False
-    Interval = 200
-    OnTimer = GameTimerTimer
-    Left = 160
-    Top = 112
+  object Edit: TEdit
+    Left = 96
+    Top = 80
+    Width = 104
+    Height = 16
+    BorderStyle = bsNone
+    Color = clBlack
+    Font.Charset = RUSSIAN_CHARSET
+    Font.Color = clSilver
+    Font.Height = -13
+    Font.Name = 'Fixedsys'
+    Font.Style = []
+    MaxLength = 13
+    ParentFont = False
+    TabOrder = 0
+    Visible = False
+    OnKeyPress = EditKeyPress
   end
 end

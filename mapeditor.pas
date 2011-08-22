@@ -93,7 +93,6 @@ type
     relation: TComboBox;
     Label4: TLabel;
     Label5: TLabel;
-    SpeedButton2: TSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FillClick(Sender: TObject);
@@ -122,7 +121,6 @@ type
     procedure SpeedButton1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
-    procedure SpeedButton2Click(Sender: TObject);
   private
   public
   end;
@@ -168,7 +166,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Tile, Player, Utils, Monsters, conf;
+  Tile, Player, Utils, Monsters;
 
 procedure TMainEdForm.FormCreate(Sender: TObject);
 const
@@ -189,7 +187,7 @@ begin
   EdScreen := TBitMap.Create;
   EdScreen.Width := MapX * CharX;
   EdScreen.Height := MapY * CharY;
-  EdScreen.Canvas.Font.Name := FontMsg;
+  EdScreen.Canvas.Font.Name := FontName;
   // Компоненты
   GroupBox2.Top := 0;
   GroupBox2.Left := MapX * CharX + 10;
@@ -244,12 +242,14 @@ begin
         Brush.Color := 0;
         // Тайл
         case M.Blood[x,y] of
-          0 : color := RealColor(TilesData[M.Tile[x,y]].color);
+          0 :
+          if TilesData[M.Tile[x,y]].color = cRANDOM then
+            color := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100) else
+              color := TilesData[M.Tile[x,y]].color;
           1 : color := cLIGHTRED;
           2 : color := cRED;
         end;
         char := TilesData[M.Tile[x,y]].char;
-        back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
         // Монстры
         if M.MonP[x,y] > 0 then
         begin
@@ -260,7 +260,9 @@ begin
               if pc.felldown then color:= cGRAY;
             end else
               begin
-                color := RealColor(MonstersData[M.MonL[M.MonP[x,y]].id].color);
+                color := MonstersData[M.MonL[M.MonP[x,y]].id].color;
+                if color = cRANDOM then
+                  color := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100);
                 if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
                 if M.MonP[x,y] = ListBox1.ItemIndex+1 then
                   back := MyRGB(150,0,0);
@@ -297,9 +299,8 @@ begin
     if SpecialMaps[i].Map.Special = 0 then
       break;
   NowMap := i;
-  Button2.Caption := IntToStr(NowMap);
-  SpecialMaps[NowMap].Map := M;
   SpecialMaps[NowMap].Map.Special := NowMap;
+  SpecialMaps[NowMap].Map := M;
   AddInfo;
   RefreshMapList;
 end;
@@ -601,7 +602,7 @@ begin
       begin
         // Свойства лестницы вниз
         if (M.Tile[CurX, CurY] = tdDSTAIRS) or (M.Tile[CurX, CurY] = tdCHATCH) or
-           (M.Tile[CurX, CurY] = tdDUNENTER) then
+        (M.Tile[CurX, CurY] = tdCHATCH) or (M.Tile[CurX, CurY] = tdDUNENTER) then
         begin
           n := 0;
           // Проверка на наличие такой лестницы
@@ -868,11 +869,7 @@ begin
   MapList.Items.Clear;
   for i:=1 to MaxMaps do
     if SpecialMaps[i].Map.Special > 0 then
-    begin
-      if SpecialMaps[i].Map.Special <> i then
-        SpecialMaps[i].Map.Special := i;
-      MapList.Items.Add(IntToStr(SpecialMaps[i].Map.Special) + ' - '+SpecialMaps[i].name);
-    end;
+      MapList.Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
   MapList.Items.Add('-- Создать новую --');
   MapList.ItemIndex := NowMap-1;
 end;
@@ -1026,23 +1023,6 @@ begin
     Visible := False;
   end;
   GroupBox2.Visible := True;
-end;
-
-// Обновить лестницы, удалить несуществующие
-procedure TMainEdForm.SpeedButton2Click(Sender: TObject);
-var
-  i : byte;
-begin
-  for i:=1 to MaxLadders do
-    with SpecialMaps[NowMap].Ladders[i] do
-    begin
-      if (M.Tile[X, Y] <> tdDSTAIRS) and (M.Tile[X, Y] <> tdCHATCH) and
-           (M.Tile[X, Y] <> tdDUNENTER) then
-             begin
-                x := 0;
-                y := 0;
-             end;
-    end;
 end;
 
 end.

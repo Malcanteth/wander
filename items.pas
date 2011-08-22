@@ -6,13 +6,6 @@ uses
   Cons, Flags, Utils, Main, SysUtils, Msg, Tile, Ability;
 
 type
-  TItemType = record
-    name     : string[20];
-    symbol   : char;
-    chance   : byte;                 // Как часто предметы данного типа будут появляться на карте
-    maxamount: integer;
-  end;
-
   TItem = record
     id               : byte;         // Идентификатор
     amount           : word;         // Колличество
@@ -22,47 +15,18 @@ type
 
   TItemData = record
     name1, name2, name3        : string[40];      // Название (1ед.число,2мн.число,3кого)
-    descr                      : string[100];     // Короткое описание
+    descr                      : string[100];      // Короткое описание
     vid                        : byte;            // Вид предмета
-    color                      : byte;            // Цвет
+    color                      : longword;        // Цвет
     mass                       : real;
     attack, defense            : word;
     chance                     : byte;            // Шанс появления
     kind                       : byte;            // Вид оружия или брони
-    dmgtype                    : byte;            // Тип урона
     flags                      : longword;        // Флажки:)
   end;
 
 const
-  { Кол-во типов предметов}
-  ItemTypeAmount = 21;
-
-  ItemTypeData : array[1..ItemTypeAmount] of TItemType =
-  (
-    (name: 'Шлем'; symbol: '['; chance:15;maxamount:1),
-    (name: 'Амулет'; symbol: '&'; chance:5;maxamount:1),
-    (name: 'Накидка'; symbol: ']'; chance:20;maxamount:1),
-    (name: 'Броня'; symbol: '['; chance:20;maxamount:1),
-    (name: 'Ремень'; symbol: '~'; chance:10;maxamount:1),
-    (name: 'Оружие ближнего боя'; symbol: ')'; chance:30;maxamount:1),
-    (name: 'Оружие дальнего боя'; symbol: '}'; chance:30;maxamount:1),
-    (name: 'Щит'; symbol: '['; chance:15;maxamount:1),
-    (name: 'Браслет'; symbol: '&'; chance:5;maxamount:1),
-    (name: 'Кольцо'; symbol: '='; chance:4;maxamount:1),
-    (name: 'Перчатки'; symbol: ']'; chance:10;maxamount:1),
-    (name: 'Обувь'; symbol: '['; chance:20;maxamount:1),
-    (name: 'Аммуниция'; symbol: '`'; chance:50;maxamount:15),
-    (name: 'Еда'; symbol: '%'; chance:70;maxamount:4),
-    (name: 'Монеты'; symbol: '$'; chance:40;maxamount:30),
-    (name: 'Свиток'; symbol: '?'; chance:20;maxamount:1),
-    (name: 'Книга'; symbol: '"'; chance:7;maxamount:1),
-    (name: 'Волшебная палочка'; symbol: '\'; chance:9;maxamount:1),
-    (name: 'Зелье'; symbol: '!'; chance:25;maxamount:1),
-    (name: 'Инструмент'; symbol: '{'; chance:5;maxamount:1),
-    (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1)
-  );
-
-  { Кол-во предметов }
+  { Константы количества предметов }
   ItemsAmount = 37;
 
   {  Описание предметов }
@@ -70,188 +34,188 @@ const
   (
     ( name1: 'Золотая Монета'; name2: 'Золотые Монеты'; name3: 'Золотую Монету';
       descr: 'Эта маленькая золотая монетка - ходовая денежная единица в этом мире.';
-      vid:15; color: crYELLOW; mass: 0.01;
+      vid:15; color: cYELLOW; mass: 0.01;
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
     ),
     ( name1: 'Столовый Нож'; name2: 'Столовые Ножи'; name3: 'Столовый Нож';
-      vid:6; color: crLIGHTGRAY; mass: 4.5;
+      vid:6; color: cLIGHTGRAY; mass: 4.5;
       attack: 5; defense: 0; chance: 60; kind: CLOSE_BLADE;
       flags : NOF;
     ),
     ( name1: 'Вилы'; name2: 'Вилы'; name3: 'Вилы';
-      vid:6; color: crBROWN; mass: 19.2;
+      vid:6; color: cBROWN; mass: 19.2;
       attack: 11; defense: 0;  chance: 30; kind: CLOSE_TWO;
       flags : NOF or I_TWOHANDED;
     ),
     ( name1: 'Кекс'; name2: 'Кексы'; name3: 'Кекс';
-      vid:14; color: crBROWN; mass: 0.4;
+      vid:14; color: cBROWN; mass: 0.4;
       attack: 1; defense: 240; chance: 90;
       flags : NOF;
     ),
     ( name1: 'Шляпа'; name2: 'Шляпы'; name3: 'Шляпу';
-      vid:1; color: crGRAY; mass: 3.0;
-      attack: 1; defense: 1;  chance: 80; kind: ARMOR_CLOTHES;
+      vid:1; color: cGRAY; mass: 3.0;
+      attack: 1; defense: 1;  chance: 80;
       flags : NOF;
     ),
     ( name1: 'Лапти'; name2: 'Лапти'; name3: 'Лапти';
-      vid:12; color: crBROWN; mass: 6.2;
-      attack: 1; defense: 1;  chance: 90; kind: ARMOR_CLOTHES;
+      vid:12; color: cBROWN; mass: 6.2;
+      attack: 1; defense: 1;  chance: 90;
       flags : NOF;
     ),
     ( name1: 'Труп'; name2: 'Трупы'; name3: 'Труп';
-      vid:14; color: crRED; mass: 50.4;
+      vid:14; color: cRED; mass: 50.4;
       attack: 5; defense: 15; chance: 20;
       flags : NOF;
     ),
     ( name1: 'Каска'; name2: 'Каски'; name3: 'Каску';
-      vid:1; color: crBROWN; mass: 13.0;
-      attack: 3; defense: 4; chance: 35; kind: ARMOR_LIGHT;
+      vid:1; color: cBROWN; mass: 13.0;
+      attack: 3; defense: 4; chance: 35;
       flags : NOF;
     ),
     ( name1: 'Мантия'; name2: 'Мантии'; name3: 'Мантию';
-      vid:3; color: crPURPLE; mass: 9.1;
-      attack: 1; defense: 2;  chance: 65; kind: ARMOR_CLOTHES;
+      vid:4; color: cPURPLE; mass: 9.1;
+      attack: 1; defense: 2;  chance: 65;
       flags : NOF;
     ),
     ( name1: 'Куртка'; name2: 'Куртки'; name3: 'Куртку';
-      vid:4; color: crBROWN; mass: 12.0;
-      attack: 1; defense: 4; chance: 55; kind: ARMOR_CLOTHES;
+      vid:4; color: cBROWN; mass: 12.0;
+      attack: 1; defense: 4; chance: 55;
       flags : NOF;
     ),
     ( name1: 'Кольчуга'; name2: 'Кольчуги'; name3: 'Кольчугу';
-      vid:4; color: crLIGHTGRAY; mass: 25.5;
-      attack: 4; defense: 8; chance: 10; kind: ARMOR_LIGHT;
+      vid:4; color: cLIGHTGRAY; mass: 25.5;
+      attack: 4; defense: 8; chance: 10;
       flags : NOF;
     ),
     ( name1: 'Посох'; name2: 'Посохи'; name3: 'Посох';
-      vid:6; color: crBROWN; mass: 10.7;
+      vid:6; color: cBROWN; mass: 10.7;
       attack: 8; defense: 0;  chance: 35; kind: CLOSE_STAFF;
       flags : NOF or I_TWOHANDED;
     ),
     ( name1: 'Кинжал'; name2: 'Кинжалы'; name3: 'Кинжал';
-      vid:6; color: crLIGHTGRAY; mass: 7.7;
+      vid:6; color: cLIGHTGRAY; mass: 7.7;
       attack: 9; defense: 0;  chance: 60; kind: CLOSE_BLADE;
       flags : NOF;
     ),
     ( name1: 'Дубина'; name2: 'Дубины'; name3: 'Дубину';
-      vid:6; color: crBROWN; mass: 16.0;
+      vid:6; color: cBROWN; mass: 16.0;
       attack: 12; defense: 0;  chance: 30; kind: CLOSE_CLUB;
       flags : NOF;
     ),
     ( name1: 'Короткий меч'; name2: 'Короткие мечи'; name3: 'Короткий Меч';
-      vid:6; color: crWHITE; mass: 12.0;
+      vid:6; color: cWHITE; mass: 12.0;
       attack: 13; defense: 0;  chance: 30; kind: CLOSE_BLADE;
       flags : NOF;
     ),
     ( name1: 'Палица'; name2: 'Палицы'; name3: 'Палицу';
-      vid:6; color: crLIGHTGRAY; mass: 14.0;
+      vid:6; color: cLIGHTGRAY; mass: 14.0;
       attack: 15; defense: 0; chance: 23; kind: CLOSE_CLUB;
       flags : NOF;
     ),
     ( name1: 'Длинный меч'; name2: 'Длинные мечи'; name3: 'Длинный Меч';
-      vid:6; color: crCYAN; mass: 21.0;
+      vid:6; color: cCYAN; mass: 21.0;
       attack: 17; defense: 0; chance: 15; kind: CLOSE_BLADE;
       flags : NOF or I_TWOHANDED;
     ),
     ( name1: 'Щит'; name2: 'Щиты'; name3: 'Щит';
-      vid:8; color: crBROWN; mass: 15.2;
+      vid:8; color: cBROWN; mass: 15.2;
       attack: 7; defense: 0; chance: 15;
       flags : NOF;
     ),
     ( name1: 'Сапоги'; name2: 'Сапоги'; name3: 'Сапоги';
-      vid:12; color: crGREEN; mass: 8.7;
-      attack: 4; defense: 3; chance: 35; kind: ARMOR_CLOTHES;
+      vid:12; color: cGREEN; mass: 8.7;
+      attack: 4; defense: 3; chance: 35;
       flags : NOF;
     ),
     ( name1: 'Лаваш'; name2: 'Лаваши'; name3: 'Лаваш';
-      vid:14; color: crBROWN; mass: 1.4;
+      vid:14; color: cBROWN; mass: 1.4;
       attack: 2; defense: 110; chance: 60;
       flags : NOF;
     ),
     ( name1: 'Зеленое яблоко'; name2: 'Зеленые яблоки'; name3: 'Зеленое яблоко';
-      vid:14; color: crLIGHTGREEN; mass: 0.5;
+      vid:14; color: cLIGHTGREEN; mass: 0.5;
       attack: 2; defense: 150; chance: 90;
       flags : NOF;
     ),
     ( name1: 'Кусок мяса'; name2: 'Куски мяса'; name3: 'Кусок мяса';
-      vid:14; color: crLIGHTRED; mass: 6.0;
+      vid:14; color: cLIGHTRED; mass: 6.0;
       attack: 3; defense: 50; chance: 35;
       flags : NOF;
     ),
     ( name1: 'Зелье лечения'; name2: 'Зелья лечения'; name3: 'Зелье лечения';
-      vid:19; color: crLIGHTBLUE; mass: 0.3;
+      vid:19; color: cLIGHTBLUE; mass: 0.3;
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
     ),
     ( name1: 'Зелье исцеления'; name2: 'Зелья исцеления'; name3: 'Зелье исцеления';
-      vid:19; color: crRED; mass: 0.3;
+      vid:19; color: cRED; mass: 0.3;
       attack: 1; defense: 0; chance: 15;
       flags : NOF;
     ),
     ( name1: 'Бутылка дешевого пива'; name2: 'Бутылки дешевого пива'; name3: 'Бутылку дешевого пива';
-      vid:19; color: crBROWN; mass: 0.5;
+      vid:19; color: cBROWN; mass: 0.5;
       attack: 2; defense: 0; chance: 20;
       flags : NOF;
     ),
     ( name1: 'Голова'; name2: 'Головы'; name3: 'Голову';
-      vid:14; color: crBROWN; mass: 5.0;
+      vid:14; color: cBROWN; mass: 5.0;
       attack: 2; defense: 40; chance: 0;
       flags : NOF;
     ),
     ( name1: 'Ключ от восточных врат Эвилиара'; name2: 'Ключи от восточных врат Эвилиара'; name3: 'Ключ от восточных врат Эвилиара';
-      vid:20; color: crCYAN; mass: 0.3;
+      vid:20; color: cCYAN; mass: 0.3;
       attack: 1; defense: 0; chance: 0;
       flags : NOF;
     ),
     ( name1: 'Топор'; name2: 'Топоры'; name3: 'Топор';
-      vid:6; color: crWHITE; mass: 13.5;
+      vid:6; color: cWHITE; mass: 13.5;
       attack: 12; defense: 0;  chance: 30; kind: CLOSE_AXE;
       flags : NOF;
     ),
     ( name1: 'Лук'; name2: 'Луки'; name3: 'Лук';
-      vid:7; color: crBROWN; mass: 5.2;
+      vid:7; color: cBROWN; mass: 5.2;
       attack: 4; defense: 0;  chance: 20; kind: FAR_BOW;
       flags : NOF;
     ),
     ( name1: 'Арбалет'; name2: 'Арбалеты'; name3: 'Арбалет';
-      vid:7; color: crBROWN; mass: 8.2;
+      vid:7; color: cBROWN; mass: 8.2;
       attack: 6; defense: 0;  chance: 18; kind: FAR_CROSS;
       flags : NOF;
     ),
     ( name1: 'Праща'; name2: 'Пращи'; name3: 'Пращу';
-      vid:7; color: crGRAY; mass: 0.4;
+      vid:7; color: cGRAY; mass: 0.4;
       attack: 0; defense: 0;  chance: 25; kind: FAR_SLING;
       flags : NOF;
     ),
     ( name1: 'Духовая трубка'; name2: 'Духовые трубки'; name3: 'Духовую трубку';
-      vid:7; color: crCYAN; mass: 0.2;
+      vid:7; color: cCYAN; mass: 0.2;
       attack: 0; defense: 0;  chance: 23; kind: FAR_PIPE;
       flags : NOF;
     ),
     ( name1: 'Стрела'; name2: 'Стрелы'; name3: 'Стрелу';
-      vid:13; color: crBROWN; mass: 0.08;
+      vid:13; color: cBROWN; mass: 0.08;
       attack: 4; defense: 0;  chance: 40; kind: FAR_BOW;
       flags : NOF;
     ),
     ( name1: 'Болт'; name2: 'Болты'; name3: 'Болт';
-      vid:13; color: crRED; mass: 0.20;
+      vid:13; color: cRED; mass: 0.20;
       attack: 4; defense: 0;  chance: 35; kind: FAR_CROSS;
       flags : NOF;
     ),
     ( name1: 'Маленький Камень'; name2: 'Маленькие Камни'; name3: 'Мальнький Камень';
-      vid:13; color: crLIGHTGRAY; mass: 0.35;
-      attack: 3; defense: 0;  chance: 60; kind: FAR_SLING;
+      vid:13; color: cRED; mass: 0.35;
+      attack: 3; defense: 0;  chance: 50; kind: FAR_SLING;
       flags : NOF;
     ),
     ( name1: 'Игла'; name2: 'Иглы'; name3: 'Иглу';
-      vid:13; color: crCYAN; mass: 0.01;
+      vid:13; color: cCYAN; mass: 0.01;
       attack: 3; defense: 0;  chance: 50; kind: FAR_PIPE;
       flags : NOF;
     ),
     ( name1: 'Накидка из шкуры зверя'; name2: 'Накидки из шкуры зверя'; name3: 'Накидку из шкуры зверя';
-      vid:4; color: crBROWN; mass: 10.5;
-      attack: 1; defense: 3;  chance: 45; kind: ARMOR_CLOTHES;
+      vid:4; color: cBROWN; mass: 10.5;
+      attack: 1; defense: 3;  chance: 45;
       flags : NOF;
     )
   );
@@ -295,13 +259,11 @@ const
   idIGLA           = 36;
   idCAPE           = 37;
 
-
-function HaveItemTypeInDB(wtype : byte) : boolean;            // Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов)
-function GenerateItem(wtype : byte) : TItem;                  // Генерировать случайный предмет определенного вида
+function GenerateItem(whatvid : byte) : TItem;                // Генерировать случайный предмет определенного вида
 function CreateItem(n : byte; am : integer;
                             OwnerId : byte) : TItem;          // Создать предмет
-function PutItem(px,py : byte; Item : TItem;
-                           amount : integer) : boolean;       // Положить предмет
+function PutItem(px,py : byte; Item : TItem) : boolean;       // Положить предмет
+function ItemSymbol(id : integer) : string;                   // Вернуть символ предмета
 procedure WriteSomeAboutItem(Item : TItem);                   // Вывести некоторые хар-ки предмета
 procedure ExamineItem(Item : TItem);                          // Внимательно осмотреть предмет
 procedure ItemOnOff(Item : TItem; PutOn : boolean);           // Применить эффект предмета или убрать
@@ -312,26 +274,10 @@ procedure UseItem(n : byte);                                  // Использовать пр
 implementation
 
 uses
-  Map, Player, Monsters, conf;
-
-{ Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов) }
-function HaveItemTypeInDB(wtype : byte) : boolean;
-var
-  i : integer;
-  e : boolean;
-begin
-  e := FALSE;
-  for i:=1 to ItemsAmount do
-    if (ItemsData[i].vid = wtype) and (ItemsData[i].chance > 0) then
-    begin
-      e := TRUE;
-      break;
-    end;
-  Result := e;
-end;
+  Map, Player, Monsters;
 
 { Генерировать случайный предмет определенного вида }
-function GenerateItem(wtype : byte) : TItem;
+function GenerateItem(whatvid : byte) : TItem;
 var
   list : array[1..ItemsAmount] of integer;
   amount, i : integer;
@@ -339,7 +285,7 @@ begin
   amount := 0;
   // Создать список указателей
   for i:=1 to ItemsAmount do
-    if ItemsData[i].vid = wtype then
+    if ItemsData[i].vid = whatvid then
     begin
       inc(amount);
       list[amount] := i;
@@ -380,12 +326,11 @@ begin
 end;
 
 { Положить предмет }
-function PutItem(px,py : byte; Item : TItem; amount : integer) : boolean;
+function PutItem(px,py : byte; Item : TItem) : boolean;
 var
   x, y : integer;
 begin
   Result := True;
-  if Amount > 0 then Item.amount := amount;
   if not TilesData[M.Tile[px,py]].move then
     Result := False else
       if M.Item[px,py].id > 0 then
@@ -397,7 +342,7 @@ begin
         end else
           Result := False;
       end else
-          M.Item[px,py] := Item;
+        M.Item[px,py] := Item;
   // Если нельзя кинуть предмет на указанном месте, попробовать кинуть его в окрестностях
   if Result = False then
   begin
@@ -430,6 +375,34 @@ begin
   end;
 end;
 
+{ Вернуть символ предмета }
+function ItemSymbol(id : integer) : string;
+begin
+  case ItemsData[id].vid of
+    1 : Result := '['; // Шлем
+    2 : Result := '&'; // Амулет
+    3 : Result := ']'; // Плащ
+    4 : Result := '['; // Броня на тело
+    5 : Result := '~'; // Ремень
+    6 : Result := ')'; // Оружие ближнего боя
+    7 : Result := '}'; // Оружие дальнего боя
+    8 : Result := '['; // Щит
+    9 : Result := '&'; // Браслет
+    10 : Result := '='; // Кольцо
+    11: Result := ']'; // Перчатки
+    12: Result := '['; // Обувь
+    13: Result := '`'; // Аммуниция
+    14: Result := '%'; // Еда
+    15: Result := '$'; // Монеты
+    16: Result := '?'; // Свиток
+    17: Result := '"'; // Книга
+    18: Result := '\'; // Волшебная палочка
+    19: Result := '!'; // Зелье
+    20: Result := '{'; // Инструмент
+    21: Result := ';'; // Барахло
+  end;
+end;
+
 { Вывести некоторые хар-ки предмета }
 procedure WriteSomeAboutItem(Item : TItem);
 var
@@ -456,17 +429,14 @@ begin
       // Вывести символ предмета
       Font.Color := cGRAY;
       TextOut(49*CharX, 31*CharY, '| |');
-      Font.Color := RealColor(ItemsData[Item.id].color);
-      TextOut(50*CharX, 31*CharY, ItemTypeData[ItemsData[Item.id].vid].symbol);
+      Font.Color := ItemsData[Item.id].color;
+      TextOut(50*CharX, 31*CharY, ItemSymbol(Item.id));
       // Тип оружия, если это оружие
       Font.Color := cWHITE;
       if (ItemsData[Item.id].vid = 6) then
         TextOut((83-Length(CLOSEWPNNAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+CLOSEWPNNAME[ItemsData[Item.id].kind]+'"');
       if (ItemsData[Item.id].vid = 7) or (ItemsData[Item.id].vid = 13) then
         TextOut((83-Length(FARWPNNAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+FARWPNNAME[ItemsData[Item.id].kind]+'"');
-      // Тип брони, если это броня или обувь
-      if (ItemsData[Item.id].vid = 4) or (ItemsData[Item.id].vid = 12) then
-        TextOut((83-Length(ARMORTYPENAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+ARMORTYPENAME[ItemsData[Item.id].kind]+'"');
       // Вывести вес предмета и общий вес инвентаря
       Font.Color := cLIGHTGRAY;
       weight := 'Масса предмета: '+FloatToStr(Item.mass)+'  Общая масса инвентаря: '+FloatToStr(pc.invmass);
@@ -478,8 +448,8 @@ end;
 procedure ExamineItem(Item : TItem);
 begin
   if ItemsData[Item.id].descr <> '' then
-    AddMsg(ItemsData[Item.id].descr,0) else
-      AddMsg('Ты внимательно рассматриваешь '+ItemName(Item, 1, TRUE)+', но не видешь ничего особенного.',0);
+    AddMsg(ItemsData[Item.id].descr) else
+      AddMsg('Ты внимательно рассматриваешь '+ItemName(Item, 1, TRUE)+', но не видешь ничего особенного.');
 end;
 
 { Применить эффект предмета или убрать }
@@ -522,8 +492,8 @@ begin
   if pc.Inv[N].id = idCOIN then
   begin
     if pc.Inv[N].amount = 1 then
-      AddMsg('Что тут пересчитывать - у тебя ровно одна золотая монетка...',0) else
-        AddMsg('Ты пересчитал{/a} '+ItemName(pc.Inv[N],0, TRUE)+'.',0);
+      AddMsg('Что тут пересчитывать - у тебя ровно одна золотая монетка...') else
+        AddMsg('Ты пересчитал'+pc.HeSheIt(1)+' '+ItemName(pc.Inv[N],0, TRUE)+'.');
     pc.turn := 1;
   end else
     // Использовать предмет по назначению
@@ -557,19 +527,19 @@ begin
           pc.status[stHUNGRY] := pc.status[stHUNGRY] - Round(ItemsData[pc.Inv[N].id].defense * pc.Inv[N].mass * 1.3 * (1 + (pc.ability[abEATINSIDE] * AbilitysData[abEATINSIDE].koef) / 100));
           if pc.status[stHUNGRY] < -500 then
           begin
-            AddMsg('[Ты не смог{/ла} доесть '+ItemName(pc.Inv[N], 1, FALSE)+' потому, что очень насытил{ся/ась}... чересчур насытил{ся/ась}...]',0);
+            AddMsg('[Ты не смог'+pc.HeSheIt(3)+' доесть '+ItemName(pc.Inv[N], 1, FALSE)+', потому что очень насытил'+pc.HeSheIt(2)+'... чересчур насытил'+pc.HeSheIt(2)+'...]');
             pc.status[stHUNGRY] := -500;
           end else
-              AddMsg('[Ты съел{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.]',0);
-          pc.DeleteInvItem(pc.Inv[N], 1);
+              AddMsg('[Ты съел'+pc.HeSheIt(1)+' '+ItemName(pc.Inv[N], 1, FALSE)+'.]');
+          pc.DeleteInvItem(pc.Inv[N], FALSE);
           pc.turn := 1;
         end else
-          AddMsg('Тебе не хочется больше есть!',0);
+          AddMsg('Тебе не хочется больше есть!');
       end;
       // Выпить
       19:
       begin
-        AddMsg('Ты выпил{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.',0);
+        AddMsg('Ты выпил'+pc.HeSheIt(1)+' '+ItemName(pc.Inv[N], 1, FALSE)+'.');
         // Лечение
         if pc.Inv[N].id = idPOTIONCURE then
         begin
@@ -581,22 +551,22 @@ begin
             inc(pc.hp, a);
             if pc.Hp >= pc.RHp then
             begin
-              AddMsg('[Ты полностью исцелил{ся/ась}!] ({+'+IntToStr(a)+'})',0);
+              AddMsg('[Ты полностью исцелил'+pc.HeSheIt(2)+'!] ({+'+IntToStr(a)+'})');
               pc.Hp := pc.RHp;
             end else
-              AddMsg('[Тебе стало немного лучше] ({+'+IntToStr(a)+'})',0);
+              AddMsg('[Тебе стало немного лучше] ({+'+IntToStr(a)+'})');
           end else
-            AddMsg('Ничего не произошло.',0);
+            AddMsg('Ничего не произошло.');
         end;
         // Исцеление
         if pc.Inv[N].id = idPOTIONHEAL then
         begin
           if pc.Hp < pc.RHp then
           begin
-            AddMsg('[Ты полностью исцелил{ся/ась}!] ({+'+IntToStr(pc.RHp-pc.Hp)+'})',0);
+            AddMsg('[Ты полностью исцелил'+pc.HeSheIt(2)+'!] ({+'+IntToStr(pc.RHp-pc.Hp)+'})');
             pc.Hp := pc.RHp;
           end else
-            AddMsg('Ничего не произошло.',0);
+            AddMsg('Ничего не произошло.');
         end;
         // Пивасик
         if pc.Inv[N].id = idCHEAPBEER then
@@ -610,16 +580,16 @@ begin
               if pc.Hp >= pc.RHp then
               begin
                 pc.Hp := pc.RHp;
-                AddMsg('Это пиво - полная ерунда, но тем не менее ты теперь чувствуешь себя замечательно!',0);
+                AddMsg('Это пиво - полная ерунда, но тем неменее ты теперь чувствуешь себя замечательно!');
               end else
-                AddMsg('Пххх.. Отдаёт спиртом...',0);
+                AddMsg('Не такое уж это пиво и плохое...');
             end else
-              AddMsg('Ты довольно быстро осушил{/a} бутылку пива. Не плохо. Освежает!',0);
+              AddMsg('Ты довольно быстро осушил'+pc.HeSheIt(1)+' бутылку пива. Не плохо. Освежает!');
             inc(pc.status[stDRUNK], 130);
           end else
-            AddMsg('Ты попытал{ся/ась} выпить еще, но случайно бутылка выскользнула из твоих рук и разбилась!..',0);
+            AddMsg('Ты попытал'+pc.HeSheIt(2)+' выпить еще, но случайно бутылка выскользнула из твоих рук и разбилась!..');
         end;
-        pc.DeleteInvItem(pc.Inv[N], 1);
+        pc.DeleteInvItem(pc.Inv[N], FALSE);
         pc.turn := 1;
       end;
     end;

@@ -21,13 +21,11 @@ type
     status      : array[1..2] of integer;        // Счетчики (1-Голод)
     //
     atr         : array[1..2] of byte;           // Приоритетные атрибуты
-    warning     : boolean;                       // Монстр в поле зрения
 
     procedure Prepare;                           // Подготовка в самом начале игры
     procedure PrepareSkills;                     // Раставить очки умений в зависимости от класса
     procedure FavWPNSkill;                       // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
     procedure Move(dx,dy : shortint);            // Двигать героя
-    procedure Run(dx,dy : shortint);             // Shift + Двигать героя
     procedure FOV;                               // Поле видимости
     procedure AfterTurn;                         // Действия после хода героя
     procedure AnalysePlace(px,py: byte;          // Описать место
@@ -56,14 +54,10 @@ type
     function FindCoins : byte;                   // Найти ячейку с монетами
     procedure Search;                            // Искать
     function HaveItemVid(vid : byte) : boolean;  // Есть ли хоть один предмет этого вида?
-    procedure HeroRandom;                        // Сделать рандомного
-    procedure StartHeroName;                 // Окно ввода имени
     procedure HeroName;                          // Окно ввода имени
     procedure HeroGender;                        // Окно выбора пола
     procedure HeroAtributes;                     // Расстановка приоритетов
-    procedure CreateClWList;
     procedure HeroCloseWeapon;                   // Оружие ближнего боя
-    procedure CreateFrWList;
     procedure HeroFarWeapon;                     // Оружие дальнего боя
     procedure HeroCreateResult;                  // Подтвердить
   end;
@@ -77,17 +71,17 @@ var
   InvList : array[1..MaxHandle] of byte;
   c_choose, f_choose : byte;                     // Выбранный тип оружия
   wlist   : array[1..5] of byte;
-  wlistsize : byte;
 
 
 implementation
 
 uses
-  Map, MapEditor, conf, sutils;
+  Map, MapEditor;
 
 { Подготовка в самом начале игры }
 procedure Tpc.Prepare;
 begin
+  level := 1; // Эвилиар
   depth := 0;
   exp := 0;
   explevel := 1;
@@ -124,12 +118,9 @@ end;
 
 { Раставить очки умений и экипировать в зависимости от класса }
 procedure Tpc.PrepareSkills;
-var i : byte;
 begin
-  for i:=1 to CLOSEFIGHTAMOUNT do closefight[i] := 0;
-  for i:=1 to FARFIGHTAMOUNT do farfight[i] := 0;
   case WhatClass of
-    1: //Воин
+    1: //Воитель
     begin
       closefight[1] := 50;
       closefight[2] := 50;
@@ -140,11 +131,11 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 60, 0), FALSE,60);
+      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 1, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 2, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 60, 0), FALSE);
     end;
     2: //Варвар
     begin
@@ -156,8 +147,8 @@ begin
       farfight[4] := 40;
 
       EquipItem(CreateItem(idCAPE, 1, 0));
-      PickUp(CreateItem(idMEAT, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 5, 0), FALSE,5);
+      PickUp(CreateItem(idMEAT, 5, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 5, 0), FALSE);
     end;
     3: //Паладин
     begin
@@ -167,10 +158,10 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 3, 0), FALSE,3);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
+      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 3, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 30, 0), FALSE);
     end;
     4: //Странник
     begin
@@ -182,11 +173,11 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 4, 0), FALSE,4);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idCOIN, 70, 0), FALSE,70);
+      PickUp(CreateItem(idPOTIONCURE, 4, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 1, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 4, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 70, 0), FALSE);
     end;
     5: //Воришка
     begin
@@ -199,11 +190,11 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 3, 0), FALSE,3);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 90, 0), FALSE,90);
+      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 3, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 1, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 5, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 90, 0), FALSE);
     end;
     6: //Монах
     begin
@@ -213,10 +204,10 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 3, 0), FALSE,3);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 8, 0), FALSE,8);
-      PickUp(CreateItem(idCOIN, 25, 0), FALSE,25);
+      PickUp(CreateItem(idPOTIONCURE, 3, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 8, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 25, 0), FALSE);
     end;
     7: //Жрец
     begin
@@ -226,11 +217,11 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idMEAT, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 35, 0), FALSE,35);
+      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 4, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 2, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 35, 0), FALSE);
     end;
     8: //Колдун
     begin
@@ -239,11 +230,11 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
+      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 5, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 1, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 30, 0), FALSE);
     end;
     9: //Мыслитель
     begin
@@ -252,11 +243,11 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 4, 0), FALSE,4);
-      PickUp(CreateItem(idLAVASH, 6, 0), FALSE,6);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 50, 0), FALSE,50);
+      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE);
+      PickUp(CreateItem(idPOTIONHEAL, 4, 0), FALSE);
+      PickUp(CreateItem(idLAVASH, 6, 0), FALSE);
+      PickUp(CreateItem(idMEAT, 1, 0), FALSE);
+      PickUp(CreateItem(idCOIN, 50, 0), FALSE);
     end;
   end;
 end;
@@ -287,12 +278,6 @@ begin
         break;
       end;
   case c_choose of
-    // Двуручное
-    1 :
-    begin
-      pc.closefight[1] := pc.closefight[1] + 25;
-      EquipItem(CreateItem(idLONGSWORD, 1, 0));
-    end;
     // Меч
     2 :
     begin
@@ -374,18 +359,18 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[3] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?!',0) + ' [(Y/n)]') = 'Y' then
+          if Ask('Хочешь сбежать как трусишка?! [(Y/n)]') = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
           end else
-            AddMsg('Ты решил{/a} остаться.',0);
+            AddMsg('Ты решил'+HeSheIt(1)+' остаться.');
         end else
           begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось <:(>');
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[3];
             // Если загрузить не удастся - ничего страшного ;)
@@ -400,18 +385,18 @@ begin
       begin
         if (SpecialMaps[pc.level].Loc[4] = 0) and (pc.level = 1) then
         begin
-          if Ask(GetMsg('Поздравляю! Ты выполнил{/a} задачу данной версии игры! Хочешь теперь уйти? [(Y/n)]',0)) = 'Y' then
+          if Ask('Поздравляю! Ты выполнил'+pc.HeSheIt(1)+' задачу данной версии игры! Хочешь теперь уйти? [(Y/n)]') = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
           end else
-            AddMsg('Ты решил{/a} остаться.',0);
+            AddMsg('Ты решил'+HeSheIt(1)+' остаться.');
         end else
           begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось <:(>');
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[4];
             // Если загрузить не удастся - ничего страшного ;)
@@ -426,18 +411,18 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[1] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! [(Y/n)]',0)) = 'Y' then
+          if Ask('Хочешь сбежать как трусишка?! [(Y/n)]') = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
           end else
-            AddMsg('Ты решил{/a} остаться.',0);
+            AddMsg('Ты решил'+HeSheIt(1)+' остаться.');
         end else
           begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось <:(>');
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[1];
             // Если загрузить не удастся - ничего страшного ;)
@@ -452,18 +437,18 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[2] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! [(Y/n)]',0)) = 'Y' then
+          if Ask('Хочешь сбежать как трусишка?! [(Y/n)]') = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
           end else
-            AddMsg('Ты решил{/a} остаться.',0);
+            AddMsg('Ты решил'+HeSheIt(1)+' остаться.');
         end else
           begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось <:(>');
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[2];
             // Если загрузить не удастся - ничего страшного ;)
@@ -492,7 +477,7 @@ begin
     if M.Tile[x+dx,y+dy] = tdCDOOR then
     begin
       M.Tile[x+dx,y+dy] := tdODOOR;
-      AddMsg('Ты открыл{/a} дверь.',0);
+      AddMsg('Ты открыл'+HeSheIt(1)+' дверь.');
       pc.turn := 1;
     end;
     3 : // Кто-то живой
@@ -500,7 +485,7 @@ begin
       if (M.MonL[M.MonP[x+dx,y+dy]].relation = 0) and (not M.MonL[M.MonP[x+dx,y+dy]].felldown) then
       begin
         // Просто поменяться местами
-        AddMsg(Format('Ты и %s поменялись местами.', [MonstersData[M.MonL[M.MonP[x+dx,y+dy]].id].name1]),0);
+        AddMsg('Ты и '+MonstersData[M.MonL[M.MonP[x+dx,y+dy]].id].name1+' поменялись местами.');
         M.MonP[x,y] := M.MonP[x+dx,y+dy];
         M.MonL[M.MonP[x,y]].x := x;
         M.MonL[M.MonP[x,y]].y := y;
@@ -509,55 +494,13 @@ begin
         M.MonP[x,y] := 1;
         pc.turn := 2;
       end else
-        // Нейтральный и лежит
-        if (M.MonL[M.MonP[x+dx,y+dy]].relation = 0) and (M.MonL[M.MonP[x+dx,y+dy]].felldown) then
         begin
-          // Не смог поменяться местами
-          AddMsg(Format('Ты и %s не смогли поменяться местами!', [MonstersData[M.MonL[M.MonP[x+dx,y+dy]].id].name1]),0);
+          // Атаковать
+          pc.Fight(M.MonL[M.MonP[x+dx,y+dy]], 0);
           pc.turn := 1;
-        end else
-          begin
-            // Атаковать
-            pc.Fight(M.MonL[M.MonP[x+dx,y+dy]], 0);
-            pc.turn := 1;
-          end;
+        end;
     end;
   end;
-end;
-
-{ Shift + Двигать героя }
-procedure Tpc.Run(dx,dy : shortint);
-var
-  a,b,count : byte;
-  around    : array[1..3,1..3] of byte;
-  stop      : boolean;
-begin
-  Move(dx,dy);
-(*  // Окружение
-  for a:=1 to 3 do
-    for b:=1 to 3 do
-      around[a,b] := M.Tile[pc.x-2+a,pc.y-2+b];
-  stop := FALSE;
-  count := 0;
-  repeat
-    // Сделать шаг
-    Move(dx,dy);
-    pc.AfterTurn;
-    sleep(40);
-    // 1) Увидел монстра,
-    if pc.warning then stop := TRUE;
-    // 2) Другое окружение тайлов,
-    for a:=1 to 3 do
-      for b:=1 to 3 do
-        if M.Tile[pc.x-2+a,pc.y-2+b] <> around[a,b] then
-          stop := TRUE;
-    // 3) Сделать максимальное кол-во шагов
-    inc(count);
-    if count = 20 then stop := TRUE;
-    // 4) Наступил на предмет
-    if M.Item[pc.x,pc.y].id > 0 then stop := TRUE;
-  until
-    stop;*)
 end;
 
 { Поле видимости }
@@ -577,27 +520,13 @@ var
     begin
       M.Saw[x,y] := 2;
       if M.MonP[x,y] > 0 then
-        if M.MonL[M.MonP[x,y]].relation = 1 then
-          pc.warning := TRUE;
-      M.MemBC[x,y] := TilesData[M.Tile[x,y]].Color;
-      if M.MonP[x,y] > 0 then
-      begin
-        M.MemS[x,y] := MonstersData[M.MonL[M.MonP[x,y]].id].char;
-        M.MemC[x,y] := MonstersData[M.MonL[M.MonP[x,y]].id].color;
-      end else
-        if M.Item[x,y].id > 0 then
-        begin
-          M.MemS[x,y] := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;;
-          M.MemC[x,y] := ItemsData[M.Item[x,y].id].color;
-        end else
-          begin
-            M.MemS[x,y] := TilesData[M.Tile[x,y]].Char;
-            M.MemC[x,y] := TilesData[M.Tile[x,y]].Color;
-          end;
+        M.Mem[x,y] := MonstersData[M.MonL[M.MonP[x,y]].id].char else
+          if M.Item[x,y].id > 0 then
+            M.Mem[x,y] := ItemSymbol(M.Item[x,y].id) else
+              M.Mem[x,y] := TilesData[M.Tile[x,y]].Char;
     end;
   end;
 begin
-  pc.warning := FALSE;
   reallos := los + (Ability[abGOODEYES] * Round(AbilitysData[abGOODEYES].koef));
   for a:=x-reallos-2 to x+reallos+2 do
     for b:=y-reallos-2 to y+reallos+2 do
@@ -659,13 +588,13 @@ begin
       dec(status[stDRUNK]);
     if status[stHUNGRY] = 1500 then
     begin
-      AddMsg('<Ты был{/a} слишком истощен{/a}...>',0);
+      AddMsg('<Ты был'+HeSheIt(1)+' слишком истощен'+HeSheIt(1)+'...>');
       More;
       pc.hp := 0;
     end;
     // Регенерация (если не умирает с голода)
     if (pc.hp < pc.Rhp) and (pc.status[stHUNGRY] <= 1200) then
-      if Random(Round(40 / (1 + (pc.ability[abQUICKREGENERATION] * AbilitysData[abQUICKREGENERATION].koef)))) + 1 = 1 then
+      if Random(Round(50 / (1 + (pc.ability[abQUICKREGENERATION] * AbilitysData[abQUICKREGENERATION].koef)))) + 1 = 1 then
         inc(pc.hp);
     if pc.Hp <= 0 then Death;
     // Осмотреться
@@ -682,33 +611,28 @@ begin
   // Тайл
   if (All=2)or(TilesData[M.Tile[px,py]].important) or ((M.Blood[px,py] > 0) and (All <> 1)) then
     if M.Blood[px,py] > 0 then
-      AddMsg(TilesData[M.Tile[px,py]].name+' в крови.',0) else
-        AddMsg(TilesData[M.Tile[px,py]].name+'.',0);
+      AddMsg(TilesData[M.Tile[px,py]].name+' в крови.') else
+        AddMsg(TilesData[M.Tile[px,py]].name+'.');
   // Монстр
   if All > 0 then
     if M.MonP[px,py] > 0 then
     begin
       if M.MonP[px,py] = 1 then
-        AddMsg(Format('Это ты - %s. Ты %s.', [pc.name, pc.WoundDescription]),0) else
+        AddMsg('Это ты - '+pc.name+'. Ты ' + pc.WoundDescription + '.') else
           begin
             if M.MonL[M.MonP[px,py]].felldown then
-              s := Format('Здесь лежит %s.', [M.MonL[M.MonP[px,py]].FullName(1, TRUE)]) else
+              s := 'Здесь лежит '+M.MonL[M.MonP[px,py]].FullName(1, TRUE) else
                 s := M.MonL[M.MonP[px,py]].FullName(1, TRUE);
             // Состояние
-            s := s + Format(' %s.', [M.MonL[M.MonP[px,py]].WoundDescription]);
-            // Тактика
-            if M.MonL[M.MonP[px,py]].tactic = 1 then
-              s := s + ' Настроен{/a} весьма агрессивно.';
-            if M.MonL[M.MonP[px,py]].tactic = 2 then
-              s := s + ' Защищается.';
+            s := s + '. Он' + M.MonL[M.MonP[px,py]].HeSheIt(1) +' '+ M.MonL[M.MonP[px,py]].WoundDescription+'.';
             // Оружие в руках
             if IsFlag(MonstersData[M.MonL[M.MonP[px,py]].id].flags, M_HAVEITEMS) then
             begin
               if M.MonL[M.MonP[px,py]].eq[6].id = 0 then
-                s := s + ' Безоруж{ен/на}.' else
-                  s := s + Format(' В руках держит %s.', [ItemsData[M.MonL[M.MonP[px,py]].eq[6].id].name3]);
+                s := s + ' Безоруж'+M.MonL[M.MonP[px,py]].HeSheIt(5)+'.' else
+                  s := s + ' В руках держит '+ItemsData[M.MonL[M.MonP[px,py]].eq[6].id].name3+'.';
             end;
-            AddMsg(s,  M.MonL[M.MonP[px,py]].id);
+            AddMsg(s);
           end;
      end;
   // Предмет
@@ -716,8 +640,8 @@ begin
     if M.Item[px,py].id > 0 then
     begin
       if M.Item[px,py].amount = 1 then
-        AddMsg(Format('Здесь лежит %s.', [ItemName(M.Item[px,py], 0, TRUE)]),0) else
-          AddMsg(Format('Здесь лежат %s.', [ItemName(M.Item[px,py], 0, TRUE)]),0);
+        AddMsg('Здесь лежит '+ItemName(M.Item[px,py], 0, TRUE)+'.') else
+          AddMsg('Здесь лежат '+ItemName(M.Item[px,py], 0, TRUE)+'.');
     end;
 end;
 
@@ -739,7 +663,7 @@ begin
     // Убрать указатель на героя
     M.MonP[pc.x,pc.y] := 0;
     // Сохранить уровень
-    if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+    if M.Save = False then AddMsg('Сохрание не удалось <:(>');
     // Если герой снаружи нужно узнать номер лестницы
     if pc.enter = 0 then
     begin
@@ -758,8 +682,8 @@ begin
     // Если загрузить не удастся - либо генерим, либо загружаем спец. уровень
     if M.Load(pc.level, pc.enter, pc.depth) = False then
     begin
-      // Генерируем
       if SpecialMaps[waslevel].Ladders[pc.enter].Levels[pc.depth].PregenLevel = 0 then
+      // Генерируем
       begin
         // Без лестицы вниз
         if (pc.depth = 10) or (SpecialMaps[pc.level].Ladders[pc.enter].Levels[pc.depth+1].IsHere = FALSE) then
@@ -771,14 +695,14 @@ begin
     end;
     PlaceAtTile(tdUSTAIRS);
     pc.turn := 2;
-    AddMsg(Format('Ты спустил{ся/ась} вниз по лестнице на уровень %d.', [pc.depth]),0);
+    AddMsg('Ты спустил'+HeSheIt(2)+' вниз по лестнице на уровень '+IntToStr(pc.depth)+'.');
   end else
     if M.Tile[pc.x,pc.y] = tdUSTAIRS then
     begin
       // Убрать указатель на героя
       M.MonP[pc.x,pc.y] := 0;
       // Сохранить уровень
-      if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+      if M.Save = False then AddMsg('Сохрание не удалось <:(>');
       // Этаж выше
       dec(pc.depth);
       wasenter := pc.enter;
@@ -788,9 +712,9 @@ begin
       // Пробуем загрузить...
       if M.Load(pc.level,pc.enter,pc.depth) = False then
       begin
-        AddMsg('Не удалось загрузить карту. Возможно файл с сохранением был удален, либо его не удалось записать.',0);
+        AddMsg('Не удалось загрузить карту. Возможно файл с сохранением был удален, либо его не удалось записать.');
         More;
-        AddMsg('<Это критическая ошибка. Игра окончена.>',0);
+        AddMsg('<Это критическая ошибка. Игра окончена.>');
         More;
         AskForQuit := FALSE;
         MainForm.Close;
@@ -807,8 +731,8 @@ begin
         PlaceAtTile(tdDSTAIRS);
       pc.turn := 2;
       if pc.depth > 0 then
-        AddMsg(Format('Ты поднял{ся/ась} по лестнице на уровень %d.', [pc.depth]),0) else
-          AddMsg('Ты поднял{ся/ась} по лестнице и снова оказал{ся/ась} на свежем воздухе.',0);
+        AddMsg('Ты поднял'+HeSheIt(2)+' по лестнице  на уровень '+IntToStr(pc.depth)+'.') else
+          AddMsg('Ты поднял'+HeSheIt(2)+' по лестнице и снова оказал'+HeSheIt(2)+' на свежем воздухе.');
     end;
 end;
 
@@ -840,7 +764,7 @@ begin
         if M.Tile[a,b] = tdODOOR then
           inc(i);
   case i of
-    0 : AddMsg('Здесь нет открытой двери!',0);
+    0 : AddMsg('Здесь нет открытой двери!');
     1 :
     begin
       for a := pc.x - 1 to pc.x + 1 do
@@ -854,7 +778,7 @@ begin
     end;
     else
       begin
-        AddMsg('Какую именно дверь ты хочешь закрыть?',0);
+        AddMsg('Какую именно дверь ты хочешь закрыть?');
         GameState := gsCLOSE;
       end;
   end;
@@ -874,9 +798,9 @@ begin
   case i of
     0 :
     case whattodo of
-      1 : AddMsg('Рядом с тобой никого нет!',0);  // Атаковать
-      2 : AddMsg('Здесь не с кем поговорить!',0); // Говорить
-      3 : AddMsg('Рядом с тобой никого нет!',0);  // Отдать
+      1 : AddMsg('Рядом с тобой никого нет!');  // Атаковать
+      2 : AddMsg('Здесь не с кем поговорить!'); // Говорить
+      3 : AddMsg('Рядом с тобой никого нет!');  // Отдать
     end;
     1 :
     begin
@@ -898,9 +822,9 @@ begin
     else
       begin
         case whattodo of
-          1 : AddMsg('На кого именно ты хочешь напасть?',0);
-          2 : AddMsg('С кем именно ты хочешь поговорить?',0);
-          3 : AddMsg('Кому именно отдать?',0);
+          1 : AddMsg('На кого именно ты хочешь напасть?');
+          2 : AddMsg('С кем именно ты хочешь поговорить?');
+          3 : AddMsg('Кому именно отдать?');
         end;
         GameState := gsCHOOSEMONSTER;
         wtd := whattodo;
@@ -955,13 +879,13 @@ begin
     begin
       if M.MonP[a,b] = 0 then
       begin
-        AddMsg('Ты закрыл{/a} дверь.',0);
+        AddMsg('Ты закрыл'+HeSheIt(1)+' дверь.');
         M.Tile[a,b] := tdCDOOR;
         pc.turn := 1;
       end else
-        AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь закрыть дверь!',0);
+        AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь закрыть дверь!');
     end else
-      AddMsg('Здесь нет открытой двери!',0);
+      AddMsg('Здесь нет открытой двери!');
   end;
 end;
 
@@ -978,23 +902,23 @@ begin
     begin
       if M.MonP[a,b] = 0 then
       begin
-        AddMsg('Ты открыл{/a} дверь.',0);
+        AddMsg('Ты открыл'+HeSheIt(1)+' дверь.');
         M.Tile[a,b] := tdODOOR;
         pc.turn := 1;
       end else
-        AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь открыть дверь! Хотя как он тут может стоять?',0);
+        AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь открыть дверь! Хотя как он тут может стоять?');
     end else
       if M.Tile[a,b] = tdCHATCH then
       begin
         if M.MonP[a,b] = 0 then
         begin
-          AddMsg('Ты с трудом открыл{}/a люк.',0);
+          AddMsg('Ты с трудом открыл'+HeSheIt(1)+' люк.');
           M.Tile[a,b] := tdOHATCH;
           pc.turn := 1;
         end else
-          AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь открыть люк!',0);
+          AddMsg('Здесь стоит '+MonstersData[M.MonL[M.MonP[a,b]].id].name1+'! Ты не можешь открыть люк!');
       end else
-        AddMsg('Что здесь можно открыть?',0);
+        AddMsg('Что здесь можно открыть?');
   end;
 end;
 
@@ -1022,13 +946,14 @@ begin
   a := lx + dx;
   b := ly + dy;
   if (a>0)and(a<=MapX)and(b>0)and(b<=MapY) then
-    if M.Saw[a,b] = 2 then
-      begin
-        lx := a;
-        ly := b;
-        if M.MonP[lx,ly] > 0 then AddMsg('{Целиться в:}',0);
-        AnalysePlace(lx,ly,1);
-      end;
+    if not((a=x)and(b=y)) then
+      if M.Saw[a,b] = 2 then
+        begin
+          lx := a;
+          ly := b;
+          if M.MonP[lx,ly] > 0 then AddMsg('{Целиться в:}');
+          AnalysePlace(lx,ly,1);
+        end;
 end;
 
 { Вывести информацию на экран справа }
@@ -1086,19 +1011,18 @@ begin
     TextOut(81*CharX, 15*CharY, '-------------------');
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, 17*CharY, 'УРОВЕНЬ  :'+IntToStr(explevel));
-    TextOut(82*CharX, 18*CharY, 'ОПЫТ     :'+IntToStr(pc.exp));
-    TextOut(82*CharX, 19*CharY, 'НУЖНО    :'+IntToStr(pc.ExpToNxtLvl));
+    TextOut(82*CharX, 18*CharY, 'ОПЫТ     :'+IntToStr(exp));
+    TextOut(82*CharX, 19*CharY, 'НУЖНО    :'+IntToStr(ExpToNxtLvl));
     Font.Color := cBROWN;
     TextOut(81*CharX, 21*CharY, '-------------------');
     Font.Color := cLIGHTGRAY;
     if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
       TextOut(82*CharX, 23*CharY, SpecialMaps[M.Special].name) else
-    if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
-      TextOut(82*CharX, 23*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth)) else
-        TextOut(82*CharX, 23*CharY, 'Странное место...');       
+        if pc.depth > 0 then
+          TextOut(82*CharX, 23*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth)) else
+            TextOut(82*CharX, 23*CharY, 'Странное место...'); 
     Font.Color := cBROWN;
     TextOut(81*CharX, 25*CharY, '-------------------');
-    if (hp > 0) then
     case pc.status[stHUNGRY] of
       -500..-400:
       begin
@@ -1108,44 +1032,39 @@ begin
       -399..-1  :
       begin
         Font.Color := cGREEN;
-        TextOut(82*CharX, 27*CharY, GetMsg('Переел{/a}...',gender));
+        TextOut(82*CharX, 27*CharY, 'Переел'+HeSheIt(1)+'...');
       end;
       0..450    :
       begin
         Font.Color := cGRAY;
-        TextOut(82*CharX, 27*CharY, GetMsg('Сыт{ый/ая}',gender));
+        TextOut(82*CharX, 27*CharY, 'Сыт'+HeSheIt(4));
       end;
       451..750  :
       begin
         Font.Color := cYELLOW;
-        TextOut(82*CharX, 27*CharY, GetMsg('Проголодал{ся/ась}',gender));
+        TextOut(82*CharX, 27*CharY, 'Проголодал'+HeSheIt(2));
       end;
       751..1200  :
       begin
         Font.Color := cLIGHTRED;
-        TextOut(82*CharX, 27*CharY, GetMsg('Голод{ен/на}',gender));
+        TextOut(82*CharX, 27*CharY, 'Голод'+HeSheIt(5)+'!');
       end;
       1201..1500 :
       begin
         Font.Color := cRED;
-        TextOut(82*CharX, 27*CharY, GetMsg('Умираешь от голода!',gender));
+        TextOut(82*CharX, 27*CharY, 'Умираешь от голода!');
       end;
-    end else
-    begin
-      Font.Color := cGRAY;
-      TextOut(82*CharX, 27*CharY, GetMsg('Мертв{ый/ая}',gender));
     end;
-    if (hp > 0) then
     case pc.status[stDRUNK] of
       350..500:
       begin
         Font.Color := cYELLOW;
-        TextOut(82*CharX, 28*CharY, GetMsg('Пьян{ый/ая}',gender));
+        TextOut(82*CharX, 28*CharY, 'Пьян'+HeSheIt(4));
       end;
       501..800:
       begin
         Font.Color := cLIGHTRED;
-        TextOut(82*CharX, 28*CharY, GetMsg('Пьян{ый/ая}! Ик!',gender));
+        TextOut(82*CharX, 28*CharY, 'Пьян'+HeSheIt(4)+'! Ик!');
       end;
     end;
   end;
@@ -1159,7 +1078,7 @@ begin
     Mon.TalkToMe;
     pc.turn := 1;
   end else
-    AddMsg('Здесь не с кем поговорить!',0);
+    AddMsg('Здесь не с кем поговорить!');
 end;
 
 { Список квестов }
@@ -1180,7 +1099,7 @@ begin
     if k = 0 then
     begin
       Font.Color := cLIGHTGRAY;
-      TextOut(5*CharX,5*CharY,GetMsg('Пока что ты не взял{/a} ни одного квеста.',gender));
+      TextOut(5*CharX,5*CharY,'Пока что ты не взял'+HeSheIt(1)+' ни одного квеста.');
     end else
       // Вывести квесты
       for i:=1 to QuestsAmount do
@@ -1234,7 +1153,7 @@ begin
     TextOut(5*CharX, 20*CharY, '[ ] - Кольцо            :');
     TextOut(5*CharX, 21*CharY, '[ ] - Перчатки          :');
     TextOut(5*CharX, 22*CharY, '[ ] - Обувь             :');
-    TextOut(5*CharX, 23*CharY, '[ ] - Амуниция          :');
+    TextOut(5*CharX, 23*CharY, '[ ] - Аммуниция         :');
     for i:=1 to EqAmount do
       if pc.eq[i].id = 0 then
       begin
@@ -1251,7 +1170,7 @@ begin
         if i = 6 then
         begin
           Font.Color := cLIGHTGRAY;
-          TextOut(33*CharX, (10+i)*CharY, Format('{Атака в рукопашной схватке: %d', [pc.attack])); //'{Атака в рукопашной схватке: '+IntToStr(pc.attack)+'}');
+          TextOut(33*CharX,(10+i)*CharY,'{Атака в рукопашной схватке: '+IntToStr(pc.attack)+'}');
         end;
       end else
         begin
@@ -1330,7 +1249,7 @@ var
   a : string;
   i,b : byte;
 begin
-  AddMsg('[Поздравляю! Ты достиг{/ла} нового уровня развития!]',0);
+  AddMsg('{Поздравляю! Ты достиг'+HeSheIt(3)+' нового уровня развития!}');
   Apply;
   // Повысить уровень, обнулить счетчик опыта
   inc(pc.explevel);
@@ -1349,35 +1268,35 @@ begin
       pc.ability[i] < 4;
     inc(pc.ability[i]);
     if pc.ability[i] = 1 then
-      AddMsg('Ты открыл{/a} в себе новую способность - "<'+AbilitysData[i].name+'>"!',0) else
-        AddMsg('Твоя способность "{'+AbilitysData[i].name+'}" стала на уровень лучше!',0);
+      AddMsg('Ты открыл'+HeSheIt(1)+' в себе новую способность - "{'+AbilitysData[i].name+'}"!') else
+        AddMsg('Твоя способность "{'+AbilitysData[i].name+'}" стала на уровень лучше!');
     Apply;
   end;
   // Каждый третий уровень можно выбрать пракачку СЛИ
   if pc.explevel mod 3 = 0 then
   begin
-    AddMsg('{Ты можешь повысить один из своих атрибутов!}',0);
+    AddMsg('{Ты можешь повысить один из своих атрибутов!}');
     a := Ask('Выбери какой: ([S]) Сила, ([D]) Ловкость или ([I]) Интеллект?');
     case a[1] of
       'S' :
       begin
         inc(pc.Rstr);
         pc.str := pc.Rstr;
-        AddMsg('[Ты стал{/a} сильнее.]',0);
+        AddMsg('[Ты стал'+HeSheIt(1)+' сильнее.]');
         Apply;
       end;
       'D' :
       begin
         inc(pc.Rdex);
         pc.dex := pc.Rdex;
-        AddMsg('[Ты стал{/a} более ловк{им/ой}.]',0);
+        AddMsg('[Ты стал'+HeSheIt(1)+' более ловк'+HeSheIt(11)+'.]');
         Apply;
       end;
       'I' :
       begin
         inc(pc.Rint);
         pc.int := pc.Rint;
-        AddMsg('[Ты стал{/a} умнее.]',0);
+        AddMsg('[Ты стал'+HeSheIt(1)+' умнее.]');
         Apply;
       end;
       ELSE
@@ -1387,27 +1306,27 @@ begin
           begin
             inc(pc.Rstr);
             pc.str := pc.Rstr;
-            AddMsg('[Ты стал{/a} сильнее.]',0);
+            AddMsg('[Ты стал'+HeSheIt(1)+' сильнее.]');
             Apply;
           end;
           2 :
           begin
             inc(pc.Rdex);
             pc.dex := pc.Rdex;
-            AddMsg('[Ты стал{/a} более ловк{им/ой}.]',0);
+            AddMsg('[Ты стал'+HeSheIt(1)+' более ловк'+HeSheIt(11)+'.]');
             Apply;
           end;
           3 :
           begin
             inc(pc.Rint);
             pc.int := pc.Rint;
-            AddMsg('[Ты стал{/a} умнее.]',0);
+            AddMsg('[Ты стал'+HeSheIt(1)+' умнее.]');
             Apply;
           end;
         end;
     end;
   end;
-  AddMsg('',0);
+  AddMsg('');
   pc.Rhp := pc.Rhp + round(pc.Rhp/4);
 end;
 
@@ -1455,7 +1374,7 @@ end;
 { Действия после смерти героя }
 procedure TPc.AfterDeath;
 begin
-  AddMsg('<Ты умер{/лa}!!!>',0);
+  AddMsg('<Ты умер'+HeSheIt(3)+'!!!>');
   Apply;
   AskForQuit := FALSE;
   MainForm.Close;
@@ -1483,11 +1402,11 @@ begin
   for a:=pc.x-1 to pc.x+1 do
     for b:=pc.y-1 to pc.y+1 do
       if (a > 0) and (a <= MapX) and (b > 0) and (b <= MapY) then
-        if (M.tile[a,b] = tdSECSTONE) or (M.tile[a,b] = tdSECEARTH) then
+        if M.tile[a,b] = tdSECRET then
           if Random(8 - pc.ability[abATTENTION])+1 = 1 then
           begin
             M.tile[a,b] := tdCDOOR;
-            AddMsg('{Ты наш{ел/лa} секретную дверь!}',0);
+            AddMsg('{Ты наш'+HeSheIt(6)+' секретную дверь!}');
             More;
           end;
 end;
@@ -1509,70 +1428,29 @@ begin
 end;
 
 { Окно ввода имени }
-procedure TPc.StartHeroName;
-begin
-  GameState := gsHERONAME;
-  Input(((WindowX-13) div 2), 17, '');
-end;
-
-{ Окно ввода имени }
 procedure TPc.HeroName;
-const s2 = '^^^^^^^^^^^^^';
-var
-  n : string[13];
-  s1: string;
+const
+  s1 = 'Введи имя героя';
+  s2 = '^^^^^^^^^^^^^';
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  s1 := GetMsg('Введи имя геро{я/ини}:',gender);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
     Font.Color := cBROWN;
     TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
-    if (Inputing = FALSE) then
-    begin
-      if InputString = '' then
-      begin
-        case pc.gender of
-          genMALE   : pc.name := GenerateName(FALSE);
-          genFEMALE : pc.name := GenerateName(TRUE);
-        end;
-      end else
-        pc.name := InputString;
-      GameState := gsHEROATR;
-      MainForm.OnPaint(NIL);
-    end;
-  end;
-end;
-
-{ Сделать рандомного }
-procedure TPc.HeroRandom;
-const
-  s1 = 'Создашь персонаж сам или доверишься воле случая?';
-begin
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 15*CharY, 'Создам сам');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 16*CharY, 'Рандомный герой');
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+    MainForm.Edit.Left := (((WindowX*CharX)-MainForm.Edit.Width-8) div 2);
+    MainForm.Edit.Top := 17*CharY;
+    MainForm.Edit.Visible := TRUE;
+    MainForm.Edit.SetFocus;
   end;
 end;
 
 { Окно выбора пола }
 procedure TPc.HeroGender;
 const
-  s1 = 'Какого пола будет твой персонаж?';
+  s1 = 'Какого пола будет твои персонаж?';
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
@@ -1601,17 +1479,17 @@ procedure TPc.HeroAtributes;
 var
   s1, s2 : string;
 begin
-  s1 := Format('Выбери атрибут, в котором %s больше всего преуспел{/a}:', [pc.name]); //'Выбери атрибут, в котором '+pc.name+' больше всего преуспел{/a}:';
-  s2 := Format('А теперь выбери атрибут, которому %s тоже уделял{/a} внимание:', [pc.name]); //'А теперь выбери атрибут, которому '+pc.name+' тоже уделял{/a} внимание:';
+  s1 := 'Выбери атрибут в котором '+pc.name+' больше всего преуспел'+pc.HeSheIt(1)+':';
+  s2 := 'А теперь выбери атрибут, которому '+pc.name+' тоже уделял'+pc.HeSheIt(1)+' внимание:';
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     case MenuSelected2 of
       1 :
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,gender));
+      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
       2 :
-      TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,gender));
+      TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, s2);
     end;
     Font.Color := cBROWN;
     TextOut(40*CharX, 15*CharY, '[ ]');
@@ -1630,35 +1508,26 @@ begin
   end;
 end;
 
-procedure TPc.CreateClWList;
-var
-  i,k    : byte;
-begin
-  // Создать список
-  for i:=1 to CLOSEFIGHTAMOUNT do wlist[i] := 0;
-  k := 0;
-  for i:=2 to CLOSEFIGHTAMOUNT do
-    if pc.closefight[i] > 0 then
-    begin
-      inc(k);
-      wlist[k] := i;
-    end;
-  wlistsize := k;
-end;
-
 { Окно выбора типа оружия ближнего боя }
 procedure TPc.HeroCloseWeapon;
 var
-  s1  : string;
-  i   : byte;
+  s1     : string;
+  i,k    : byte;
 begin
-  CreateClWList;
-  s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
+  // Создать список
+  k := 1;
+  for i:=2 to CLOSEFIGHTAMOUNT do
+    if pc.closefight[i] > 0 then
+    begin
+      wlist[k] := i;
+      inc(k);
+    end;
+  s1 := 'Выбери оружие ближнего боя, с которым '+pc.name+' тренировал'+pc.HeSheIt(2)+' больше всего:';
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
     for i:=1 to CLOSEFIGHTAMOUNT-1 do
       if wlist[i] > 0 then
         if pc.closefight[wlist[i]] > 0 then
@@ -1681,35 +1550,27 @@ begin
   end;
 end;
 
-procedure TPc.CreateFrWList;
+{ Окно выбора пола }
+procedure TPc.HeroFarWeapon;
 var
+  s1     : string;
   i,k    : byte;
 begin
   // Создать список
   for i:=1 to FARFIGHTAMOUNT do wlist[i] := 0;
-  k := 0;
+  k := 1;
   for i:=2 to FARFIGHTAMOUNT do
     if pc.farfight[i] > 0 then
     begin
-      inc(k);
       wlist[k] := i;
+      inc(k);
     end;
-  wlistsize := k;
-end;
-
-{ Окно выбора пола }
-procedure TPc.HeroFarWeapon;
-var
-  S1     : string;
-  I      : byte;
-begin
-  CreateFrWList;
-  S1 := Format('Какое оружие дальнего боя %s осваивал{/a} во время тренировок?', [PC.Name]);
+  s1 := 'Какое оружие дальнего боя '+pc.name+' осваивал'+pc.HeSheIt(1)+' во время тренеровок?';
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
     for i:=1 to FARFIGHTAMOUNT do
       if wlist[i] > 0 then
         if pc.farfight[wlist[i]] > 0 then
@@ -1736,32 +1597,14 @@ procedure Tpc.HeroCreateResult;
 const
   s1 = 'ENTER - продожить, ESC - создать заново';
 var
-  R, H, S : string;
+  s : string;
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  case Rand(1, 7) of
-    1: R := 'Итак, в этом мире ты %s по имени %s.';
-    2: R := 'Ты %s по имени %s.';
-    3: R := 'Все знают в этом мире, что ты %s по имени %s.';
-    4: R := 'В мире ты известен как %s по имени %s.';
-    5: R := 'Ты %s и тебя зовут %s.';
-    6: R := 'Ты %s. Тебя зовут %s.';
-    7: R := 'Известно, что ты %s по имени %s.';
-  end;
-  case Rand(1, 7) of
-    1: H := 'Продолжаем?';
-    2: H := 'Соглас{ен/на}?';
-    3: H := 'Идем дальше?';
-    4: H := 'Играем?';
-    5: H := 'Продолжим?';
-    6: H := 'Начнем игру?';
-    7: H := 'Начинаем?';
-  end;
-  S := Format(R + ' ' + H, [CLName, PC.Name]);
+  s := 'Итак, в этом мире ты '+CLName+' по имени '+pc.name+'. Соглас'+pc.HeSheIt(5)+'?';
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
-    TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, GetMsg(S,gender));
+    TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, s);
     Font.Color := cYELLOW;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
   end;

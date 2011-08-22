@@ -75,22 +75,6 @@ const
   FAR_PIPE                = 4;      // Трубка
   FAR_CROSS               = 5;      // Арбалет
 
-  { Типы брони }
-  ARMORTYPEAMOUNT         = 3;
-
-  ARMOR_CLOTHES           = 1;
-  ARMOR_LIGHT             = 2;
-  ARMOR_HEAVY             = 3;
-
-  { Магия }
-  MAGICSCHOOLAMOUNT       = 5;      // Кол-во разновидности магии
-
-  MAGICSCHOOLOFFIRE       = 1;      // Школа стихии огня
-  MAGICSCHOOLOFWATER      = 2;      // Школа стихии воды
-  MAGICSCHOOLOFEARTH      = 3;      // Школа стихии земли
-  MAGICSCHOOLOFAIR        = 4;      // Школа стихии воздуха
-  MAGICSCHOOLOFDEATH      = 5;      // Школа смерти
-
   CLOSEWPNNAME : array[1..CLOSEFIGHTAMOUNT] of string =
   (
     'Двуручное оружие', 'Клинки', 'Дубины', 'Жезлы и посохи',
@@ -99,10 +83,6 @@ const
   FARWPNNAME : array[1..FARFIGHTAMOUNT] of string =
   (
     'Кинуть/швырнуть', 'Луки', 'Пращи', 'Духовые трубки', 'Арбалеты'
-  );
-  ARMORTYPENAME : array[1..ARMORTYPEAMOUNT] of string =
-  (
-    'Одежда', 'Легкая броня', 'Тяжелая броня'
   );
 
 var
@@ -130,7 +110,7 @@ procedure ShowAbilitys;                        // Показать окно со способностями
 implementation
 
 uses
-  Player, Main, Conf;
+  Player, Main;
 
 { Показать меню 'Навыки и способности' }
 procedure SkillsAndAbilitys;
@@ -162,108 +142,57 @@ end;
 { Оружейные навыки }
 procedure WpnSkills;
 const
-  s1 = ' Ближний бой ';
-  s2 = ' Дальний бой ';
-  s3 = ' Магия ';
-  top = 6;
+  s1 = '-- Ближний бой --';
+  s2 = '-- Дальний бой --';
 var
-  i,c,f,m : byte;
-procedure DrawStyleLine(y:integer);
-var
-  i : byte;
-begin
-  with Screen.Canvas do
-  begin
-    For i:=1 to Round(WindowX/2) do
-    begin
-      Font.Color := Darker(cGRAY, 100-i);
-      TextOut((i-1)*CharX,y,'-');
-    end;
-    For i:=Round(WindowX/2) to WindowX do
-    begin
-      Font.Color := Darker(cGRAY, i);
-      TextOut((i-1)*CharX,y,'-');
-    end;
-  end;
-end;
+  i,c,f : byte;
 begin
   StartDecorating('<-ОРУЖЕЙНЫЕ НАВЫКИ->', FALSE);
-  c := 0; f := 0;
+  c := 0; f := 0; 
   for i:=1 to CLOSEFIGHTAMOUNT do
     if pc.closefight[i] > 0 then
       c := 1;
   for i:=1 to FARFIGHTAMOUNT do
     if pc.farfight[i] > 0 then
       f := 1;
-  for i:=1 to MAGICSCHOOLAMOUNT do
-    if pc.magicfight[i] > 0 then
-      m := 1;
-  // Вывести навыки
+  // Навыков нет
+  if (c = 0)and(f = 0) then
+  begin
+    Screen.Canvas.Font.Color := cLIGHTGRAY;
+    Screen.Canvas.TextOut(5*CharX, 5*CharY, 'У вас нет никаких оружейных навыков.');
+  end else
   with Screen.Canvas do
   begin
-    // Ближнеий бой
-    DrawStyleLine(top*CharY);
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, top*CharY, s1);
     if c > 0 then
     begin
+      Font.Color := cWHITE;
+      TextOut(((WindowX-length(s1)) div 2) * CharX, 10*CharY, s1);
       for i:=1 to CLOSEFIGHTAMOUNT do
         if pc.closefight[i] > 0 then
         begin
           Font.Color := cBROWN;
-          TextOut(15*CharX, (top+i)*CharY, CLOSEWPNNAME[i]+':');
+          TextOut(15*CharX, (11+i)*CharY, CLOSEWPNNAME[i]+':');
           Font.Color := ColorRateSkill(pc.CloseFight[i]);
           if ShowProc then
-            TextOut(33*CharX, (top+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])) +' = ' +FloatToStr(pc.CloseFight[i])+'%') else
-              TextOut(33*CharX, (top+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])));
+            TextOut(33*CharX, (11+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])) +' = ' +FloatToStr(pc.CloseFight[i])+'%') else
+              TextOut(33*CharX, (11+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])));
         end;
-    end else
-      begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, (top+1)*CharY, 'У тебя нет никаких навыков в этой области.');
-      end;
-    // Дальний бой
-    DrawStyleLine((top+10)*CharY);
-    Font.Color := cCYAN;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (top+10)*CharY, s2);
+    end;
     if f > 0 then
     begin
+      Font.Color := cWHITE;
+      TextOut(((WindowX-length(s2)) div 2) * CharX, 20*CharY, s2);
       for i:=1 to FARFIGHTAMOUNT do
         if pc.farfight[i] > 0 then
         begin
           Font.Color := cBROWN;
-          TextOut(15*CharX, ((top+10)+i)*CharY, FARWPNNAME[i]+':');
+          TextOut(15*CharX, (21+i)*CharY, FARWPNNAME[i]+':');
           Font.Color := ColorRateSkill(pc.FarFight[i]);
           if ShowProc then
-            TextOut(33*CharX, ((top+10)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%') else
-              TextOut(33*CharX, ((top+10)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i])));
+            TextOut(33*CharX, (21+i)*CharY, RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%') else
+              TextOut(33*CharX, (21+i)*CharY, RateToStr(RateSkill(pc.FarFight[i])));
         end;
-    end else
-      begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, ((top+10)+1)*CharY, 'У тебя нет никаких навыков в этой области.');
-      end;
-    // Магические навыки
-    DrawStyleLine((top+20)*CharY);
-    Font.Color := cPURPLE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (top+20)*CharY, s3);
-    if m > 0 then
-    begin
-      for i:=1 to MAGICSCHOOLAMOUNT do
-        if pc.farfight[i] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(15*CharX, ((top+20)+i)*CharY, FARWPNNAME[i]+':');
-          Font.Color := ColorRateSkill(pc.FarFight[i]);
-          if ShowProc then
-            TextOut(33*CharX, ((top+20)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%') else
-              TextOut(33*CharX, ((top+20)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i])));
-        end;
-    end else
-      begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, ((top+20)+1)*CharY, 'У тебя нет никаких навыков в этой области.');
-      end;
+    end;
   end;
 end;
 

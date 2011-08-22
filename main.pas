@@ -3,11 +3,11 @@ unit main;
 interface
 
 uses
-  Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math;
+  Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs;
 
 type
   TMainForm = class(TForm)
-    GameTimer: TTimer;
+    Edit: TEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -16,13 +16,11 @@ type
     procedure EndGame;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormResize(Sender: TObject);
+    procedure EditKeyPress(Sender: TObject; var Key: Char);
     procedure InitGame;
-    procedure GameTimerTimer(Sender: TObject);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
-    procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
-    function GetCharFromVirtualKey(Key: Word): string;
   public
   end;
 
@@ -31,9 +29,7 @@ var
   Screen               : TBitMap;              // Картинка для двойной-буфферизации
   WaitMore             : boolean;              // --Далее--
   WaitEnter            : boolean;              // Ждем нажатия Enter
-  Inputing             : boolean;              // Режим ввода
   GameState            : byte;                 // Состояние игры
-  GameVersion          : string;               // Версия игры
   Answer               : string[1];            // Ожидается ответ
   AskForQuit           : boolean;              // Подтверждение выхода
   MenuSelected,
@@ -48,33 +44,29 @@ implementation
 {$R *.dfm}
 
 uses
-  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor,
-  conf, sutils, script;
+  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  // Загрузка карт
+  if not MainEdForm.LoadSpecialMaps then
+  begin
+    ShowMessage('Ошибка загрузки файла maps.dp!');
+    Halt;
+  end;
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
-  with Screen do
-  begin
-    Width := ClientWidth;
-    Height := ClientHeight;
-  end;
-  // Если режим приключений то нужно загрузить карты
-  if PlayMode = AdventureMode then
-    if not MainEdForm.LoadSpecialMaps then
-    begin
-      ShowMessage('Ошибка загрузки файла maps.dp!');
-      Halt;
-    end;
-  GameTimer.Enabled := False;  
+  // Создаем картинку
+  Screen := TBitMap.Create;
+  Screen.Width := ClientWidth;
+  Screen.Height := ClientHeight;
+  Screen.Canvas.Font.Name := FontName;
   GameState := gsINTRO;
   pc.id := 1;
   pc.idinlist := 1;
   MenuSelected := 1;
-  Run('test.pas');
 end;
 
 { Отрисовка }
@@ -101,7 +93,6 @@ begin
     gsUSEMENU      : begin if WasEq then pc.Equipment else pc.Inventory; pc.UseMenu; end;
     gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
-    gsHERORANDOM   : pc.HeroRandom;
     gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
     gsHEROCLWPN    : pc.HeroCloseWeapon;
@@ -112,23 +103,15 @@ begin
     gsSKILLSMENU   : SkillsAndAbilitys;
     gsWPNSKILLS    : WpnSkills;
   end;
-  // Ввод
-  if Inputing then
-  begin
-    GameTimer.Interval := 200;
-    GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
-    ShowInput;                  // Показываем поле для ввода имени персонажа
-  end;
-  Canvas.StretchDraw(ClientRect, Screen); // Отображаем буфер
+  // Отобразить
+  Canvas.StretchDraw(ClientRect, Screen);
 end;
 
 { Нажатие на клавиши }
 procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
-  i : integer;
-  n : string;
-  Item : TItem;
+  i : byte;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
   if Key <> 16 then
@@ -143,45 +126,7 @@ begin
       // Enter для продолжения
       if WaitENTER then
       begin
-        if Key = 13 then
-        begin
-          WaitENTER := False;          // Ввод имени закончен. Мигание курсора 
-          GameTimer.Enabled := False;  // больше не нужно, отключаем таймер
-        end else
-        // Ввод
-        if Inputing then
-        begin
-          if (Key = VK_BACK) and (InputPos > 0) then
-          begin
-            Delete(InputString,InputPos,1);
-            dec(InputPos);
-          end
-          else if (Key = VK_DELETE) and (InputPos < Length(InputString)) then
-          begin
-            Delete(InputString,InputPos+1,1);
-          end
-          else if Key = VK_HOME then
-            InputPos := 0
-          else if Key = VK_END then
-            InputPos := length(InputString)
-          else if (Key = VK_LEFT) and (InputPos > 0) then
-            dec(InputPos)
-          else if (Key = VK_RIGHT) and (InputPos < Length(InputString)) then
-            inc(InputPos)
-          else if length(InputString)<13 then
-          begin
-            n := GetCharFromVirtualKey(Key);
-            if n<>'' then
-            begin
-              if ord(n[1]) > 31 then
-              begin
-                Insert(n, InputString, InputPos+1);
-                Inc(InputPos);
-              end;
-            end;
-          end;
-          OnPaint(Sender);
-        end;
+        if Key = 13 then WaitENTER := False;
       end else
         // Вопрос
         if Answer = ' ' then
@@ -197,54 +142,7 @@ begin
           gsINTRO:
           begin
             case Key of
-              13, 32 : GameState := gsHERORANDOM;
-              67     : if PlayMode = 0 then PlayMode := 1 else PlayMode := 0;
-            end;
-          end;
-          // Рандомный герой?
-          gsHERORANDOM:
-          begin
-            case Key of
-              // Вверх/Вниз
-              38,104,56,40,98,50 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
-                OnPaint(SENDER);
-              end;
-              // Ok...
-              13 :
-              begin
-                if MenuSelected = 1 then
-                  GameState := gsHEROGENDER else
-                    // Всё рандомно
-                    begin
-                      // имя
-                      pc.gender := Rand(1, 2);
-                      // пол
-                      case pc.gender of
-                        genMALE   : pc.name := GenerateName(FALSE);
-                        genFEMALE : pc.name := GenerateName(TRUE);
-                      end;
-                      // атрибуты
-                      pc.atr[1] := Rand(1, 3);
-                      pc.atr[2] := Rand(1, 3);
-                      // Добавить очки умений исходя из класса
-                      pc.Prepare;
-                      pc.PrepareSkills;
-                      if (HowManyBestWPNCL > 1) and not ((HowManyBestWPNCL < 3) and (OneOfTheBestWPNCL(CLOSE_TWO))) then
-                      begin
-                        pc.CreateClWList;
-                        c_choose := Wlist[Random(wlistsize)+1];
-                      end;
-                      if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW))) then
-                      begin
-                        pc.CreateFrWList;
-                        f_choose := Wlist[Random(wlistsize)+1];
-                      end;
-                      GameState := gsHEROCRRESULT;
-                    end;
-                OnPaint(Sender);
-              end;
+              13, 32 : GameState := gsHEROGENDER;
             end;
           end;
           // Выбор пола
@@ -266,10 +164,10 @@ begin
               // Ok...
               13 :
               begin
-                if MenuSelected < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
+                if MenuSelected < 3 then pc.gender := MenuSelected else pc.gender := Random(2)+1;
                 MenuSelected := 1;
                 MenuSelected2 := 1;
-                pc.startheroname;
+                GameState := gsHERONAME;
                 OnPaint(Sender);
               end;
             end;
@@ -281,13 +179,25 @@ begin
               // Вверх
               38,104,56 :
               begin
-                if MenuSelected > 1 then dec(MenuSelected) else MenuSelected := wlistsize;
+                if MenuSelected > 1 then dec(MenuSelected) else
+                  for i:= 5 downto 1 do
+                    if WList[i] > 0 then
+                      begin
+                        MenuSelected := i;
+                        break;
+                      end;
                 OnPaint(SENDER);
               end;
               // Вниз
               40,98,50 :
               begin
-                if MenuSelected < wlistsize then inc(MenuSelected) else MenuSelected := 1;
+                if MenuSelected < 5 then
+                begin
+                  if WList[MenuSelected+1] > 0 then
+                    inc(MenuSelected) else
+                      MenuSelected := 1;
+                end else
+                  MenuSelected := 1;
                 OnPaint(SENDER);
               end;
               // Ok...
@@ -395,7 +305,7 @@ begin
               27     :
               begin
                 MenuSelected := 1;
-                GameState := gsHERORANDOM;
+                GameState := gsHEROGENDER;
               end;
             end;
           end;
@@ -416,15 +326,15 @@ begin
             end else
             case Key of
               { Передвижение }
-              35,97,49     : if ssShift in Shift then pc.Run(-1,1) else pc.Move(-1,1);
-              40,98,50     : if ssShift in Shift then pc.Run(0,1) else pc.Move(0,1);
-              34,99,51     : if ssShift in Shift then pc.Run(1,1) else pc.Move(1,1);
-              37,100,52    : if ssShift in Shift then pc.Run(-1,0) else pc.Move(-1,0);
+              35,97,49     : pc.Move(-1,1);
+              40,98,50     : pc.Move(0,1);
+              34,99,51     : pc.Move(1,1);
+              37,100,52    : pc.Move(-1,0);
               12,101,53,32 : pc.Move(0,0);
-              39,102,54    : if ssShift in Shift then pc.Run(1,0) else pc.Move(1,0);
-              36,103,55    : if ssShift in Shift then pc.Run(-1,-1) else pc.Move(-1,-1);
-              38,104,56    : if ssShift in Shift then pc.Run(0,-1) else pc.Move(0,-1);
-              33,105,57    : if ssShift in Shift then pc.Run(1,-1) else pc.Move(1,-1);
+              39,102,54    : pc.Move(1,0);
+              36,103,55    : pc.Move(-1,-1);
+              38,104,56    : pc.Move(0,-1);
+              33,105,57    : pc.Move(1,-1);
               13           : pc.UseStairs;
               { Комманды }
               // Выйти 'Esc'
@@ -455,7 +365,7 @@ begin
                   VidFilter := 14;
                   GameState := gsINVENTORY;
                 end else
-                  AddMsg('У тебя нет ничего съестного!',0);
+                  AddMsg('У тебя нет ничего съестного!');
               end;
               // Выпить 'd'
               68        :
@@ -466,7 +376,7 @@ begin
                   VidFilter := 19;
                   GameState := gsINVENTORY;
                 end else
-                  AddMsg('В инвентаре нет ничего, что можно выпить!',0);
+                  AddMsg('В инвентаре нет ничего что можно выпить!');
               end;
               // Экипировка 'e'
               69        :
@@ -483,7 +393,7 @@ begin
                   VidFilter := 0;
                   GameState := gsINVENTORY;
                 end else
-                  AddMsg('Твой инвентарь пуст!',0);
+                  AddMsg('Твой инвентарь пуст!');
               end;
               // Помощь '?'
               112       :
@@ -494,52 +404,20 @@ begin
               65        : pc.SearchForAlive(1);
               // Поднять 'g'
               71        :
-              begin
-                i := 1;
-                if M.Item[pc.x,pc.y].amount > 1 then
+              case pc.PickUp(M.Item[pc.x,pc.y], FALSE) of
+                0 :
                 begin
-                  // Если золото, то взять все без вопросов
-                  if ItemsData[M.Item[pc.x,pc.y].id].vid = 15 then
-                    i := M.Item[pc.x,pc.y].amount else
-                      begin
-                        AddMsg(ItemName(M.Item[pc.x,pc.y], 0, TRUE)+'. Сколько хочешь взять?',0);
-                        n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(M.Item[pc.x,pc.y].amount));
-                        if TryStrToInt(n,i) then
-                        begin
-                          if (i > M.Item[pc.x,pc.y].amount) then
-                          begin
-                            AddMsg('Введено слишком большое значение.',0);
-                            i := 0;
-                          end;
-                        end else
-                          begin
-                            AddMsg('Нужно ввести число.',0);
-                            i := 0;
-                          end;
-                      end;
+                  AddMsg('Ты поднимаешь '+ItemName(M.Item[pc.x,pc.y], 1, TRUE)+'.');
+                  M.Item[pc.x,pc.y].id := 0;
                 end;
-                if i > 0 then
-                begin
-                  case pc.PickUp(M.Item[pc.x,pc.y], FALSE,i) of
-                    0 :
-                    begin
-                      Item := M.Item[pc.x,pc.y];
-                      Item.amount := i;
-                      AddMsg('Ты поднимаешь '+ItemName(Item,0,TRUE)+'.',0);
-                      if M.Item[pc.x,pc.y].amount > i then
-                        dec(M.Item[pc.x,pc.y].amount,i) else
-                          M.Item[pc.x,pc.y].id := 0;
-                    end;
-                    1 : AddMsg('Здесь ничего не лежит!',0);
-                    2 : AddMsg('Твой инвентарь полностью забит! Как такое могло случиться?! Пора бы подумать о том, чтобы выкинуть или продать некоторые вещи...',0);
-                    3 : AddMsg('Ты не можешь нести больше... Слишком тяжело!',0);
-                  end;
-                end;
+                1 : AddMsg('Здесь ничего не лежит!');
+                2 : AddMsg('Твой инвентарь полностю забит! Как такое могло случиться?! Пора бы подумать о том, чтобы выкинуть или продать некоторые вещи...');
+                3 : AddMsg('Ты не можешь нести больше... Слишком тяжело!');
               end;
               // Открыть 'o'
               79        :
               begin
-                AddMsg('Что ты хочешь открыть?',0);
+                AddMsg('Что ты хочешь открыть?');
                 GameState := gsOPEN;
               end;
               // Войти в меню Навыки и Способности 'x'
@@ -551,76 +429,61 @@ begin
               // История сообщений 'm'
               77        :
                 GameState := gsHISTORY;
-              // Крикнуть 'y'
-              89        :
-              begin
-                AddMsg('Что ты хочешь крикнуть?',0);
-                Input(LastMsgL+1, MapY+(LastMsgY-1), '');
-              end;
               // Стрелять 's'
               83       :
               begin
                 if (pc.eq[13].id > 0) then
                 begin
-                  if (pc.eq[7].id = 0) or (ItemsData[pc.eq[7].id].kind = ItemsData[pc.eq[13].id].kind) then
+                  AddMsg('{Целиться в:}');
+                  i := pc.SearchForAliveField;
+                  if autoaim > 0 then
+                    if (M.Saw[M.MonL[autoaim].x, M.MonL[autoaim].y] = 2) and (M.MonL[autoaim].id > 0) then
+                      i := autoaim;
+                  if i > 0 then
                   begin
-                    AddMsg('{Целиться в:}',0);
-                    i := pc.SearchForAliveField;
-                    if autoaim > 0 then
-                      if (M.Saw[M.MonL[autoaim].x, M.MonL[autoaim].y] = 2) and (M.MonL[autoaim].id > 0) then
-                        i := autoaim;
-                    if i > 0 then
-                    begin
-                      lx := M.MonL[i].x;
-                      ly := M.MonL[i].y;
-                      pc.AnalysePlace(lx,ly,1);
-                      GameState := gsAIM;
-                    end else
-                      begin
-                        lx := pc.x;
-                        ly := pc.y;
-                        pc.AnalysePlace(lx,ly,1);
-                        GameState := gsAIM;
-                      end;
+                    lx := M.MonL[i].x;
+                    ly := M.MonL[i].y;
+                    pc.AnalysePlace(lx,ly,1);
+                    GameState := gsAIM;
                   end else
-                    AddMsg(ItemsData[pc.eq[13].id].name2+' и '+ItemsData[pc.eq[7].id].name1+' - не совместимы!',0);
+                    AddMsg('В пределах видимости нет живых существ!');
                 end else
-                  AddMsg('Слот амуниции в экипировке пуст!',0);
+                  AddMsg('Слот аммуниции в экипировке пуст!');
               end;
               // Поменять тактику 'tab'
               VK_TAB    :
               begin
                 case pc.tactic of
-                   0 : AddMsg('Текущая тактика - {Стандартная}.',0);
-                   1 : AddMsg('Текущая тактика - <Агрессивное нападение>.',0);
-                   2 : AddMsg('Текущая тактика - [Защита].',0);
+                   0 : AddMsg('Текущая тактика - {Стандартная}.');
+                   1 : AddMsg('Текущая тактика - <Агрессивное нападение>.');
+                   2 : AddMsg('Текущая тактика - [Защита].');
                 end;
                 case Ask('Выбрать тактику: ([A]) - Агрессивное нападение, ([S]) - Стандартная, ([D]) - Защищаться.') of
                   'A' :
                   begin
                     ClearMsg;
                     pc.tactic := 1;
-                    AddMsg('Выбрано агрессивное нападение.',0);
-                    AddMsg('Распределение шансов:',0);
-                    AddMsg('[+50% к успешному попадению и урону], <-50% к уклонению и эффективности брони>.',0);
+                    AddMsg('Выбрано агрессивное нападение.');
+                    AddMsg('Распределение шансов:');
+                    AddMsg('[+50% к успешному попадению и урону], <-50% к уклонению и эффективности брони>.');
                   end;
                   'S' :
                   begin
                     ClearMsg;
                     pc.tactic := 0;
-                    AddMsg('Выбрана стандартная тактика.',0);
-                    AddMsg('Никаких плюсов и минусов во время боя.',0);
+                    AddMsg('Выбрана стандартная тактика.');
+                    AddMsg('Никаких плюсов и минусов во время боя.');
                   end;
                   'D' :
                   begin
                     ClearMsg;
                     pc.tactic := 2;
-                    AddMsg('Выбрана защитная тактика.',0);
-                    AddMsg('Распределение шансов:',0);
-                    AddMsg('<-50% к успешному попадению и урону>, [+50% к уклонению и эффективности брони].',0);
+                    AddMsg('Выбрана защитная тактика.');
+                    AddMsg('Распределение шансов:');
+                    AddMsg('<-50% к успешному попадению и урону>, [+50% к уклонению и эффективности брони].');
                   end;
                   ELSE
-                    AddMsg('Ты решил{/a} не менять тактику.',0);
+                    AddMsg('Ты решил'+pc.HeSheIt(1)+' не менять тактику.');
                 end;
               end;
             end;
@@ -638,7 +501,7 @@ begin
               38,104,56 : pc.CloseDoor(0,-1);
               33,105,57 : pc.CloseDoor(1,-1);
               else
-                AddDrawMsg('Указано неправильное направление!',0);
+                AddDrawMsg('Указано неправильное направление!');
             end;
             pc.turn := 1;
             GameState := gsPLAY;
@@ -656,7 +519,7 @@ begin
               38,104,56 : pc.Open(0,-1);
               33,105,57 : pc.Open(1,-1);
               else
-                AddDrawMsg('Указано неправильное направление!',0);
+                AddDrawMsg('Указано неправильное направление!');
             end;
             pc.turn := 1;
             GameState := gsPLAY;
@@ -722,7 +585,7 @@ begin
                                       pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Inv[MenuSelected]);
               end;
               else
-                AddDrawMsg('Указано неправильное направление!',0);
+                AddDrawMsg('Указано неправильное направление!');
             end;
             pc.turn := 1;
             GameState := gsPLAY;
@@ -740,7 +603,6 @@ begin
               36,103,55 : pc.MoveLook(-1,-1);
               38,104,56 : pc.MoveLook(0,-1);
               33,105,57 : pc.MoveLook(1,-1);
-              13        : AnimFly(pc.x,pc.y,lx,ly,'`',crBrown);
               else
                 GameState := gsPlay;
               M.DrawScene;
@@ -759,15 +621,21 @@ begin
               36,103,55 : pc.MoveAim(-1,-1);
               38,104,56 : pc.MoveAim(0,-1);
               33,105,57 : pc.MoveAim(1,-1);
-              13,83     :
-                if (lx = pc.x) and (ly = pc.y) then
-                  AddMsg('Проще нажми ESC, если уж так хочешь умереть!',0) else
+              13        :
+                if M.MonP[lx,ly] > 0 then
+                begin
+                  autoaim := M.MonP[lx,ly];
+                  pc.Fire(M.MonL[M.MonP[lx,ly]]);
+                  dec(pc.Eq[13].amount);
+                  if pc.eq[13].amount = 0 then
                   begin
-                    GameState := gsPLAY;
-                    AnimFly(pc.x,pc.y,lx,ly, ItemTypeData[ItemsData[pc.Eq[13].id].vid].symbol, ItemsData[pc.Eq[13].id].color);
-                    pc.turn := 1;
+                    AddMsg('<У тебя закончились '+ItemsData[pc.eq[13].id].name2+'!>');
+                    pc.eq[13].id := 0;
                   end;
-              ELSE
+                  pc.turn := 1;
+                  GameState := gsPLAY;
+                end;
+              else
                 GameState := gsPlay;
               M.DrawScene;
             end;
@@ -929,16 +797,16 @@ begin
                     //В экипировке
                     if WasEq then
                     begin
-                      case pc.PickUp(pc.eq[MenuSelected], TRUE,pc.eq[MenuSelected].amount) of
+                      case pc.PickUp(pc.eq[MenuSelected], TRUE) of
                         0 :
                         begin
                           ItemOnOff(pc.eq[MenuSelected], FALSE);
-                          AddMsg('Ты положил{/a} '+ItemName(pc.eq[MenuSelected], 1, TRUE)+' обратно в инвентарь.',0);
+                          AddMsg('Ты положил'+pc.HeSheIt(1)+' '+ItemName(pc.eq[MenuSelected], 1, TRUE)+' обратно в инвентарь.');
                           pc.eq[MenuSelected].id := 0;
                         end;
-                        1 : AddMsg('<Ты положил{/a} пустоту обратно в свой инвентарь :)>',0);
-                        2 : AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.',0);
-                        3 : AddMsg('<Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.>',0);
+                        1 : AddMsg('<Ты положил'+pc.HeSheIt(1)+' пустоту обратно в свой инвентарь :)>');
+                        2 : AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.');
+                        3 : AddMsg('<Этого быть не должно - даже если у тебя перегрузка, ты можешь положить, то что ты уже несешь в инвентарь.>');
                       end;
                     end else
                       UseItem(MenuSelected);
@@ -964,68 +832,22 @@ begin
                     GameState := gsPLAY;
                     if WasEq then
                     begin
-                      i := 1;
-                      if pc.Eq[MenuSelected].amount > 1 then
+                      if PutItem(pc.x,pc.y, pc.Eq[MenuSelected]) then
                       begin
-                        AddMsg(ItemName(pc.Eq[MenuSelected], 0, TRUE)+'. Сколько хочешь выкинуть?',0);
-                        n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(pc.Eq[MenuSelected].amount));
-                        if TryStrToInt(n,i) then
-                        begin
-                          if (i > pc.Eq[MenuSelected].amount) then
-                          begin
-                            AddMsg('Введено слишком большое значение.',0);
-                            i := 0;
-                          end;
-                        end else
-                          begin
-                            AddMsg('Нужно ввести число.',0);
-                            i := 0;
-                          end;
-                      end;
-                      if i > 0 then
-                      begin
-                        if PutItem(pc.x,pc.y, pc.Eq[MenuSelected], i) then
-                        begin
-                          Item := pc.Eq[MenuSelected];
-                          Item.amount := i;
-                          AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-                          pc.DeleteInvItem(pc.Eq[MenuSelected], i);
-                          pc.turn := 1;
-                        end else
-                          AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
-                      end;
+                        AddMsg('Ты выкинул'+pc.HeSheIt(1)+' '+ItemName(pc.Eq[MenuSelected], 1, TRUE)+'.');
+                        pc.DeleteInvItem(pc.Eq[MenuSelected], TRUE);
+                        pc.turn := 1;
+                      end else
+                        AddMsg('Здесь нет места для того, что бы выкинуть что-либо!');
                     end else
                       begin
-                        i := 1;
-                        if pc.Inv[MenuSelected].amount > 1 then
+                        if PutItem(pc.x,pc.y, pc.Inv[MenuSelected]) then
                         begin
-                          AddMsg(ItemName(pc.Inv[MenuSelected], 0, TRUE)+'. Сколько хочешь выкинуть?',0);
-                          n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(pc.Inv[MenuSelected].amount));
-                          if TryStrToInt(n,i) then
-                          begin
-                            if (i > pc.Inv[MenuSelected].amount) then
-                            begin
-                              AddMsg('Введено слишком большое значение.',0);
-                              i := 0;
-                            end;
-                          end else
-                            begin
-                              AddMsg('Нужно ввести число.',0);
-                              i := 0;
-                            end;
-                        end;
-                        if i > 0 then
-                        begin
-                          if PutItem(pc.x,pc.y, pc.Inv[MenuSelected], i) then
-                          begin
-                            Item := pc.Inv[MenuSelected];
-                            Item.amount := i;
-                            AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-                            pc.DeleteInvItem(pc.Inv[MenuSelected], i);
-                            pc.turn := 1;
-                          end else
-                            AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
-                        end;
+                          AddMsg('Ты выкинул'+pc.HeSheIt(1)+' '+ItemName(pc.Inv[MenuSelected], 1, TRUE)+'.');
+                          pc.DeleteInvItem(pc.Inv[MenuSelected], TRUE);
+                          pc.turn := 1;
+                        end else
+                          AddMsg('Здесь нет места для того, что бы выкинуть что-либо!');
                       end;
                   end;
                 end;
@@ -1100,7 +922,7 @@ begin
         CanClose := TRUE;
         EndGame;
       end else
-        AddMsg('Ты решил{/a} пожить еще чуть-чуть.',0);
+        AddMsg('Ты решил'+pc.HeSheIt(1)+' пожить еще чуть-чуть.');
     end else
       begin
         if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
@@ -1118,6 +940,26 @@ begin
     OnPaint(Sender);
 end;
 
+{ Нажатие в Edit'e}
+procedure TMainForm.EditKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    if Edit.Text = '' then
+    begin
+      case pc.gender of
+        genMALE   : pc.name := GenerateName(FALSE);
+        genFEMALE : pc.name := GenerateName(TRUE);
+      end;
+    end else
+      pc.name := Edit.Text;
+    Edit.Visible := False;
+    GameState := gsHEROATR;
+    OnPaint(Sender);
+    Key := #0;
+  end;
+end;
+
 { Это нужно что бы TAB обработать }
 procedure TMainForm.CMDialogKey(var msg: TCMDialogKey);
 begin
@@ -1129,133 +971,15 @@ procedure TMainForm.InitGame;
 begin
   GameState := gsPLAY;
   AskForQuit := TRUE;
-  // Режим приключения
-  if PlayMode = AdventureMode then
-  begin
-    pc.level := 1;   // Эвилиар
-    M.MakeSpMap(pc.level);
-    pc.PlaceHere(6,18);
-    Addmsg('{Очень теплый и ясный день.}',0);
-    Addmsg('После нескольких недель странствия, ты, наконец, прибыл{/a} в деревушку Эвилиар.',0);
-    Addmsg('Ходят слухи, что здесь творятся странные вещи. Ты хочешь разобраться в этом.',0);
-    AddMsg('',0);
-  end else
-    if PlayMode = DungeonMode then
-    begin
-      pc.level := 7; // Вход в подземелье
-      M.MakeSpMap(pc.level);
-      pc.PlaceHere(42,16);
-      Addmsg('Поиски увенчались успехом - ты стоишь перед входом в пещеру, которая, согласно легендам,',0);
-      Addmsg('хранит в себе множество сокровищ и артефактов. Но приготовься и к опасностям - говорят, в ней',0);
-      Addmsg('обитают злые силы...',0);
-    end;
+  M.MakeSpMap(1);
+  pc.PlaceHere(6,18);
   pc.FOV;
-  Addmsg(' ',0);
-  Addmsg('Нажми ([F1]), если нужна помощь.',0);
+  Addmsg('{Очень теплый и ясный день.}');
+  Addmsg('После нескольких недель странствия, ты, наконец, прибыл'+pc.HeSheIt(1)+' в деревушку Эвилиар.');
+  Addmsg('Ходят слухи, что здесь творятся странные вещи. Ты хочешь разобраться в этом.');
+  Addmsg(' ');
+  Addmsg('Нажми ([F1]), если нужна помощь.');
   OnPaint(NIL);
 end;
-
-{ Анимация летящего объекта }
-procedure TMainForm.AnimFly(x1,y1,x2,y2:integer; symbol:string; color:byte);
-var
-  dx,dy,i,sx,sy,check,e,oldx,oldy:integer;
-begin
-  dx:=abs(x1-x2);
-  dy:=abs(y1-y2);
-  sx:=Sign(x2-x1);
-  sy:=Sign(y2-y1);
-  FlyX:=x1;
-  FlyY:=y1;
-  FlyS:=symbol;
-  FlyC:=color;
-  check:=0;
-  if dy>dx then begin
-      dx:=dx+dy;
-      dy:=dx-dy;
-      dx:=dx-dy;
-      check:=1;
-  end;
-  e:= 2*dy - dx;
-  for i:=0 to dx-1 do
-  begin
-    oldx := FlyX;
-    oldy := FlyY;
-    if e>=0 then
-    begin
-      if check=1 then FlyX:=FlyX+sx else FlyY:=FlyY+sy;
-      e:=e-2*dx;
-    end;
-    if check=1 then FlyY:=FlyY+sy else FlyX:=FlyX+sx;
-    e:=e+2*dy;
-    OnPaint(NIL);
-    sleep(FlySpeed);
-    // А теперь проверить с чем столкнулось
-    if not TilesData[M.Tile[FlyX,FlyY]].void then
-    begin
-      // Надо придумать какое сообщение здесь вывести
-      break;
-    end else
-      // Стоит монстр
-      if M.MonP[FlyX,FlyY] > 0 then
-      begin
-        autoaim := M.MonP[FlyY,FlyY];
-        pc.Fire(M.MonL[M.MonP[FlyX,FlyY]]);
-          break;
-      end;
-  end;
-  pc.DecArrows;
-  FlyX := 0;
-  FlyY := 0;
-end;
-
-{ Word 2 Char }
-function TMainForm.GetCharFromVirtualKey(Key: Word): string;
-var
-  keyboardState: TKeyboardState;
-  asciiResult: Integer;
-begin
-  GetKeyboardState(keyboardState) ;
-  SetLength(Result, 2) ;
-  asciiResult := ToAscii(key, MapVirtualKey(key, 0), keyboardState, @Result[1], 0) ;
-  case asciiResult of
-    0: Result := '';
-    1: SetLength(Result, 1) ;
-    2:;
-  else
-    Result := '';
-end;
-
-end;
-
-procedure TMainForm.GameTimerTimer(Sender: TObject);
-begin
-  MainForm.Paint;
-end;
-
-initialization
-  Randomize;
-  // Создаем картинку (буфер)
-  Screen := TBitMap.Create;
-  // Разумные границы
-  if (FontSize < 8 ) then FontSize := 8;
-  if (FontSize > 20) then FontSize := 20;
-  // Свойства шрифта
-  with Screen.Canvas do
-  begin
-    Font.Name := FontMsg;
-    Font.Size := FontSize;
-    case FontStyle of
-      1:   Font.Style := [fsBold];
-      2:   Font.Style := [fsItalic];
-      3:   Font.Style := [fsBold, fsItalic];
-      else Font.Style := [];
-    end;
-    CharX := TextWidth('W');
-    CharY := TextHeight('W');
-  end;
-
-finalization
-  // Освобождаем картинку (буфер)
-  Screen.Free;
 
 end.

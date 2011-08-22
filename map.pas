@@ -3,7 +3,7 @@ unit map;
 interface
 
 uses
-  SysUtils, Cons, Main, Player, Tile, Monsters, Utils, Items, Flags, Windows, Graphics, Math;
+  SysUtils, Cons, Main, Player, Tile, Monsters, Utils, Items, Flags, Windows;
 
 type
   { Структура карты }
@@ -13,9 +13,7 @@ type
     Tile : array [1..MapX,1..MapY] of byte;     // Тайлы
     Blood: array [1..MapX,1..MapY] of byte;     // Кровь
     Saw  : array [1..MapX,1..MapY] of byte;     // Была ли видима клетка
-    MemS  : array [1..MapX,1..MapY] of string[1];// Зрительная память (символ)
-    MemC  : array [1..MapX,1..MapY] of byte;    // Зрительная память (цвет)
-    MemBC : array [1..MapX,1..MapY] of byte;    // Зрительная память (фон)
+    Mem  : array [1..MapX,1..MapY] of string[1];// Зрительная память
     MonL : array [1..255] of TMonster;          // Список монстров на уровне
     MonP : array [1..MapX,1..MapY] of byte;     // Указатели на монстра
     Item : array [1..MapX,1..MapY] of TItem;    // Предметы
@@ -32,14 +30,11 @@ type
 
 var
   M         : TMap;
-  FlyX,FlyY : byte;
-  FlyS      : string[1];
-  FlyC      : byte;
 
 implementation
 
 uses
-  MapEditor, conf;
+  MapEditor;
 
 { Очистить карту }
 procedure TMap.Clear;
@@ -54,12 +49,9 @@ var
   color,
   back       : longword;
   char       : string[1];
-  dx,dy,i,sx,sy,check,e:integer;
-  onway      : boolean;
 begin
   with Screen.Canvas do
   begin
-    Font.Name := FontMap;
     for x:=1 to MapX do
       for y:=1 to MapY do
         begin
@@ -69,17 +61,19 @@ begin
           begin
             // Тайл
             case M.Blood[x,y] of
-              0 : color := RealColor(TilesData[M.Tile[x,y]].color);
+              0 :
+              if TilesData[M.Tile[x,y]].color = cRANDOM then
+                color := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100) else
+                  color := TilesData[M.Tile[x,y]].color;
               1 : color := cLIGHTRED;
               2 : color := cRED;
             end;
             char := TilesData[M.Tile[x,y]].char;
-            back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
             // Предметы
             if M.Item[x,y].id > 0 then
             begin
-              color := RealColor(ItemsData[M.Item[x,y].id].color);
-              char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
+              color := ItemsData[M.Item[x,y].id].color;
+              char := ItemSymbol(M.Item[x,y].id);
             end;
             // Монстры
             if M.MonP[x,y] > 0 then
@@ -88,12 +82,14 @@ begin
               begin
                 color := ClassColor;
                 char := '@';
-                if pc.tactic > 0 then back := pc.ColorOfTactic;
+                back := pc.ColorOfTactic;
                 if pc.felldown then color:= cGRAY;
               end else
                 begin
-                  color := RealColor(MonstersData[M.MonL[M.MonP[x,y]].id].color);
-                  if (M.MonL[M.MonP[x,y]].relation = 1) and (M.MonL[M.MonP[x,y]].tactic > 0) then
+                  color := MonstersData[M.MonL[M.MonP[x,y]].id].color;
+                  if color = cRANDOM then
+                    color := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100);
+                  if M.MonL[M.MonP[x,y]].relation = 1 then
                     back := M.MonL[M.MonP[x,y]].ColorOfTactic;
                   if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
                   char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
@@ -105,18 +101,12 @@ begin
             // Курсор прицела
             if (GameState = gsAim) and (x=lx) and (y=ly) then
               Back := MyRGB(140, 0, 0);
-            // Летающий объект
-            if (FlyX = X) and (FlyY = Y) then
-            begin
-              char := FlyS;
-              color := RealColor(FlyC);
-            end;
-            // Если место было увидено, то вывести темнее
+            // Если место было увидено, то вывести серым
             if M.Saw[x,y] = 1 then
             begin
-              char := M.MemS[x,y];
-              color := Darker(RealColor(M.MemC[x,y]), 60);
-              back := Darker(RealColor(M.MemBC[x,y]), 95);
+              char := M.Mem[x,y];
+              color := MyRGB(70,70,70);
+              back := 0;
             end;
           end else
             begin
@@ -149,47 +139,8 @@ begin
                     LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
                 end else
                   if M.MonL[M.MonP[x,y]].Hp > 0 then
-                    LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2)) / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
-              end;
-        end;
-    Font.Name := FontMsg;
-    // Если режим прицеливания
-    if (GameState = gsAIM) and NOT ((pc.x=lx)and(pc.y=ly)) then
-    begin
-      dx:=abs(pc.x-lx);
-      dy:=abs(pc.y-ly);
-      sx:=Sign(lx-pc.x);
-      sy:=Sign(ly-pc.y);
-      x := pc.x;
-      y := pc.y;
-      check:=0;
-      onway := FALSE;
-      if dy>dx then
-      begin
-        dx:=dx+dy;
-        dy:=dx-dy;
-        dx:=dx-dy;
-        check:=1;
-      end;
-      e:= 2*dy - dx;
-      for i:=0 to dx-2 do
-      begin
-        if e>=0 then
-        begin
-          if check=1 then x:=x+sx else y:=y+sy;
-          e:=e-2*dx;
-        end;
-        if check=1 then y:=y+sy else x:=x+sx;
-        e:=e+2*dy;
-        if onway then
-          Font.Color := cRED else
-            Font.Color := cYELLOW;
-        Brush.Style := bsClear;
-        TextOut((x-1)*CharX, (y-1)*CharY, '*');
-        // А теперь проверить на столкновение и если оно есть выводить уже красным цветом
-        if (not TilesData[M.Tile[x,y]].void) or (M.MonP[x,y] > 0) then inc(onway);
-      end;
-    end;
+                    LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2)) / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);              end;
+     end;
   end;
 end;
 
@@ -441,11 +392,7 @@ var
           if M.Tile[x,y] = tdCDOOR then
             case Random(100)+1 of
               1..35  : M.Tile[x,y] := tdODOOR;
-              36..40 :
-              case WallTile of
-                tdROCK  : M.Tile[x,y] := tdSECSTONE;
-                tdEWALL : M.Tile[x,y] := tdSECEARTH;
-              end;
+              36..40 : M.Tile[x,y] := tdSECRET;
             end;
         end;
   end;
@@ -506,7 +453,7 @@ var
   begin
    for x:=1 to MapX do
      for y:=1 to MapY do
-       if (M.Tile[x,y] = FloorTile) then
+       if M.Tile[x,y] = tdFLOOR then
          if Random(75)+1 = 1 then
          begin
            repeat
@@ -519,18 +466,70 @@ var
   // Поместить предметы
   procedure PlaceItems;
   var
-    x,y,t : byte;
+    x,y : byte;
   begin
     for x:=1 to MapX do
       for y:=1 to MapY do
-        if (M.Tile[x,y] = FloorTile) and (Random(200)+1 = 1) then
-        begin
-          repeat
-            t := Random(ItemTypeAmount)+1;
-          until
-            (ItemTypeData[t].chance >= Random(100)+1) and (HaveItemTypeInDB(t));
-          PutItem(x,y,GenerateItem(t), Random(ItemTypeData[t].maxamount)+1);
-        end;
+        if (M.Tile[x,y] = tdFLOOR) and (Random(200)+1 = 1) then
+          case Random(10)+1 of
+            1 :
+            case Random(100)+1 of
+              1..70   : PutItem(x,y,CreateItem(idJACKSONSHAT, 1, 0));
+              71..100 : PutItem(x,y,CreateItem(idHELMET, 1, 0));
+            end;
+            2 :
+            case Random(100)+1 of
+              1..50    : PutItem(x,y,CreateItem(idMANTIA, 1, 0));
+              51..80   : PutItem(x,y,CreateItem(idJACKET, 1, 0));
+              81..100  : PutItem(x,y,CreateItem(idCHAINARMOR, 1, 0));
+            end;
+            3 :
+            case Random(100)+1 of
+              1..30    : PutItem(x,y,CreateItem(idKITCHENKNIFE, 1, 0));
+              31..50   : PutItem(x,y,CreateItem(idPITCHFORK, 1, 0));
+              51..65   : PutItem(x,y,CreateItem(idDAGGER, 1, 0));
+              66..75   : PutItem(x,y,CreateItem(idSTAFF, 1, 0));
+              76..85   : PutItem(x,y,CreateItem(idDUBINA, 1, 0));
+              86..90   : PutItem(x,y,CreateItem(idSHORTSWORD, 1, 0));
+              91..97   : PutItem(x,y,CreateItem(idPALICA, 1, 0));
+              98..100  : PutItem(x,y,CreateItem(idLONGSWORD, 1, 0));
+            end;
+            4 :
+            PutItem(x,y,CreateItem(idSHIELD, 1, 0));
+            5 :
+            case Random(100)+1 of
+              1..70   : PutItem(x,y,CreateItem(idLAPTI, 1, 0));
+              71..100 : PutItem(x,y,CreateItem(idBOOTS, 1, 0));
+            end;
+            6 : PutItem(x,y,CreateItem(idCOIN, Random(30)+1, 0));
+            7 :
+            case Random(100)+1 of
+              1..40   : PutItem(x,y,CreateItem(idKEKS, 1, 0));
+              41..60  : PutItem(x,y,CreateItem(idLAVASH, 1, 0));
+              61..90  : PutItem(x,y,CreateItem(idGREENAPPLE, Random(5)+1, 0));
+              91..100 : PutItem(x,y,CreateItem(idMEAT, 1, 0));
+            end;
+            8 :
+            case Random(100)+1 of
+              1..60   : PutItem(x,y,CreateItem(idPOTIONCURE, 1, 0));
+              61..90  : PutItem(x,y,CreateItem(idPOTIONHEAL, 1, 0));
+              91..100 : PutItem(x,y,CreateItem(idCHEAPBEER, 1, 0));
+            end;
+            9 :
+            case Random(100)+1 of
+              1..50   : PutItem(x,y,CreateItem(idSLING, 1, 0));
+              51..80  : PutItem(x,y,CreateItem(idBLOWPIPE, 1, 0));
+              81..90  : PutItem(x,y,CreateItem(idBOW, 1, 0));
+              91..100 : PutItem(x,y,CreateItem(idCROSSBOW, 1, 0));
+            end;
+            10 :
+            case Random(100)+1 of
+              1..50   : PutItem(x,y,CreateItem(idLITTLEROCK, Random(15)+1, 0));
+              51..80  : PutItem(x,y,CreateItem(idIGLA, Random(10)+1, 0));
+              81..90  : PutItem(x,y,CreateItem(idARROW, Random(10)+1, 0));
+              91..100 : PutItem(x,y,CreateItem(idBOLT, Random(10)+1, 0));
+            end;
+          end;
   end;
   begin
     Result := True;
@@ -542,16 +541,8 @@ var
         M.tip := Random(TipsAmount)+1 else
           M.tip := vid;
       // Тип стен и пола
-      case Random(3)+1 of
-        1 : FloorTile := tdFLOOR;
-        2 : FloorTile := tdGRASS;
-        3 : FloorTile := tdEARTH;
-      end;
-      case Random(3)+1 of
-        1 : WallTile := tdROCK;
-        2 : WallTile := tdEWALL;
-        3 : WallTile := tdGREENWALL;
-      end;
+      FloorTile := tdFLOOR;
+      WallTile := tdROCK;
       // Максимальное колличество комнат
       case M.tip of
         tipRooms : MaxRoomsAmount := 10+Random(180);
@@ -783,9 +774,7 @@ begin
   BlockWrite(f,Tile,SizeOf(Tile));
   BlockWrite(f,Blood,SizeOf(Blood));
   BlockWrite(f,Saw,SizeOf(Saw));
-  BlockWrite(f,MemS,SizeOf(MemS));
-  BlockWrite(f,MemC,SizeOf(MemC));
-  BlockWrite(f,MemBC,SizeOf(MemBC));
+  BlockWrite(f,Mem,SizeOf(Mem));
   // Записываем монстров
   for x:=2 to 255 do
   begin
@@ -824,9 +813,7 @@ begin
     BlockRead(f,Tile,SizeOf(Tile));
     BlockRead(f,Blood,SizeOf(Blood));
     BlockRead(f,Saw,SizeOf(Saw));
-    BlockRead(f,MemS,SizeOf(MemS));
-    BlockRead(f,MemC,SizeOf(MemC));
-    BlockRead(f,MemBC,SizeOf(MemBC));
+    BlockRead(f,Mem,SizeOf(Mem));
     // Монстров читаем поочереди
     for x:=2 to 255 do
     begin

@@ -16,7 +16,6 @@ const
   M_ALWAYSANSWERED   = 1 shl 5;     // Всегда отвечает на атаку
   M_DRUNK            = 1 shl 6;     // Пьяный 
   M_HAVEITEMS        = 1 shl 7;     // Может держать вещи
-  M_TACTIC           = 1 shl 8;     // Может применять тактику
 
   { Флажки для предметов }
   I_TWOHANDED        = 1 shl 0;     // Двуручное оружие 
