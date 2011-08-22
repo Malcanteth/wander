@@ -1,6 +1,7 @@
 object MainForm: TMainForm
-  Left = 514
-  Top = 208
+  Left = 244
+  Top = 205
+  BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'WANDER'
   ClientHeight = 206
@@ -17,14 +18,6 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   OnPaint = FormPaint
-  OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
-  object GameTimer: TTimer
-    Enabled = False
-    Interval = 200
-    OnTimer = GameTimerTimer
-    Left = 160
-    Top = 112
-  end
 end
