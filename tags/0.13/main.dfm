@@ -1,0 +1,41 @@
+object MainForm: TMainForm
+  Left = 390
+  Top = 205
+  BorderStyle = bsSingle
+  Caption = 'WANDER'
+  ClientHeight = 206
+  ClientWidth = 334
+  Color = clBlack
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  OnPaint = FormPaint
+  OnResize = FormResize
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Edit: TEdit
+    Left = 96
+    Top = 80
+    Width = 104
+    Height = 16
+    BorderStyle = bsNone
+    Color = clBlack
+    Font.Charset = RUSSIAN_CHARSET
+    Font.Color = clSilver
+    Font.Height = -13
+    Font.Name = 'Fixedsys'
+    Font.Style = []
+    MaxLength = 13
+    ParentFont = False
+    TabOrder = 0
+    Visible = False
+    OnKeyPress = EditKeyPress
+  end
+end
