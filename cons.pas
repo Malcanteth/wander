@@ -4,31 +4,34 @@ interface
 
 const
   { Общие константы игры }
-  MapEditorVersion         = '0.7.0.0';
-
-  { Константы режимов игры }
+  GameVersion              = '0.14';
+  MapEditorVersion         = '0.70';
   AdventureMode            = 0;
   DungeonMode              = 1;
 
   { Константы  окна }
+  FontMap                  = 'FixedSys';
+  FontMsg                  = 'FixedSys';
   WindowX                  = 100;
   WindowY                  = 42;
 
   { Константы карты }
+  CharX                    = 8;
+  CharY                    = 16;
   MapX                     = 80;
   MapY                     = 35;
 
   { Константы для генерации подземелья }
-  MinRooms   = 7;
-  MaxRooms   = 15;
-  MinHeight  = 3;
-  MaxHeight  = 10;
-  MinWidth   = 6;
-  MaxWidth   = 10;
-  MaxDoors   = 3;
+  MinRooms = 7;
+  MaxRooms = 15;
+  MinHeight = 3;
+  MaxHeight = 10;
+  MinWidth  = 6;
+  MaxWidth  = 10;
+  MaxDoors  = 3;
 
   MaxLadders = 4;          // Максимальное кол-во лестниц вниз на локации
-  MaxDepth   = 10;         // Максимальная глубина подземелья
+  MaxDepth  = 10;          // Максимальная глубина подземелья
 
   TipsAmount = 5;
 
@@ -39,28 +42,28 @@ const
   tipDRoom = 5;            // Разрушенные комнаты
 
   { Сообщения }
-  MsgAmount                = 7;    
+  MsgAmount                = 7;
   MsgLength                = WindowX;
   MaxHistory               = 38;
 
   { Константы основных цветов }
-  crRANDOM                 = 1;
-  crBLACK                  = 2;
-  crBLUE                   = 3;
-  crGREEN                  = 4;
-  crRED                    = 5;
-  crCYAN                   = 6;
-  crPURPLE                 = 7;
-  crBROWN                  = 8;
-  crWHITE                  = 9;
-  crGRAY                   = 10;
-  crYELLOW                 = 11;
-  crLIGHTGRAY              = 12;
-  crLIGHTRED               = 13;
-  crLIGHTGREEN             = 14;
-  crLIGHTBLUE              = 15;
-  crORANGE                 = 16;
-  crBLUEGREEN              = 17;
+  crRANDOM                  = 1;
+  crBLACK                   = 2;
+  crBLUE                    = 3;
+  crGREEN                   = 4;
+  crRED                     = 5;
+  crCYAN                    = 6;
+  crPURPLE                  = 7;
+  crBROWN                   = 8;
+  crWHITE                   = 9;
+  crGRAY                    = 10;
+  crYELLOW                  = 11;
+  crLIGHTGRAY               = 12;
+  crLIGHTRED                = 13;
+  crLIGHTGREEN              = 14;
+  crLIGHTBLUE               = 15;
+  crORANGE                  = 16;
+  crBLUEGREEN               = 17;
 
   cBLACK                   = 0;
   cBLUE                    = 9830400;
@@ -122,6 +125,7 @@ const
 
   { Сколько действий в списке использования предмета }
   HOWMANYVARIANTS          = 5;       //1-Использовать,2-Рассмотреть повнимательнее,3-Бросить,4-Отдать,5-Выкинуть
+
 
 implementation
 

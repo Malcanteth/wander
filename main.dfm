@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 514
-  Top = 208
+  Left = 390
+  Top = 205
   BorderStyle = bsSingle
   Caption = 'WANDER'
   ClientHeight = 206
@@ -20,11 +20,4 @@ object MainForm: TMainForm
   OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
-  object GameTimer: TTimer
-    Enabled = False
-    Interval = 200
-    OnTimer = GameTimerTimer
-    Left = 160
-    Top = 112
-  end
 end

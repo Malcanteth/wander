@@ -11,7 +11,7 @@ procedure ShowHistory;              // Показать историю сообщений
 implementation
 
 uses
-  Main, SysUtils, conf;
+  Main, SysUtils;
 
 { Показать список команд }
 procedure ShowHelp;

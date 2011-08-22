@@ -1,11 +1,11 @@
 object MainDlForm: TMainDlForm
-  Left = 351
-  Top = 100
+  Left = 323
+  Top = 121
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1056#1077#1076#1072#1082#1090#1086#1088' '#1076#1080#1072#1083#1086#1075#1086#1074
   ClientHeight = 630
-  ClientWidth = 1028
+  ClientWidth = 1080
   Color = 16766935
   Font.Charset = RUSSIAN_CHARSET
   Font.Color = clWindowText

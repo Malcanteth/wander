@@ -39,7 +39,7 @@ var
 implementation
 
 uses
-  MapEditor, conf;
+  MapEditor;
 
 { Очистить карту }
 procedure TMap.Clear;
@@ -79,7 +79,7 @@ begin
             if M.Item[x,y].id > 0 then
             begin
               color := RealColor(ItemsData[M.Item[x,y].id].color);
-              char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
+              char := ItemSymbol(M.Item[x,y].id);
             end;
             // Монстры
             if M.MonP[x,y] > 0 then
@@ -519,18 +519,70 @@ var
   // Поместить предметы
   procedure PlaceItems;
   var
-    x,y,t : byte;
+    x,y : byte;
   begin
     for x:=1 to MapX do
       for y:=1 to MapY do
         if (M.Tile[x,y] = FloorTile) and (Random(200)+1 = 1) then
-        begin
-          repeat
-            t := Random(ItemTypeAmount)+1;
-          until
-            (ItemTypeData[t].chance >= Random(100)+1) and (HaveItemTypeInDB(t));
-          PutItem(x,y,GenerateItem(t), Random(ItemTypeData[t].maxamount)+1);
-        end;
+          case Random(10)+1 of
+            1 :
+            case Random(100)+1 of
+              1..70   : PutItem(x,y,CreateItem(idJACKSONSHAT, 1, 0),1);
+              71..100 : PutItem(x,y,CreateItem(idHELMET, 1, 0),1);
+            end;
+            2 :
+            case Random(100)+1 of
+              1..50    : PutItem(x,y,CreateItem(idMANTIA, 1, 0),1);
+              51..80   : PutItem(x,y,CreateItem(idJACKET, 1, 0),1);
+              81..100  : PutItem(x,y,CreateItem(idCHAINARMOR, 1, 0),1);
+            end;
+            3 :
+            case Random(100)+1 of
+              1..30    : PutItem(x,y,CreateItem(idKITCHENKNIFE, 1, 0),1);
+              31..50   : PutItem(x,y,CreateItem(idPITCHFORK, 1, 0),1);
+              51..65   : PutItem(x,y,CreateItem(idDAGGER, 1, 0),1);
+              66..75   : PutItem(x,y,CreateItem(idSTAFF, 1, 0),1);
+              76..85   : PutItem(x,y,CreateItem(idDUBINA, 1, 0),1);
+              86..90   : PutItem(x,y,CreateItem(idSHORTSWORD, 1, 0),1);
+              91..97   : PutItem(x,y,CreateItem(idPALICA, 1, 0),1);
+              98..100  : PutItem(x,y,CreateItem(idLONGSWORD, 1, 0),1);
+            end;
+            4 :
+            PutItem(x,y,CreateItem(idSHIELD, 1, 0),1);
+            5 :
+            case Random(100)+1 of
+              1..70   : PutItem(x,y,CreateItem(idLAPTI, 1, 0),1);
+              71..100 : PutItem(x,y,CreateItem(idBOOTS, 1, 0),1);
+            end;
+            6 : PutItem(x,y,CreateItem(idCOIN, Random(30)+1, 0),Random(30)+1);
+            7 :
+            case Random(100)+1 of
+              1..40   : PutItem(x,y,CreateItem(idKEKS, 1, 0),1);
+              41..60  : PutItem(x,y,CreateItem(idLAVASH, 1, 0),1);
+              61..90  : PutItem(x,y,CreateItem(idGREENAPPLE, Random(5)+1, 0),Random(5)+1);
+              91..100 : PutItem(x,y,CreateItem(idMEAT, 1, 0),1);
+            end;
+            8 :
+            case Random(100)+1 of
+              1..60   : PutItem(x,y,CreateItem(idPOTIONCURE, 1, 0),1);
+              61..90  : PutItem(x,y,CreateItem(idPOTIONHEAL, 1, 0),1);
+              91..100 : PutItem(x,y,CreateItem(idCHEAPBEER, 1, 0),1);
+            end;
+            9 :
+            case Random(100)+1 of
+              1..50   : PutItem(x,y,CreateItem(idSLING, 1, 0),1);
+              51..80  : PutItem(x,y,CreateItem(idBLOWPIPE, 1, 0),1);
+              81..90  : PutItem(x,y,CreateItem(idBOW, 1, 0),1);
+              91..100 : PutItem(x,y,CreateItem(idCROSSBOW, 1, 0),1);
+            end;
+            10 :
+            case Random(100)+1 of
+              1..50   : PutItem(x,y,CreateItem(idLITTLEROCK, Random(15)+1, 0),1);
+              51..80  : PutItem(x,y,CreateItem(idIGLA, Random(10)+1, 0),1);
+              81..90  : PutItem(x,y,CreateItem(idARROW, Random(10)+1, 0),1);
+              91..100 : PutItem(x,y,CreateItem(idBOLT, Random(10)+1, 0),1);
+            end;
+          end;
   end;
   begin
     Result := True;

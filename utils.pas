@@ -13,6 +13,7 @@ function GetGValue(rgb: LONGWORD): Byte;         // Достать зеленый цвет
 function GetBValue(rgb: LONGWORD): Byte;         // Достать синий цвет
 function InFov(x1,y1,x2,y2,los : byte) : boolean;// Принадлежит ли радиусу видимости?
 procedure DeleteSwap;                            // Удалить файлы сохранения
+function GenerateName(female : boolean) : string;// Генерация имени
 function IsFlag(flags : LongWord;
                  flag : LongWord) : boolean;     // Проверка флага
 procedure StartDecorating(header : string;
@@ -30,13 +31,11 @@ procedure Intro;                                 // Заставка
 function WhatClass : byte;                       // Вернуть цифру класса героя
 function CLName : string;                        // Вернуть название класса
 function ClassColor : longword;                  // Цвет класса
-function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
-function GenerateName(female : boolean) : string; // Генерация имени
 
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf;
+  Player, Monsters, Map, Items, Msg;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -103,14 +102,13 @@ end;
 { Принадлежит ли радиусу видимости? }
 function InFov(x1,y1,x2,y2,los : byte) : boolean;
 begin
-  if (x1>0)and(x1<=MapX)and(y1>0)and(y1<=MapY)and(x2>0)and(x2<=MapX)and(y2>0)and(y2<=MapY)
-    then Result := Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) < los
-{  begin
+  if (x1>0)and(x1<=MapX)and(y1>0)and(y1<=MapY)and(x2>0)and(x2<=MapX)and(y2>0)and(y2<=MapY)then
+  begin
     if Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) >= los then
       Result := false else
         Result := true;
-  end  }
-    else Result := false;
+  end else
+    Result := false;
 end;
 
 { Удалить файлы сохранения }
@@ -119,9 +117,9 @@ var
   s : TSearchRec;
   f : file;
 begin
-  while FindFirst(Path + 'swap/' + pc.name+'/*.lev', faAnyFile, s) = 0 do
+  while FindFirst('swap/'+pc.name+'/*.lev',faAnyFile,s) = 0 do
   begin
-    AssignFile(f, Path + 'swap/' + pc.name + '/' + s.name);
+    AssignFile(f,'swap/'+pc.name+'/'+s.name);
     {$I-}
     Erase(f);
     CloseFile(f);
@@ -129,9 +127,28 @@ begin
     FindNext(s);
   end;
   {$I-}
-  RMDir(Path + 'swap/' + pc.name);
-  RMDir(Path + 'swap');
+  RMDir('swap/'+pc.name);
+  RMDir('swap');
   {$I+}
+end;
+
+{ Генерация имени }
+function GenerateName(female : boolean) : string;
+const
+  name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
+  name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
+  name3 : array[1..6]of string[3] = ('эн','е','и','о','д','ер');
+  fends : array[1..3]of string[3] = ('оя','ия','еа');
+var
+  s : string[40];
+begin
+  s := name1[random(7)+1];
+  s := s + name2[random(6)+1];
+  if random(2)+1 = 2 then
+    s := s + name3[random(6)+1];
+  if female then
+    s := s + fends[random(3)+1];
+  Result := s;
 end;
 
 { Проверка флага }
@@ -309,17 +326,15 @@ begin
   end;
 end;
 
-{ Сделать скриншот (F5)}
+{ Сделать скриншот }
 procedure TakeScreenShot;
 var
   t : TSystemTime;
-  s: string;
 begin
   GetSystemTime(t);
-  CreateDir(Path + 'screens');
-  if pc.name = '' then s := 'unknown' else s := pc.name;
-  Screen.SaveToFile(Path + 'screens/' + s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.bmp');
-  AddMsg('[Скриншот...]',0);
+  CreateDir('screens');
+  Screen.SaveToFile('screens/'+pc.name+'_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.bmp');
+  AddMsg('[Скриншот...]');
   MainForm.OnPaint(NIL);
 end;
 
@@ -347,18 +362,18 @@ end;
 { Заставка }
 procedure Intro;
 const
-  s0 = '#       #   #   #          #### #     ';
-  s1 = ' #  #  #   ##   ##  # ###  #    ###   ';
-  s2 = ' ## # ##  #  #  # # # #  # #### #  #  ';
-  s3 = '  # # #   ####  #  ## #  # #    ###   ';
-  s4 = '   ###   #    # #   # #  # #### #  #  ';
-  s5 = '        #           # ###           # ';
-  s6 = '< Нажми ENTER для того, чтобы начать >';
+  s0 = '#     #    #   #          #### #    ';
+  s1 = '#  #  #   ##   ##  # ###  #    ###  ';
+  s2 = '## # ##  #  #  # # # #  # #### #  # ';
+  s3 = ' # # #   ####  #  ## #  # #    ###  ';
+  s4 = '  ###   #    # #   # #  # #### #  # ';
+  s5 = '       #           # ###           #';
+  s6 = '< Нажми ENTER для того чтобы начать >';
 begin
   with Screen.Canvas do
   begin
     // WANDER
-    Font.Color := cLIGHTGRAY;
+    Font.Color := cWHITE;
     TextOut(((WindowX-length(s0)) div 2) * CharX, 14*CharY, s0);
     Font.Color := cLIGHTBLUE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
@@ -371,8 +386,8 @@ begin
     Font.Color := cBROWN;
     TextOut(((WindowX-length(s5)) div 2) * CharX, 19*CharY, s5);
     // Версия
-    Font.Color := cPURPLE;
-    TextOut(28*CharY, 21*CharY, 'Версия ' + GameVersion);
+    Font.Color := cGRAY;
+    TextOut(30*CharY, 20*CharY, 'Версия '+GameVersion);
     // Нажите кнопку
     Font.Color := cYELLOW;
     TextOut(((WindowX-length(s6)) div 2) * CharX, 25*CharY, s6);
@@ -417,13 +432,13 @@ begin
   case WhatClass of
     1 :
     case pc.gender of
-      1 : Result := 'Воин'; 
-      2 : Result := 'Воительница';
+      1 : Result := 'Воин';
+      2 : Result := 'Воин';
     end;
     2 :
     case pc.gender of
       1 : Result := 'Варвар';
-      2 : Result := 'Амазонка';
+      2 : Result := 'Варвар';
     end;
     3 :
     case pc.gender of
@@ -437,7 +452,7 @@ begin
     end;
     5 :
     case pc.gender of
-      1 : Result := 'Вор';
+      1 : Result := 'Воришка';
       2 : Result := 'Воришка';
     end;
     6 :
@@ -479,85 +494,5 @@ begin
     9 : Result := cCYAN;
   end;
 end;
-
-{ Случайное целое число из диапазона }
-function Rand(A, B: Integer): Integer;
-begin
-  Randomize;
-  Result := Round(Random(B - A + 1) + A);
-end;
-
-function FileVersion(AFileName:string): string;
-var
-  szName: array[0..255] of Char;
-  P: Pointer;
-  Value: Pointer;
-  Len: UINT;
-  GetTranslationString:string;
-  FFileName: PChar;
-  FValid:boolean;
-  FSize: DWORD;
-  FHandle: DWORD;
-  FBuffer: PChar;
-begin
-  try
-   FFileName := StrPCopy(StrAlloc(Length(AFileName) + 1), AFileName);
-   FValid := False;
-   FSize := GetFileVersionInfoSize(FFileName, FHandle);
-   if FSize > 0 then
-     try
-       GetMem(FBuffer, FSize);
-       FValid := GetFileVersionInfo(FFileName, FHandle, FSize, FBuffer);
-     except
-       FValid := False;
-       raise;
-     end;
-   Result := '';
-   if FValid then
-     VerQueryValue(FBuffer, '\VarFileInfo\Translation', p, Len)
-   else p := nil;
-   if P <> nil then
-     GetTranslationString := IntToHex(MakeLong(HiWord(Longint(P^)), LoWord(Longint(P^))), 8);
-   if FValid then
-     begin
-       StrPCopy(szName, '\StringFileInfo\' + GetTranslationString + '\FileVersion');
-       if VerQueryValue(FBuffer, szName, Value, Len) then
-         Result := StrPas(PChar(Value));
-     end;
-  finally
-   try
-     if FBuffer <> nil then FreeMem(FBuffer, FSize);
-   except
-   end;
-   try
-     StrDispose(FFileName);
-   except
-   end;
-  end;
-end;
-
-{ Генерация случайного имени }
-function GenerateName(female : boolean) : string;
-const
-  name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
-  name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
-  name3 : array[1..6]of string[3] = ('эн','е','и','о','д','ер');
-  fends : array[1..3]of string[3] = ('оя','ия','еа');
-var
-  s : string[40];
-begin
-  s := name1[random(7)+1];
-  s := s + name2[random(6)+1];
-  if random(2)+1 = 2 then
-    s := s + name3[random(6)+1];
-  if female then
-    s := s + fends[random(3)+1];
-  Result := s;
-end;
-
-initialization
-  GameVersion := FileVersion(Paramstr(0));
-
-finalization
 
 end.

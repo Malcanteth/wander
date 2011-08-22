@@ -3,7 +3,7 @@ unit msg;
 interface
 
 uses
-  Main, Cons, Utils, SUtils;
+  Main, Cons, Utils;
 
 type
   THistory = record
@@ -16,34 +16,27 @@ var
   History : array[1..MaxHistory] of THistory;
   InputX, InputY : integer;
   InputString : string[13];
-  InputPos : byte;
   LastMsgY, LastMsgL : byte;
 
 
-procedure AddMsg(s : string; id : integer);
-function GetMsg(AString: String; gender : byte): string;
-procedure AddDrawMsg(s : string; id : integer);
+procedure AddMsg(s : string);
+procedure AddDrawMsg(s : string);
 procedure ClearMsg;
 procedure More;
 procedure Apply;
 procedure ShowMsgs;
-function Ask(s: string): char;
-function Input(sx, sy: integer; ss: string): string;
+function Ask(s : string) : char;
+function Input(sx,sy : integer; ss : string) : string;
 procedure ShowInput;
 
 implementation
 
-uses SysUtils, Conf, Player, Windows, Graphics, Monsters;
-
 { Добавить сообщение }
-procedure AddMsg(s: string; id : integer);
+procedure AddMsg(s : string);
 var
   a,i,j : byte;
   w,o : string;
 begin
-  if id < 2 then
-    S := GetMsg(S, pc.gender) else
-      S := GetMsg(S, MonstersData[id].gender);
   //Найти пустой слот
   for a:=1 to MsgAmount do
     if (Msgs[a] = '')and(a < MsgAmount) then
@@ -92,61 +85,21 @@ begin
               end;
           end;
       end;
-      if o <> '' then AddMsg(o,id);
+      if o <> '' then AddMsg(o);
       break;
     end else
       if (Msgs[a] = '')and(a = MsgAmount) then
       begin
         More;
-        AddMsg(s,id);
+        AddMsg(s);
         break;
       end;
 end;
 
-(* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
-function GetMsg(AString: String; gender : byte): string;
-var
-  I: Integer;
-  SX, RX, S1, S2: String;
-  RF: Byte;
-begin
-  if Gender = 10 then Gender := pc.gender;
-  if (Pos('/', AString) <= 0) then
-  begin
-    Result := AString;
-    Exit;
-  end;
-  SX := '';
-  RX := '';
-  RF := 0;
-  for I := 1 to Length(AString) do
-  begin
-    case AString[I] of
-      '{': begin
-             RF := 1;
-             Continue;
-           end;
-      '}': RF := 2;
-    end;
-    case RF of
-      0: RX := RX + AString[I];
-      1: SX := SX + AString[I];
-      2: begin
-           S1 := GetStrKey(SX, '/');
-           S2 := GetStrValue(SX, '/');
-           SX := '';
-           RF := 0;
-           if (Gender = genFEMALE) then RX := RX + S2 else RX := RX + S1;
-         end;
-    end;
-  end;
-  Result := RX;
-end;
-
 { Добавить сообщение и отобразить}
-procedure AddDrawMsg(s: string; id : integer);
+procedure AddDrawMsg(s : string);
 begin
-  AddMsg(s,id);
+  AddMsg(s);
   MainForm.OnPaint(NIL);
 end;
 
@@ -189,7 +142,6 @@ begin
   //Сообщения
   with Screen.Canvas do
   begin
-    Font.Name := FontMsg;
     Brush.Color := 0;
     for y:=1 to MsgAmount do
       if Msgs[y] <> '' then
@@ -230,7 +182,7 @@ end;
 { Задать вопрос }
 function Ask(s : string) : char;
 begin
-  AddDrawMsg(s,0);
+  AddDrawMsg(s);
   Answer := ' ';
   while Answer = ' ' do
     MainForm.ProcessMsg;
@@ -242,7 +194,6 @@ end;
 function Input(sx,sy : integer; ss : string) : string;
 begin
   InputString := ss;
-  InputPos := Length(ss);
   InputX := sx;
   InputY := sy;
   WaitENTER := True;
@@ -256,7 +207,6 @@ end;
 
 { Вывести то, что ввел пользователь }
 procedure ShowInput;
-var OldStyle : TBrushStyle;
 begin
   //Сообщения
   with Screen.Canvas do
@@ -264,14 +214,8 @@ begin
     Brush.Color := 0;
     Font.Color := MyRGB(160,160,160);
     Textout(InputX*CharX, InputY*CharY, InputString);
-    if GetTickCount mod 1000 < 500 then
-    begin
-      OldStyle := Brush.Style;
-      Brush.Style := bsClear;
-      Font.Color := cLIGHTGREEN;
-      Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
-      Brush.Style := OldStyle;
-    end;
+    Font.Color := cLIGHTGREEN;
+    Textout((InputX+(Length(InputString)))*CharX, InputY*CharY, '_');
   end;
 end;
 

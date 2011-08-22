@@ -168,7 +168,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Tile, Player, Utils, Monsters, conf;
+  Tile, Player, Utils, Monsters;
 
 procedure TMainEdForm.FormCreate(Sender: TObject);
 const

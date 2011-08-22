@@ -261,7 +261,7 @@ begin
   begin
     Dialogs[NowDialog].variants[NowVariant].answers[1].Exist := TRUE;
     Dialogs[NowDialog].variants[NowVariant].answers[1].Answer := Memo1.Text;
-    Dialogs[NowDialog].variants[NowVariant].answers[1].WhatNext := '';
+    Dialogs[NowDialog].variants[NowVariant].answers[1].WhatNext :=
   end;
   //
   RefreshDialogList;

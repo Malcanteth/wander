@@ -21,13 +21,7 @@ uses
   items in 'items.pas',
   help in 'help.pas',
   ability in 'ability.pas',
-  mapeditor in 'mapeditor.pas' {MainEdForm},
-  conf in 'conf.pas',
-  sutils in 'sutils.pas',
-  wlog in 'wlog.pas',
-  vars in 'vars.pas',
-  script in 'script.pas',
-  mbox in 'mbox.pas';
+  mapeditor in 'mapeditor.pas' {MainEdForm};
 
 {$R *.res}
 
@@ -37,5 +31,6 @@ begin
   Application.Title := 'WANDER';
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TMainEdForm, MainEdForm);
+  MainForm.Caption := 'WANDER '+GameVersion;
   Application.Run;
 end.
