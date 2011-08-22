@@ -14,9 +14,8 @@ const
   M_NAME             = 1 shl 3;     // Есть имя
   M_STAY             = 1 shl 4;     // Когда не видет цели просто стоит
   M_ALWAYSANSWERED   = 1 shl 5;     // Всегда отвечает на атаку
-  M_DRUNK            = 1 shl 6;     // Пьяный 
+  M_FELLDOWN         = 1 shl 6;     // Лежит 
   M_HAVEITEMS        = 1 shl 7;     // Может держать вещи
-  M_TACTIC           = 1 shl 8;     // Может применять тактику
 
   { Флажки для предметов }
   I_TWOHANDED        = 1 shl 0;     // Двуручное оружие 
