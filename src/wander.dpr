@@ -22,12 +22,7 @@ uses
   help in 'help.pas',
   ability in 'ability.pas',
   mapeditor in 'mapeditor.pas' {MainEdForm},
-  conf in 'conf.pas',
-  sutils in 'sutils.pas',
-  wlog in 'wlog.pas',
-  vars in 'vars.pas',
-  script in 'script.pas',
-  mbox in 'mbox.pas';
+  conf in 'conf.pas';
 
 {$R *.res}
 

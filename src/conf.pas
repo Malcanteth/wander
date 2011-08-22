@@ -12,8 +12,6 @@ var
   // Размер символа
   CharX: Byte = 8;
   CharY: Byte = 16;
-  // Скорость анимации полета
-  FlySpeed: Byte = 70;
   // Путь
   Path: String;
   // Режим игры
@@ -38,7 +36,6 @@ initialization
     FontSize  := Ini.ReadInteger('FONT', 'Size', 10);
     FontStyle := Ini.ReadInteger('FONT', 'Style', 0);
     PlayMode  := Ini.ReadInteger('GAME', 'Mode', AdventureMode);
-    FlySpeed  := Ini.ReadInteger('GAME', 'FlySpeed', 70);
   finally
     Ini.Free;
   end;

@@ -13,6 +13,7 @@ function GetGValue(rgb: LONGWORD): Byte;         // Достать зеленый цвет
 function GetBValue(rgb: LONGWORD): Byte;         // Достать синий цвет
 function InFov(x1,y1,x2,y2,los : byte) : boolean;// Принадлежит ли радиусу видимости?
 procedure DeleteSwap;                            // Удалить файлы сохранения
+function GenerateName(female : boolean) : string;// Генерация имени
 function IsFlag(flags : LongWord;
                  flag : LongWord) : boolean;     // Проверка флага
 procedure StartDecorating(header : string;
@@ -31,7 +32,6 @@ function WhatClass : byte;                       // Вернуть цифру класса героя
 function CLName : string;                        // Вернуть название класса
 function ClassColor : longword;                  // Цвет класса
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
-function GenerateName(female : boolean) : string; // Генерация имени
 
 implementation
 
@@ -103,14 +103,13 @@ end;
 { Принадлежит ли радиусу видимости? }
 function InFov(x1,y1,x2,y2,los : byte) : boolean;
 begin
-  if (x1>0)and(x1<=MapX)and(y1>0)and(y1<=MapY)and(x2>0)and(x2<=MapX)and(y2>0)and(y2<=MapY)
-    then Result := Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) < los
-{  begin
+  if (x1>0)and(x1<=MapX)and(y1>0)and(y1<=MapY)and(x2>0)and(x2<=MapX)and(y2>0)and(y2<=MapY)then
+  begin
     if Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) >= los then
       Result := false else
         Result := true;
-  end  }
-    else Result := false;
+  end else
+    Result := false;
 end;
 
 { Удалить файлы сохранения }
@@ -132,6 +131,25 @@ begin
   RMDir(Path + 'swap/' + pc.name);
   RMDir(Path + 'swap');
   {$I+}
+end;
+
+{ Генерация имени }
+function GenerateName(female : boolean) : string;
+const
+  name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
+  name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
+  name3 : array[1..6]of string[3] = ('эн','е','и','о','д','ер');
+  fends : array[1..3]of string[3] = ('оя','ия','еа');
+var
+  s : string[40];
+begin
+  s := name1[random(7)+1];
+  s := s + name2[random(6)+1];
+  if random(2)+1 = 2 then
+    s := s + name3[random(6)+1];
+  if female then
+    s := s + fends[random(3)+1];
+  Result := s;
 end;
 
 { Проверка флага }
@@ -309,17 +327,15 @@ begin
   end;
 end;
 
-{ Сделать скриншот (F5)}
+{ Сделать скриншот }
 procedure TakeScreenShot;
 var
   t : TSystemTime;
-  s: string;
 begin
   GetSystemTime(t);
   CreateDir(Path + 'screens');
-  if pc.name = '' then s := 'unknown' else s := pc.name;
-  Screen.SaveToFile(Path + 'screens/' + s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.bmp');
-  AddMsg('[Скриншот...]',0);
+  Screen.SaveToFile(Path + 'screens/' + pc.name + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.bmp');
+  AddMsg('[Скриншот...]');
   MainForm.OnPaint(NIL);
 end;
 
@@ -417,13 +433,13 @@ begin
   case WhatClass of
     1 :
     case pc.gender of
-      1 : Result := 'Воин'; 
-      2 : Result := 'Воительница';
+      1 : Result := 'Воин';
+      2 : Result := 'Воин';
     end;
     2 :
     case pc.gender of
       1 : Result := 'Варвар';
-      2 : Result := 'Амазонка';
+      2 : Result := 'Варвар';
     end;
     3 :
     case pc.gender of
@@ -534,25 +550,6 @@ begin
    except
    end;
   end;
-end;
-
-{ Генерация случайного имени }
-function GenerateName(female : boolean) : string;
-const
-  name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
-  name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
-  name3 : array[1..6]of string[3] = ('эн','е','и','о','д','ер');
-  fends : array[1..3]of string[3] = ('оя','ия','еа');
-var
-  s : string[40];
-begin
-  s := name1[random(7)+1];
-  s := s + name2[random(6)+1];
-  if random(2)+1 = 2 then
-    s := s + name3[random(6)+1];
-  if female then
-    s := s + fends[random(3)+1];
-  Result := s;
 end;
 
 initialization

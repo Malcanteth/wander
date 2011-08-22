@@ -75,14 +75,6 @@ const
   FAR_PIPE                = 4;      // Трубка
   FAR_CROSS               = 5;      // Арбалет
 
-  { Типы брони }
-  ARMORTYPEAMOUNT         = 3;
-
-  ARMOR_CLOTHES           = 1;
-  ARMOR_LIGHT             = 2;
-  ARMOR_HEAVY             = 3;
-
-  { Магия }
   MAGICSCHOOLAMOUNT       = 5;      // Кол-во разновидности магии
 
   MAGICSCHOOLOFFIRE       = 1;      // Школа стихии огня
@@ -99,10 +91,6 @@ const
   FARWPNNAME : array[1..FARFIGHTAMOUNT] of string =
   (
     'Кинуть/швырнуть', 'Луки', 'Пращи', 'Духовые трубки', 'Арбалеты'
-  );
-  ARMORTYPENAME : array[1..ARMORTYPEAMOUNT] of string =
-  (
-    'Одежда', 'Легкая броня', 'Тяжелая броня'
   );
 
 var
