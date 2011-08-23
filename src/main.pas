@@ -49,7 +49,7 @@ implementation
 
 uses
   Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor,
-  conf, sutils, script;
+  conf, sutils, script, mbox;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
