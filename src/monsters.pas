@@ -266,7 +266,7 @@ procedure MonstersTurn;                    // У каждого монстра есть право на хо
 implementation
 
 uses
-  Map, Player, MapEditor;
+  Map, Player, MapEditor, script, vars, sutils, mbox;
 
 { Создать монстра }
 procedure CreateMonster(n,px,py : byte);
@@ -723,51 +723,30 @@ end;
 { Поговорить с кем-нибудь }
 procedure TMonster.TalkToMe;
 var
-  s, r : string;
+  s : string;
   w : boolean;
   p : integer;
+  i: byte;
 begin
   if relation = 0 then
   begin
-      w := TRUE;
-      s := FullName(1, TRUE) + ' говорит: ';
-      case id of
-        mdMALECITIZEN, mdFEMALECITIZEN:
+    // Переменные для работы скрипта
+    for i := 1 to QuestsAmount do V.SetInt('PCQuest'+IntToStr(I)+'State', pc.quest[I]); // Состояние квестов
+    V.SetStr('NPCWeaponName', ItemsData[eq[6].id].name1);
+    V.SetStr('PCName', PC.Name);
+    V.SetStr('NPCName', Name);    // Имя монстра
+    V.SetInt('NPCID', ID);        // Идентификатор монстра
+    w := TRUE;
+    s := FullName(1, TRUE) + ' говорит: ';
+    case id of
+        mdMALECITIZEN, mdFEMALECITIZEN: // Жители деревушки
         begin
-          case Rand(1, 9) of
-            1 : if pc.name = name then
-                  s := Format('"Тебя зовут %s? И меня так же!"', [PC.Name]) else
-                    s := s + Format('"Меня зовут %s. Рад{/a} познакомится с тобой, %s!"', [name, pc.name]);
-            2 :
-            case pc.quest[1] of
-              0 : s := s + '"Старейшина ждёт таких как ты. Поторопись!"';
-              1 : s := s + '"Ох... нет! Я ни за что не спущусь в хранилище!"';
-              2 : s := s + '"Ты был в хранилище? О, боже! Быстрее беги к старейшине! Вот это новость!"';
-              3 : s := s + '"Спасибо за то, что спас нас! Мы все тебе очень благодарны!"';
-            end;
-            3 : s := s + '"Прости, но мне нужно идти!"';
-            4 : s := s + '"Сегодня хорошая погода не так ли?"';
-            5 : s := s + '"В такие смутные времена мы вынуждены постоянно носить оружие при себе..."';
-            6 : s := s + Format('"Я надеюсь только на себя и на %s в моих руках!"', [ItemsData[eq[6].id].name1]);
-            7 :
-            case Rand(1, 3) of
-              1 : s := s + '"Людям нельзя верить!"';
-              2 : s := s + '"Никому нельзя верить!"';
-              3 : s := s + '"Не верь никому!"';
-            end;
-            8 : s := s + Format('"Наслышан{/a} о тебе, %s!"', [PC.Name]);
-            9 :
-            begin
-              case rand(1, 3) of
-                1: r := 'Хороший';
-                2: r := 'Замечательный';
-                3: r := 'Отличный';
-              end;
-              s := s + '"' + r + ' сегодня день..."';
-            end;
-          end;
+          // Выполняем скрипт
+          Run('NPCTalk.pas');
+          // Сохраняем результат
+          S := S + V.GetStr('TalkStr');
         end;
-        mdELDER:
+        mdELDER: // Старейшина
         begin
           // Если оба квеста от старейшины выполнены
           if (pc.quest[1] = 4) and (pc.quest[2] = 4) then
@@ -795,7 +774,7 @@ begin
             begin
               case Random(3)+1 of
                 1 : s := s + '"Ну как? Ты еще не исследовал{/а} хранилище? Как жаль!"';
-                2 : s := s + '"Пожалуйста, '+pc.name+',поторопись! Люди в опасности!"';
+                2 : s := s + '"Пожалуйста, '+pc.name+', поторопись! Люди в опасности!"';
                 3 : s := s + '"Мы все надеемся на тебя, '+pc.name+'!"';
               end;{case}
             end;
@@ -850,7 +829,7 @@ begin
                     More;
                   end else
                     begin
-                      AddMsg('"Очень жаль... Надеюсь ты передумаешь в ближайшее время!"',0);
+                      AddMsg('"Очень жаль... Надеюсь, ты передумаешь в ближайшее время!"',0);
                       More;
                     end;
                 end;
@@ -894,19 +873,17 @@ begin
         end;
         mdBREAKMT:
         begin
-          case Random(3)+1 of
-            1 : s := s + '"Не советую меня бить... Впрочем... Можешь попробовать разок, если уж очень хочется!"';
-            2 : s := s + '"Я тут вообще не игровой персонаж. Но все-равно у меня есть кое-что... Гм... Нет. Тебе рановато!"';
-            3 : s := s + '"Читерские вещи не продаю. Хотя следовало бы... Надо подумать над этим."';
-          end;
+          // Выполняем скрипт
+          Run('NPCTalk.pas');
+          // Сохраняем результат
+          S := S + V.GetStr('TalkStr');
         end;
         mdKEYWIFE:
         begin
-          case Random(3)+1 of
-            1 : s := s + '"Я очень беспокоюсь за своего мужа... Он пропал!"';
-            2 : s := s + '"В нашем подвале полным-полно крыс и тараканов! Я боюсь туда спускаться... Но вдруг мой муж там..."';
-            3 : s := s + '"В последнее время мой муж очень странно себя вёл! Надеюсь, с ним ничего не случилось!"';
-          end;
+          // Выполняем скрипт
+          Run('NPCTalk.pas');
+          // Сохраняем результат
+          S := S + V.GetStr('TalkStr');
         end;
         mdBARTENDER:
         begin
@@ -937,7 +914,10 @@ begin
         end;
         mdDRUNK:
         begin
-          s := s + '"Ик! ... Пфф... Ик!"';
+          // Выполняем скрипт
+          Run('NPCTalk.pas');
+          // Сохраняем результат
+          S := S + V.GetStr('TalkStr');
         end;
         mdHEALER:
         begin
@@ -1017,7 +997,7 @@ begin
         end;
         else s := 'Говорить впустую...';
       end;
-      if w then AddMsg(s,0);
+      if W then AddMsg(s,id);
   end else
     AddMsg('Ох! Вы не в таких отношениях, чтобы беседовать!',0);
 end;

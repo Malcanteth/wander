@@ -36,7 +36,7 @@ function GenerateName(female : boolean) : string; // Генерация имени
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf;
+  Player, Monsters, Map, Items, Msg, conf, sutils;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -372,7 +372,7 @@ begin
     TextOut(((WindowX-length(s5)) div 2) * CharX, 19*CharY, s5);
     // Версия
     Font.Color := cPURPLE;
-    TextOut(28*CharY, 21*CharY, 'Версия ' + GameVersion);
+    TextOut(29*CharY, 21*CharY, 'Версия ' + GameVersion);
     // Нажите кнопку
     Font.Color := cYELLOW;
     TextOut(((WindowX-length(s6)) div 2) * CharX, 25*CharY, s6);
@@ -555,9 +555,11 @@ begin
   Result := s;
 end;
 
-initialization
-  GameVersion := FileVersion(Paramstr(0));
+var
+  EX: TExplodeResult;
 
-finalization
+initialization
+  EX := Explode('.', FileVersion(Paramstr(0)));
+  GameVersion := EX[0] + '.' + EX[1] + EX[2];
 
 end.

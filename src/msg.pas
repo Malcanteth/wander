@@ -111,11 +111,6 @@ var
   RF: Byte;
 begin
   if Gender = 10 then Gender := pc.gender;
-  if (Pos('/', AString) <= 0) then
-  begin
-    Result := AString;
-    Exit;
-  end;
   SX := '';
   RX := '';
   RF := 0;
@@ -132,8 +127,8 @@ begin
       0: RX := RX + AString[I];
       1: SX := SX + AString[I];
       2: begin
-           S1 := GetStrKey(SX, '/');
-           S2 := GetStrValue(SX, '/');
+           S1 := GetStrKey('/',SX,);
+           S2 := GetStrValue('/',SX);
            SX := '';
            RF := 0;
            if (Gender = genFEMALE) then RX := RX + S2 else RX := RX + S1;
