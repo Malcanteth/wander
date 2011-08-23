@@ -176,7 +176,7 @@ const
 begin
   if not LoadSpecialMaps then
   begin
-    showmessage('Ошибка загрузки пакета карт!');
+    MsgBox('Ошибка загрузки пакета карт!');
     NowMap := 0;
   end;
   WaitForLadderClick := False;
@@ -278,14 +278,14 @@ end;
 procedure TMainEdForm.Button5Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    showmessage('Не выбрана карта!') else
-      begin
-        SpecialMaps[NowMap].Map.Special := NowMap;
-        SpecialMaps[NowMap].Map := M;
-        AddInfo;
-        SaveSpecialMaps;
-        RefreshMapList;
-      end;
+    MsgBox('Не выбрана карта!') else
+    begin
+      SpecialMaps[NowMap].Map.Special := NowMap;
+      SpecialMaps[NowMap].Map := M;
+      AddInfo;
+      SaveSpecialMaps;
+      RefreshMapList;
+    end;
 end;
 
 { Добавить карту }
@@ -893,7 +893,7 @@ begin
           If SpecialMaps[i].Map.Tile[x,y] = tdUSTAIRS then
             h := true;
       if (h) and (SpecialMaps[i].LadderUp = 0) then
-        Showmessage('В локации "'+SpecialMaps[i].name+'" не определены свойства лестницы вверх!');
+        MsgBox('В локации "'+SpecialMaps[i].name+'" не определены свойства лестницы вверх!');
      end;
 end;
 
@@ -910,7 +910,7 @@ end;
 procedure TMainEdForm.Button6Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    showmessage('Для начала необходимо выбрать карту!') else
+    MsgBox('Для начала необходимо выбрать карту!') else
       WaitForLadderClick := True;
 end;
 
@@ -1012,7 +1012,7 @@ end;
 procedure TMainEdForm.Button2Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    showmessage('Для начала необходимо выбрать карту!') else
+    MsgBox('Для начала необходимо выбрать карту!') else
       WaitForMonsterClick := True; 
 end;
 

@@ -1,4 +1,5 @@
-// Диалог на WinAPI вместо тяжелого Dialogs c ShowMessage
+// Диалог MsgBox на WinAPI вместо тяжелого Dialogs c ShowMessage,
+// не требует преобразования типов, также записывает сообщение в лог
 unit MBox;
 
 interface
@@ -11,9 +12,12 @@ procedure MsgBox(const BoxBoolMessage: Boolean); overload;
 
 implementation
 
+uses wlog;
+
 procedure MsgBox(const BoxStrMessage: String); overload;
 begin
   MessageBox(0, PChar(BoxStrMessage), 'Wander', MB_OK);
+  Log(BoxStrMessage);
 end;
 
 procedure MsgBox(const BoxIntMessage: Integer); overload;

@@ -380,7 +380,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 54
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -394,7 +394,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 54
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -433,7 +433,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 115
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -447,7 +447,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 115
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -486,7 +486,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 145
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -500,7 +500,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 145
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -539,7 +539,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 176
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -553,7 +553,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 176
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -592,7 +592,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 207
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -606,7 +606,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 207
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -645,7 +645,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 237
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -659,7 +659,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 237
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -698,7 +698,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 298
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -712,7 +712,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 298
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -751,7 +751,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 84
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -765,7 +765,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 84
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -804,7 +804,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 268
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -818,7 +818,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 268
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -857,7 +857,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 329
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -871,7 +871,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 329
       Width = 39
-      Height = 26
+      Height = 25
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
