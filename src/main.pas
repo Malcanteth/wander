@@ -66,7 +66,7 @@ begin
   if PlayMode = AdventureMode then
     if not MainEdForm.LoadSpecialMaps then
     begin
-      MsgBox('Ошибка загрузки файла maps.dp!');
+      MsgBox('Ошибка загрузки карт!');
       Halt;
     end;
   GameTimer.Enabled := False;  

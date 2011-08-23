@@ -332,7 +332,7 @@ begin
   {$I+}
   if IOResult = 0 then
   begin
-    Result := true;
+    Result := TRUE;
     BlockRead(f, kol, SizeOf(kol));
     for i:=1 to kol do
     begin
@@ -358,7 +358,7 @@ begin
   {$I+}
   if IOResult = 0 then
   begin
-    Result := TRUE;
+    if Result = TRUE then Result := TRUE;
     for i:=1 to kol do
     begin
       // Читаем кол-во монстров
@@ -373,10 +373,8 @@ begin
           end;
     end;
     CloseFile(f);
-  end;
-  {$I+}
-  if IOResult <> 0 then
-    Result := false;
+  end else
+    Result := FALSE;
   // Предметы
   AssignFile(f,'data/items.dm');
   {$I-}
@@ -384,7 +382,7 @@ begin
   {$I+}
   if IOResult = 0 then
   begin
-    Result := TRUE;
+    if Result = TRUE then Result := TRUE;
     for i:=1 to kol do
     begin
       z := 0;
@@ -397,9 +395,7 @@ begin
         end;
     end;
     CloseFile(f);
-  end;
-  {$I+}
-  if IOResult <> 0 then
+  end else
     Result := FALSE;
 end;
 
