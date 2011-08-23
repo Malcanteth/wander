@@ -83,7 +83,7 @@ var
 implementation
 
 uses
-  Map, MapEditor, conf, sutils;
+  Map, MapEditor, conf, sutils, vars, script;
 
 { Подготовка в самом начале игры }
 procedure Tpc.Prepare;
@@ -1739,25 +1739,8 @@ var
   R, H, S : string;
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  case Rand(1, 7) of
-    1: R := 'Итак, в этом мире ты %s по имени %s.';
-    2: R := 'Ты %s по имени %s.';
-    3: R := 'Все знают в этом мире, что ты %s по имени %s.';
-    4: R := 'В мире ты известен как %s по имени %s.';
-    5: R := 'Ты %s и тебя зовут %s.';
-    6: R := 'Ты %s. Тебя зовут %s.';
-    7: R := 'Известно, что ты %s по имени %s.';
-  end;
-  case Rand(1, 7) of
-    1: H := 'Продолжаем?';
-    2: H := 'Соглас{ен/на}?';
-    3: H := 'Идем дальше?';
-    4: H := 'Играем?';
-    5: H := 'Продолжим?';
-    6: H := 'Начнем игру?';
-    7: H := 'Начинаем?';
-  end;
-  S := Format(R + ' ' + H, [CLName, PC.Name]);
+  Script.Run('CreatePC.pas');
+  S := Format(V.GetStr('CreatePCStr'), [CLName, PC.Name]);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;

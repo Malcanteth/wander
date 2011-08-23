@@ -45,55 +45,55 @@ begin
   Result := Msg.GetMsg(s, gid);
 end;
 
-{  }
+{ Вернуть переменную как строку }
 function WanderGetStr(VR: String): String;
 begin
   Result := V.GetStr(VR);
 end;
 
-{  }
+{ Установить переменную как строку }
 procedure WanderSetStr(VR, D: String);
 begin
   V.SetStr(VR, D);
 end;
 
-{  }
+{ Вернуть переменную как целое число }
 function WanderGetInt(VR: String): Integer;
 begin
   Result := V.GetInt(VR);
 end;
 
-{  }
+{ Установить переменную как целое число }
 procedure WanderSetInt(VR: String; A: Integer);
 begin
   V.SetInt(VR, A);
 end;
 
-{  }
+{ Инкременировать целочисленное значение переменной }
 procedure WanderIncInt(VR: String; A: Integer);
 begin
   V.Inc(VR, A);
 end;
 
-{  }
+{ Декременировать целочисленное значение переменной }
 procedure WanderDecInt(VR: String; A: Integer);
 begin
   V.Dec(VR, A);
 end;
 
-{  }
+{ Вернуть переменную как булевую }
 function WanderGetBool(VR: String): Boolean;
 begin
   Result := V.GetBool(VR);
 end;
 
-{  }
+{ Установить переменную как булевую }
 procedure WanderSetBool(VR: String; B: Boolean);
 begin
   V.SetBool(VR, B);
 end;
 
-{  }
+{ Присвоить значение одной переменной другой }
 procedure WanderLetVar(V1, V2: String);
 begin
   V.Let(V1, V2);
@@ -142,6 +142,7 @@ var
     I: Integer;
     S: string;
   begin
+    // Если ошибка...
     S := Format('Ошибки в скрипте: "%s":', [ExtractFileName(FileName)]) + #10#13;
     for I := 0 to Compiler.MsgCount - 1 do
       S := S + Compiler.Msg[I].MessageToString + ';'#10#13;
@@ -191,7 +192,6 @@ begin
     Exec.RegisterDelphiFunction(@WanderAddMsg,'ADDMSG',cdRegister);
     Exec.RegisterDelphiFunction(@WanderGetMsg,'GETMSG',cdRegister);
     Exec.RegisterDelphiFunction(@WanderRun,'RUN',cdRegister);
-    // Vars Functions
     Exec.RegisterDelphiFunction(@WanderGetStr,'GETSTR',cdRegister);
     Exec.RegisterDelphiFunction(@WanderSetStr,'SETSTR',cdRegister);
     Exec.RegisterDelphiFunction(@WanderGetInt,'GETINT',cdRegister);
