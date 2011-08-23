@@ -49,7 +49,7 @@ implementation
 
 uses
   Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor,
-  conf, sutils, script, mbox;
+  conf, sutils, script, mbox, vars;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -1117,7 +1117,7 @@ begin
     OnPaint(Sender);
 end;
 
-{ Это нужно что бы TAB обработать }
+{ Это нужно, что бы TAB обработать }
 procedure TMainForm.CMDialogKey(var msg: TCMDialogKey);
 begin
   if msg.Charcode <> VK_TAB then inherited;
@@ -1128,26 +1128,24 @@ procedure TMainForm.InitGame;
 begin
   GameState := gsPLAY;
   AskForQuit := TRUE;
-  // Режим приключения
-  if PlayMode = AdventureMode then
-  begin
-    pc.level := 1;   // Эвилиар
-    M.MakeSpMap(pc.level);
-    pc.PlaceHere(6,18);
-    Addmsg('{Очень теплый и ясный день.}',0);
-    Addmsg('После нескольких недель странствия, ты, наконец, прибыл{/a} в деревушку Эвилиар.',0);
-    Addmsg('Ходят слухи, что здесь творятся странные вещи. Ты хочешь разобраться в этом.',0);
-    AddMsg('',0);
-  end else
-    if PlayMode = DungeonMode then
+  // Выбор режима приключения
+  V.SetInt('PlayMode', PlayMode);
+  case PlayMode of
+    AdventureMode:  // Деревушка Эвилиар
     begin
-      pc.level := 7; // Вход в подземелье
+      pc.level := 1;
+      M.MakeSpMap(pc.level);
+      pc.PlaceHere(6,18);
+      Run('InitStory.pas');
+    end;
+    DungeonMode:    // Вход в подземелье
+    begin
+      pc.level := 7;
       M.MakeSpMap(pc.level);
       pc.PlaceHere(42,16);
-      Addmsg('Поиски увенчались успехом - ты стоишь перед входом в пещеру, которая, согласно легендам,',0);
-      Addmsg('хранит в себе множество сокровищ и артефактов. Но приготовься и к опасностям - говорят, в ней',0);
-      Addmsg('обитают злые силы...',0);
+      Run('InitStory.pas');
     end;
+  end;
   pc.FOV;
   Addmsg(' ',0);
   Addmsg('Нажми ([F1]), если нужна помощь.',0);
