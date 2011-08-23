@@ -4,7 +4,7 @@ unit sutils;
 interface
 
 type
-  TExplodeResult = array of string;
+  TExplodeResult = array of string;               // Тип для разбивания строки на фрагменты
 
 function StrLeft(S: String; I: Integer): String;  // Копия строки слева
 function StrRight(S: String; I: Integer): String; // Копия строки справа
