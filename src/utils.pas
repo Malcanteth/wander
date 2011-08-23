@@ -129,8 +129,8 @@ begin
     FindNext(s);
   end;
   {$I-}
-  RMDir(Path + 'swap/' + pc.name);
-  RMDir(Path + 'swap');
+  RemoveDir(Path + 'swap/' + pc.name);
+  RemoveDir(Path + 'swap');
   {$I+}
 end;
 
