@@ -6,7 +6,8 @@ procedure Run(Script: string); // Запускаем скрипт на выполнение
 
 implementation
 
-uses uPSCompiler, uPSRuntime, SysUtils, Classes, wlog, sutils, vars, utils, mbox;
+uses uPSCompiler, uPSRuntime, SysUtils, Classes, wlog, sutils, vars, utils, mbox,
+  msg;
 
 const ScriptPath = '\Data\Scripts\';
 
@@ -32,7 +33,73 @@ begin
   WLog.Log(LogMsg);
 end;
 
-{ Dыполнение скрипта }
+{ Добавить сообщение }
+procedure WanderAddMsg(s: string; id : integer);
+begin
+  Msg.AddDrawMsg(s, id);
+end;
+
+(* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
+function WanderGetMsg(s: string; gid : integer): string;
+begin
+  Result := Msg.GetMsg(s, gid);
+end;
+
+{  }
+function WanderGetStr(VR: String): String;
+begin
+  Result := V.GetStr(VR);
+end;
+
+{  }
+procedure WanderSetStr(VR, D: String);
+begin
+  V.SetStr(VR, D);
+end;
+
+{  }
+function WanderGetInt(VR: String): Integer;
+begin
+  Result := V.GetInt(VR);
+end;
+
+{  }
+procedure WanderSetInt(VR: String; A: Integer);
+begin
+  V.SetInt(VR, A);
+end;
+
+{  }
+procedure WanderIncInt(VR: String; A: Integer);
+begin
+  V.Inc(VR, A);
+end;
+
+{  }
+procedure WanderDecInt(VR: String; A: Integer);
+begin
+  V.Dec(VR, A);
+end;
+
+{  }
+function WanderGetBool(VR: String): Boolean;
+begin
+  Result := V.GetBool(VR);
+end;
+
+{  }
+procedure WanderSetBool(VR: String; B: Boolean);
+begin
+  V.SetBool(VR, B);
+end;
+
+{  }
+procedure WanderLetVar(V1, V2: String);
+begin
+  V.Let(V1, V2);
+end;
+
+{ Выполнение скрипта }
 procedure WanderRun(Script: string);
 begin
   Run(Script);
@@ -46,7 +113,18 @@ begin
     Sender.AddDelphiFunction('function Rand(A, B: Integer): Integer;');
     Sender.AddDelphiFunction('procedure MsgBox(S: String);');
     Sender.AddDelphiFunction('procedure Log(LogMsg: String);');
+    Sender.AddDelphiFunction('procedure AddMsg(s: string; id : integer);');
+    Sender.AddDelphiFunction('function GetMsg(AString: String; gender : byte): string;');
     Sender.AddDelphiFunction('procedure Run(Script: String);');
+    Sender.AddDelphiFunction('function  GetStr(VR: String): String;');
+    Sender.AddDelphiFunction('procedure SetStr(VR, D: String);');
+    Sender.AddDelphiFunction('function  GetInt(VR: String): Integer;');
+    Sender.AddDelphiFunction('procedure SetInt(VR: String; I: Integer);');
+    Sender.AddDelphiFunction('procedure IncInt(VR: String; A: Integer);');
+    Sender.AddDelphiFunction('procedure DecInt(VR: String; A: Integer);');
+    Sender.AddDelphiFunction('function  GetBool(VR: String): Boolean;');
+    Sender.AddDelphiFunction('procedure SetBool(VR: String; B: Boolean);');
+    Sender.AddDelphiFunction('procedure LetVar(V1, V2: String);');
     Result := True;
   end else
     Result := False;
@@ -110,7 +188,19 @@ begin
     Exec.RegisterDelphiFunction(@WanderRand,'RAND',cdRegister);
     Exec.RegisterDelphiFunction(@WanderLog,'LOG',cdRegister);
     Exec.RegisterDelphiFunction(@WanderMsgBox,'MSGBOX',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderAddMsg,'ADDMSG',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderGetMsg,'GETMSG',cdRegister);
     Exec.RegisterDelphiFunction(@WanderRun,'RUN',cdRegister);
+    // Vars Functions
+    Exec.RegisterDelphiFunction(@WanderGetStr,'GETSTR',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderSetStr,'SETSTR',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderGetInt,'GETINT',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderSetInt,'SETINT',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderIncInt,'INCINT',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderDecInt,'DECINT',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderGetBool,'GETBOOL',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderSetBool,'SETBOOL',cdRegister);
+    Exec.RegisterDelphiFunction(@WanderLetVar,'LETVAR',cdRegister);
     //
     if not Exec.LoadData(Data) then
     begin
