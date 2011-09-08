@@ -9,7 +9,7 @@ implementation
 uses uPSCompiler, uPSRuntime, SysUtils, Classes, wlog, sutils, vars, utils, mbox,
   msg;
 
-const ScriptPath = '\Data\Scripts\';
+const ScriptPath = '\Data\Scripts\'; // Путь к папке со скриптами
 
 var
   Path: string;
@@ -177,6 +177,7 @@ begin
     Compiler.OnUses := ScriptOnUses;
     if not Compiler.Compile(Script) then
     begin
+      // Если ошибки
       ShowScriptErrors(S);
       Compiler.Free;
       Exit;
@@ -201,7 +202,7 @@ begin
     Exec.RegisterDelphiFunction(@WanderGetBool,'GETBOOL',cdRegister);
     Exec.RegisterDelphiFunction(@WanderSetBool,'SETBOOL',cdRegister);
     Exec.RegisterDelphiFunction(@WanderLetVar,'LETVAR',cdRegister);
-    //
+    // Выполняем скрипт
     if not Exec.LoadData(Data) then
     begin
       Exec.Free;
@@ -213,15 +214,19 @@ begin
 end;
 
 initialization
+  // Путь
   GetDir(0, Path);
   Path := Path + ScriptPath;
+  // Списки
   L := TStringList.Create;
   F := TStringList.Create;
   D := TStringList.Create;
   H := TStringList.Create;
+  // Заголовочный скрипт
   H.LoadFromFile(Path + 'utils.pas');
 
 finalization
+  // Осв. ресурсы
   F.Free;
   H.Free;
   L.Free;
