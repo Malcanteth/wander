@@ -18,6 +18,7 @@ type
     procedure FormResize(Sender: TObject);
     procedure InitGame;
     procedure GameTimerTimer(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -42,6 +43,7 @@ var
   WasEq                : boolean;              // Перед вызовом меню действий с предметом был инвентарь или экипировка
   a                    : integer;
   wtd                  : byte;                 // Что сделать при выборе монстра
+  DC                   : HDC;                  // 
 
 implementation
 
@@ -54,6 +56,8 @@ uses
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  // контекст главной формы
+  DC := GetDC(MainForm.Handle);
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
@@ -118,7 +122,10 @@ begin
     GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
     ShowInput;                  // Показываем поле для ввода имени персонажа
   end;
-  Canvas.StretchDraw(ClientRect, Screen); // Отображаем буфер
+  // Отображаем растягиваемый буфер
+  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  StretchBlt(DC, 0, 0, MainForm.Width, MainForm.Height,
+         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
 end;
 
 { Нажатие на клавиши }
@@ -1227,6 +1234,12 @@ end;
 procedure TMainForm.GameTimerTimer(Sender: TObject);
 begin
   MainForm.Paint;
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  ReleaseDC(MainForm.Handle, DC);
+  DeleteDC(DC);
 end;
 
 initialization
