@@ -124,7 +124,7 @@ begin
   end;
   // ќтображаем раст€гиваемый буфер
   SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
-  StretchBlt(DC, 0, 0, MainForm.Width, MainForm.Height,
+  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
          Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
 end;
 
