@@ -117,14 +117,6 @@ function RateToStr(n : byte) : string;         // Статус раскачки навыка
 function ColorRateSkill(n : real) : longword;  // Цвет статуса раскачки
 function IsInNewAreaSkill(was, now : real)     // Если уровень развития навыка перешел в другой статус
                                   : boolean;
-                                  
-function BestWPNCL : byte;                     // Самый прокаченный навык в ближ. бою
-function HowManyBestWPNCL : byte;              // Сколько одинаковопрокаченных в ближ. бою
-function OneOfTheBestWPNCL(i : byte): boolean; // Один из лучше прок. навыков
-function BestWPNFR : byte;                     // Самый прокаченный навык в дальнем бою
-function HowManyBestWPNFR : byte;              // Сколько одинаковопрокаченных в дальнем бою
-function OneOfTheBestWPNFR(i : byte): boolean; // Один из лучше прок. навыков
-
 procedure ShowAbilitys;                        // Показать окно со способностями
 
 implementation
@@ -319,70 +311,6 @@ function IsInNewAreaSkill(was, now : real)
 begin
   Result := FALSE;
   if RateSkill(was) <> RateSkill(now) then Result := TRUE;
-end;
-
-{ Самый прокаченный навык в ближ. бою }
-function BestWPNCL : byte;
-var
-  best, i : byte;
-begin
-  best := 1;
-  for i:=1 to CLOSEFIGHTAMOUNT do
-    if pc.closefight[i] > pc.closefight[best] then
-      best := i;
-  Result := best;
-end;
-
-{ Сколько одинаковопрокаченных в ближ. бою }
-function HowManyBestWPNCL : byte;
-var
-  i, bestone, amount : byte;
-begin
-  bestone := BestWPNCL;
-  amount := 1;
-  for i:=1 to CLOSEFIGHTAMOUNT do
-    if (i <> bestone) and (pc.closefight[i] = pc.closefight[bestone]) then
-      inc(amount);
-  Result := amount;
-end;
-
-{ Один из лучше прок. навыков }
-function OneOfTheBestWPNCL(i : byte): boolean;
-begin
-  Result := FALSE;
-  if pc.closefight[i] = pc.closefight[BestWPNCL] then Result := TRUE;
-end;
-
-{ Самый прокаченный навык в дальнем бою }
-function BestWPNFR : byte;
-var
-  best, i : byte;
-begin
-  best := 1;
-  for i:=1 to FARFIGHTAMOUNT do
-    if pc.farfight[i] > pc.farfight[best] then
-      best := i;
-  Result := best;
-end;
-
-{ Сколько одинаковопрокаченных в дальнем бою }
-function HowManyBestWPNFR : byte;
-var
-  i, bestone, amount : byte;
-begin
-  bestone := BestWPNFR;
-  amount := 1;
-  for i:=1 to FARFIGHTAMOUNT do
-    if (i <> bestone) and (pc.farfight[i] = pc.farfight[bestone]) then
-      inc(amount);
-  Result := amount;
-end;
-
-{ Один из лучше прок. навыков }
-function OneOfTheBestWPNFR(i : byte): boolean;
-begin
-  Result := FALSE;
-  if pc.farfight[i] = pc.farfight[BestWPNFR] then Result := TRUE;
 end;
 
 { Показать окно со способностями }

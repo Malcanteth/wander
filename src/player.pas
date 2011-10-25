@@ -20,12 +20,10 @@ type
     //
     status      : array[1..2] of integer;        // Счетчики (1-Голод)
     //
-    atr         : array[1..2] of byte;           // Приоритетные атрибуты
     warning     : boolean;                       // Монстр в поле зрения
 
+    procedure ClearPlayer;                       // Очистить
     procedure Prepare;                           // Подготовка в самом начале игры
-    procedure PrepareSkills;                     // Раставить очки умений в зависимости от класса
-    procedure FavWPNSkill;                       // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
     procedure Move(dx,dy : shortint);            // Двигать героя
     procedure Run(dx,dy : shortint);             // Shift + Двигать героя
     procedure FOV;                               // Поле видимости
@@ -85,12 +83,27 @@ implementation
 uses
   Map, MapEditor, conf, sutils, vars, script;
 
+{ Очистить }
+procedure Tpc.ClearPlayer;
+begin
+  ClearMonster;
+  id := 1;
+  turn := 0;
+  level := 0;
+  enter := 0;
+  depth := 0;
+  fillchar(quest,sizeof(quest),0);
+  color := 0;
+  gender := 0;
+  exp := 0;
+  explevel := 1;
+  fillchar(status,sizeof(status),0);
+  warning := FALSE
+end;
+
 { Подготовка в самом начале игры }
 procedure Tpc.Prepare;
 begin
-  depth := 0;
-  exp := 0;
-  explevel := 1;
   // Изменить атрибуты исходя из приоритетов
   Rstr := 5; Rdex := 5; Rint := 5;
   // Первичный
@@ -117,248 +130,10 @@ begin
   los := 5 + Round(int / 5);
   // Атака голыми руками
   attack := Round(str / 2);
+  defense := Round(str / 4) + Round(dex / 4);
   // Обнулить статусы
   status[1] := 0;
   status[2] := 0;
-end;
-
-{ Раставить очки умений и экипировать в зависимости от класса }
-procedure Tpc.PrepareSkills;
-var i : byte;
-begin
-  for i:=1 to CLOSEFIGHTAMOUNT do closefight[i] := 0;
-  for i:=1 to FARFIGHTAMOUNT do farfight[i] := 0;
-  case WhatClass of
-    1: //Воин
-    begin
-      closefight[1] := 50;
-      closefight[2] := 50;
-      closefight[5] := 50;
-      closefight[6] := 50;
-      farfight[1] := 40;
-      farfight[2] := 40;
-
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 60, 0), FALSE,60);
-    end;
-    2: //Варвар
-    begin
-      closefight[3] := 50;
-      closefight[4] := 40;
-      closefight[6] := 50;
-      farfight[1] := 50;
-      farfight[3] := 40;
-      farfight[4] := 40;
-
-      EquipItem(CreateItem(idCAPE, 1, 0));
-      PickUp(CreateItem(idMEAT, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 5, 0), FALSE,5);
-    end;
-    3: //Паладин
-    begin
-      closefight[2] := 50;
-      farfight[1] := 40;
-      farfight[2] := 40;
-
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 3, 0), FALSE,3);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
-    end;
-    4: //Странник
-    begin
-      closefight[2] := 40;
-      closefight[4] := 40;
-      closefight[6] := 40;
-      farfight[1] := 40;
-      farfight[3] := 40;
-
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 4, 0), FALSE,4);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idCOIN, 70, 0), FALSE,70);
-    end;
-    5: //Воришка
-    begin
-      closefight[2] := 30;
-      closefight[6] := 40;
-      farfight[1] := 30;
-      farfight[2] := 30;
-      farfight[3] := 30;
-      farfight[4] := 30;
-
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 3, 0), FALSE,3);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 90, 0), FALSE,90);
-    end;
-    6: //Монах
-    begin
-      closefight[6] := 60;
-      farfight[1] := 40;
-      farfight[4] := 50;
-
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 3, 0), FALSE,3);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 8, 0), FALSE,8);
-      PickUp(CreateItem(idCOIN, 25, 0), FALSE,25);
-    end;
-    7: //Жрец
-    begin
-      closefight[4] := 30;
-      farfight[1] := 30;
-      farfight[3] := 30;
-
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idMEAT, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 35, 0), FALSE,35);
-    end;
-    8: //Колдун
-    begin
-      closefight[4] := 25;
-      farfight[3]   := 25;
-
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
-    end;
-    9: //Мыслитель
-    begin
-      closefight[4] := 25;
-      farfight[3] := 25;
-
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 4, 0), FALSE,4);
-      PickUp(CreateItem(idLAVASH, 6, 0), FALSE,6);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 50, 0), FALSE,50);
-    end;
-  end;
-end;
-
-{ Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие }
-procedure Tpc.FavWPNSkill;
-var i : byte;
-begin
-  // Если изначльно прокачен только 1 оружейный навык, то он автоматически становится любимым
-  if HowManyBestWPNCL = 1 then
-    c_choose := BestWPNCL;
-  if HowManyBestWPNFR = 1 then
-    f_choose := BestWPNFR;
-  // Если 2 одинаковых и первое - двуручное оружие, то любимым становится второе
-  if (HowManyBestWPNCL = 2) and (OneOfTheBestWPNCL(1)) then
-    for i:=2 to CLOSEFIGHTAMOUNT do
-      if OneOfTheBestWPNCL(i) then
-      begin
-        c_choose := i;
-        break;
-      end;
-  // Если 2 одинаковых и первое - кидать, то любимым становится второе
-  if (HowManyBestWPNFR = 2) and (OneOfTheBestWPNFR(1)) then
-    for i:=2 to FARFIGHTAMOUNT do
-      if OneOfTheBestWPNFR(i) then
-      begin
-        f_choose := i;
-        break;
-      end;
-  case c_choose of
-    // Двуручное
-    1 :
-    begin
-      pc.closefight[1] := pc.closefight[1] + 25;
-      EquipItem(CreateItem(idLONGSWORD, 1, 0));
-    end;
-    // Меч
-    2 :
-    begin
-      pc.closefight[2] := pc.closefight[2] + 25;
-      EquipItem(CreateItem(idSHORTSWORD, 1, 0));
-    end;
-    // Дубина
-    3 :
-    begin
-      pc.closefight[3] := pc.closefight[3] + 25;
-      EquipItem(CreateItem(idDUBINA, 1, 0));
-    end;
-    // Посох
-    4 :
-    begin
-      pc.closefight[4] := pc.closefight[4] + 25;
-      EquipItem(CreateItem(idSTAFF, 1, 0));
-    end;
-    // Топор
-    5 :
-    begin
-      pc.closefight[5] := pc.closefight[5] + 25;
-      EquipItem(CreateItem(idAXE, 1, 0));
-    end;
-    // Рукопашный бой
-    6 :
-    begin
-      pc.closefight[6] := pc.closefight[6] + 25;
-      pc.attack := pc.attack * 2;
-    end;
-  end;
-  case f_choose of
-    // Кидать
-    1 :
-    begin
-      pc.farfight[1] := pc.farfight[1] + 25;
-    end;
-    // Лук
-    2 :
-    begin
-      pc.farfight[2] := pc.farfight[2] + 25;
-      EquipItem(CreateItem(idBOW, 1, 0));
-      EquipItem(CreateItem(idARROW, 30, 0));
-    end;
-    // Праща
-    3 :
-    begin
-      pc.farfight[3] := pc.farfight[3] + 25;
-      EquipItem(CreateItem(idSLING, 1, 0));
-      EquipItem(CreateItem(idLITTLEROCK, 50, 0));
-    end;
-    // Духовая трубка
-    4 :
-    begin
-      pc.farfight[4] := pc.farfight[4] + 25;
-      EquipItem(CreateItem(idBLOWPIPE, 1, 0));
-      EquipItem(CreateItem(idIGLA, 40, 0));
-    end;
-    // Арбалет
-    5 :
-    begin
-      pc.farfight[5] := pc.farfight[5] + 25;
-      EquipItem(CreateItem(idCROSSBOW, 1, 0));
-      EquipItem(CreateItem(idBOLT, 25, 0));
-    end;
-  end;
 end;
 
 { Двигать героя }
@@ -374,7 +149,7 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[3] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?!',0) + ' [(Y/n)]') = 'Y' then
+          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?!',0) + ' #(Y/n)#') = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
@@ -385,7 +160,7 @@ begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось *:(*',0);
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[3];
             // Если загрузить не удастся - ничего страшного ;)
@@ -400,7 +175,7 @@ begin
       begin
         if (SpecialMaps[pc.level].Loc[4] = 0) and (pc.level = 1) then
         begin
-          if Ask(GetMsg('Поздравляю! Ты выполнил{/a} задачу данной версии игры! Хочешь теперь уйти? [(Y/n)]',0)) = 'Y' then
+          if Ask(GetMsg('Поздравляю! Ты выполнил{/a} задачу данной версии игры! Хочешь теперь уйти? #(Y/n)#',0)) = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
@@ -411,7 +186,7 @@ begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось *:(*',0);
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[4];
             // Если загрузить не удастся - ничего страшного ;)
@@ -426,7 +201,7 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[1] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! [(Y/n)]',0)) = 'Y' then
+          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! #(Y/n)#',0)) = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
@@ -437,7 +212,7 @@ begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось *:(*',0);
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[1];
             // Если загрузить не удастся - ничего страшного ;)
@@ -452,7 +227,7 @@ begin
       begin
         if SpecialMaps[pc.level].Loc[2] = 0 then
         begin
-          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! [(Y/n)]',0)) = 'Y' then
+          if Ask(GetMsg('Хочешь сбежать как трус{/ишка}?! #(Y/n)#',0)) = 'Y' then
           begin
             AskForQuit := FALSE;
             MainForm.Close;
@@ -463,7 +238,7 @@ begin
             // Убрать указатель на героя
             M.MonP[pc.x,pc.y] := 0;
             // Сохранить уровень
-            if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+            if M.Save = False then AddMsg('Сохрание не удалось *:(*',0);
             // Меняем  номер локации
             pc.level := SpecialMaps[pc.level].Loc[2];
             // Если загрузить не удастся - ничего страшного ;)
@@ -659,7 +434,7 @@ begin
       dec(status[stDRUNK]);
     if status[stHUNGRY] = 1500 then
     begin
-      AddMsg('<Ты был{/a} слишком истощен{/a}...>',0);
+      AddMsg('*Ты был{/a} слишком истощен{/a}...*',0);
       More;
       pc.hp := 0;
     end;
@@ -701,13 +476,34 @@ begin
               s := s + ' Настроен{/a} весьма агрессивно.';
             if M.MonL[M.MonP[px,py]].tactic = 2 then
               s := s + ' Защищается.';
-            // Оружие в руках
+            // Оружие в руках и другие вещи
             if IsFlag(MonstersData[M.MonL[M.MonP[px,py]].id].flags, M_HAVEITEMS) then
             begin
+              // Оружие
               if M.MonL[M.MonP[px,py]].eq[6].id = 0 then
                 s := s + ' Безоруж{ен/на}.' else
                   s := s + Format(' В руках держит %s.', [ItemsData[M.MonL[M.MonP[px,py]].eq[6].id].name3]);
+              // Щит
+              if M.MonL[M.MonP[px,py]].eq[8].id > 0 then
+                s := s + Format(' В руках держит %s.', [ItemsData[M.MonL[M.MonP[px,py]].eq[6].id].name3]);
+              // Броня
+              if M.MonL[M.MonP[px,py]].eq[4].id > 0 then
+                  s := s + Format(' На нем ты видишь %s.', [ItemsData[M.MonL[M.MonP[px,py]].eq[4].id].name3]);
             end;
+{    Font.Color := cBROWN;
+    TextOut(5*CharX, 11*CharY, '[ ] - Голова            :');
+    TextOut(5*CharX, 12*CharY, '[ ] - Шея               :');
+    TextOut(5*CharX, 13*CharY, '[ ] - Плащ              :');
+    TextOut(5*CharX, 14*CharY, '[ ] - Тело              :');
+    TextOut(5*CharX, 15*CharY, '[ ] - Пояс              :');
+    TextOut(5*CharX, 16*CharY, '[ ] - Оружие            :');
+    TextOut(5*CharX, 17*CharY, '[ ] - Дальний бой       :');
+    TextOut(5*CharX, 18*CharY, '[ ] - Щит               :');
+    TextOut(5*CharX, 19*CharY, '[ ] - Запястье          :');
+    TextOut(5*CharX, 20*CharY, '[ ] - Кольцо            :');
+    TextOut(5*CharX, 21*CharY, '[ ] - Перчатки          :');
+    TextOut(5*CharX, 22*CharY, '[ ] - Обувь             :');
+    TextOut(5*CharX, 23*CharY, '[ ] - Амуниция          :');}
             AddMsg(s,  M.MonL[M.MonP[px,py]].id);
           end;
      end;
@@ -739,7 +535,7 @@ begin
     // Убрать указатель на героя
     M.MonP[pc.x,pc.y] := 0;
     // Сохранить уровень
-    if M.Save = False then AddMsg('Сохрание не удалось <:(>',0);
+    if M.Save = False then AddMsg('Сохрание не удалось *:(*',0);
     // Если герой снаружи нужно узнать номер лестницы
     if pc.enter = 0 then
     begin
@@ -790,7 +586,7 @@ begin
       begin
         AddMsg('Не удалось загрузить карту. Возможно файл с сохранением был удален, либо его не удалось записать.',0);
         More;
-        AddMsg('<Это критическая ошибка. Игра окончена.>',0);
+        AddMsg('*Это критическая ошибка. Игра окончена.*',0);
         More;
         AskForQuit := FALSE;
         MainForm.Close;
@@ -1026,7 +822,7 @@ begin
       begin
         lx := a;
         ly := b;
-        if M.MonP[lx,ly] > 0 then AddMsg('{Целиться в:}',0);
+        if M.MonP[lx,ly] > 0 then AddMsg('#Целиться в:#',0);
         AnalysePlace(lx,ly,1);
       end;
 end;
@@ -1251,7 +1047,7 @@ begin
         if i = 6 then
         begin
           Font.Color := cLIGHTGRAY;
-          TextOut(33*CharX, (10+i)*CharY, Format('{Атака в рукопашной схватке: %d', [pc.attack])); //'{Атака в рукопашной схватке: '+IntToStr(pc.attack)+'}');
+          TextOut(33*CharX, (10+i)*CharY, Format('{Атака в рукопашной схватке: %d}', [pc.attack])); 
         end;
       end else
         begin
@@ -1330,7 +1126,7 @@ var
   a : string;
   i,b : byte;
 begin
-  AddMsg('[Поздравляю! Ты достиг{/ла} нового уровня развития!]',0);
+  AddMsg('$Поздравляю! Ты достиг{/ла} нового уровня развития!$',0);
   Apply;
   // Повысить уровень, обнулить счетчик опыта
   inc(pc.explevel);
@@ -1349,35 +1145,35 @@ begin
       pc.ability[i] < 4;
     inc(pc.ability[i]);
     if pc.ability[i] = 1 then
-      AddMsg('Ты открыл{/a} в себе новую способность - "<'+AbilitysData[i].name+'>"!',0) else
-        AddMsg('Твоя способность "{'+AbilitysData[i].name+'}" стала на уровень лучше!',0);
+      AddMsg('Ты открыл{/a} в себе новую способность - "$'+AbilitysData[i].name+'$"!',0) else
+        AddMsg('Твоя способность "#'+AbilitysData[i].name+'#" стала на уровень лучше!',0);
     Apply;
   end;
   // Каждый третий уровень можно выбрать пракачку СЛИ
   if pc.explevel mod 3 = 0 then
   begin
-    AddMsg('{Ты можешь повысить один из своих атрибутов!}',0);
-    a := Ask('Выбери какой: ([S]) Сила, ([D]) Ловкость или ([I]) Интеллект?');
+    AddMsg('#Ты можешь повысить один из своих атрибутов!#',0);
+    a := Ask('Выбери какой: (#S#) Сила, (#D#) Ловкость или (#I#) Интеллект?');
     case a[1] of
       'S' :
       begin
         inc(pc.Rstr);
         pc.str := pc.Rstr;
-        AddMsg('[Ты стал{/a} сильнее.]',0);
+        AddMsg('$Ты стал{/a} сильнее.$',0);
         Apply;
       end;
       'D' :
       begin
         inc(pc.Rdex);
         pc.dex := pc.Rdex;
-        AddMsg('[Ты стал{/a} более ловк{им/ой}.]',0);
+        AddMsg('$Ты стал{/a} более ловк{им/ой}.$',0);
         Apply;
       end;
       'I' :
       begin
         inc(pc.Rint);
         pc.int := pc.Rint;
-        AddMsg('[Ты стал{/a} умнее.]',0);
+        AddMsg('$Ты стал{/a} умнее.$',0);
         Apply;
       end;
       ELSE
@@ -1387,21 +1183,21 @@ begin
           begin
             inc(pc.Rstr);
             pc.str := pc.Rstr;
-            AddMsg('[Ты стал{/a} сильнее.]',0);
+            AddMsg('$Ты стал{/a} сильнее.$',0);
             Apply;
           end;
           2 :
           begin
             inc(pc.Rdex);
             pc.dex := pc.Rdex;
-            AddMsg('[Ты стал{/a} более ловк{им/ой}.]',0);
+            AddMsg('$Ты стал{/a} более ловк{им/ой}.$',0);
             Apply;
           end;
           3 :
           begin
             inc(pc.Rint);
             pc.int := pc.Rint;
-            AddMsg('[Ты стал{/a} умнее.]',0);
+            AddMsg('$Ты стал{/a} умнее.$',0);
             Apply;
           end;
         end;
@@ -1455,7 +1251,7 @@ end;
 { Действия после смерти героя }
 procedure TPc.AfterDeath;
 begin
-  AddMsg('<Ты умер{/лa}!!!>',0);
+  AddMsg('*Ты умер{/лa}!!!*',0);
   Apply;
   AskForQuit := FALSE;
   MainForm.Close;
@@ -1487,7 +1283,7 @@ begin
           if Random(8 - pc.ability[abATTENTION])+1 = 1 then
           begin
             M.tile[a,b] := tdCDOOR;
-            AddMsg('{Ты наш{ел/лa} секретную дверь!}',0);
+            AddMsg('$Ты наш{ел/лa} секретную дверь!$',0);
             More;
           end;
 end;
