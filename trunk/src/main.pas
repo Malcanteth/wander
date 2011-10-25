@@ -210,6 +210,7 @@ begin
           // Рандомный герой?
           gsHERORANDOM:
           begin
+            pc.ClearPlayer;
             case Key of
               // Вверх/Вниз
               38,104,56,40,98,50 :
@@ -224,9 +225,9 @@ begin
                   GameState := gsHEROGENDER else
                     // Всё рандомно
                     begin
-                      // имя
-                      pc.gender := Rand(1, 2);
                       // пол
+                      pc.gender := Rand(1, 2);
+                      // имя
                       case pc.gender of
                         genMALE   : pc.name := GenerateName(FALSE);
                         genFEMALE : pc.name := GenerateName(TRUE);
@@ -237,12 +238,12 @@ begin
                       // Добавить очки умений исходя из класса
                       pc.Prepare;
                       pc.PrepareSkills;
-                      if (HowManyBestWPNCL > 1) and not ((HowManyBestWPNCL < 3) and (OneOfTheBestWPNCL(CLOSE_TWO))) then
+                      if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
                       begin
                         pc.CreateClWList;
                         c_choose := Wlist[Random(wlistsize)+1];
                       end;
-                      if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW))) then
+                      if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
                       begin
                         pc.CreateFrWList;
                         f_choose := Wlist[Random(wlistsize)+1];
@@ -302,7 +303,7 @@ begin
                 c_choose := Wlist[MenuSelected];
                 MenuSelected := 1;
                 MenuSelected2 := 1;
-                if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW)))  then
+                if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
                   GameState := gsHEROFRWPN else
                     GameState := gsHEROCRRESULT;
                 OnPaint(Sender);
@@ -378,9 +379,9 @@ begin
                     // Добавить очки умений исходя из класса
                     pc.Prepare;
                     pc.PrepareSkills;
-                    if (HowManyBestWPNCL > 1) and not ((HowManyBestWPNCL < 3) and (OneOfTheBestWPNCL(CLOSE_TWO))) then
+                    if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
                       GameState := gsHEROCLWPN else
-                        if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW))) then
+                        if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
                           GameState := gsHEROFRWPN else
                             GameState := gsHEROCRRESULT;
                   end;
@@ -570,7 +571,7 @@ begin
                 begin
                   if (pc.eq[7].id = 0) or (ItemsData[pc.eq[7].id].kind = ItemsData[pc.eq[13].id].kind) then
                   begin
-                    AddMsg('{Целиться в:}',0);
+                    AddMsg('$Целиться в:$',0);
                     i := pc.SearchForAliveField;
                     if autoaim > 0 then
                       if (M.Saw[M.MonL[autoaim].x, M.MonL[autoaim].y] = 2) and (M.MonL[autoaim].id > 0) then
@@ -601,14 +602,14 @@ begin
                    1 : AddMsg('Текущая тактика - <Агрессивное нападение>.',0);
                    2 : AddMsg('Текущая тактика - [Защита].',0);
                 end;
-                case Ask('Выбрать тактику: ([A]) - Агрессивное нападение, ([S]) - Стандартная, ([D]) - Защищаться.') of
+                case Ask('Выбрать тактику: (#A#) - Агрессивное нападение, (#S#) - Стандартная, (#D#) - Защищаться.') of
                   'A' :
                   begin
                     ClearMsg;
                     pc.tactic := 1;
                     AddMsg('Выбрано агрессивное нападение.',0);
                     AddMsg('Распределение шансов:',0);
-                    AddMsg('[+50% к успешному попадению и урону], <-50% к уклонению и эффективности брони>.',0);
+                    AddMsg('#+50% к успешному попадению и урону#, *-50% к уклонению и эффективности брони*.',0);
                   end;
                   'S' :
                   begin
@@ -623,7 +624,7 @@ begin
                     pc.tactic := 2;
                     AddMsg('Выбрана защитная тактика.',0);
                     AddMsg('Распределение шансов:',0);
-                    AddMsg('<-50% к успешному попадению и урону>, [+50% к уклонению и эффективности брони].',0);
+                    AddMsg('*-50% к успешному попадению и урону*, #+50% к уклонению и эффективности брони#.',0);
                   end;
                   ELSE
                     AddMsg('Ты решил{/a} не менять тактику.',0);
@@ -942,9 +943,9 @@ begin
                           AddMsg('Ты положил{/a} '+ItemName(pc.eq[MenuSelected], 1, TRUE)+' обратно в инвентарь.',0);
                           pc.eq[MenuSelected].id := 0;
                         end;
-                        1 : AddMsg('<Ты положил{/a} пустоту обратно в свой инвентарь :)>',0);
+                        1 : AddMsg('*Ты положил{/a} пустоту обратно в свой инвентарь :)*',0);
                         2 : AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.',0);
-                        3 : AddMsg('<Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.>',0);
+                        3 : AddMsg('*Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.*',0);
                       end;
                     end else
                       UseItem(MenuSelected);
@@ -1101,7 +1102,7 @@ begin
   end else
     if (GameState = gsPLAY) or (GameState = gsLOOK) or (GameState = gsCLOSE) or (GameState = gsCHOOSEMONSTER) then
     begin
-      if (Ask('Покинуть мир, совершив суицид? [(Y/n)]')) = 'Y' then
+      if (Ask('Покинуть мир, совершив суицид? #(Y/n)#')) = 'Y' then
       begin
         CanClose := TRUE;
         EndGame;
@@ -1155,7 +1156,7 @@ begin
   end;
   pc.FOV;
   Addmsg(' ',0);
-  Addmsg('Нажми ([F1]), если нужна помощь.',0);
+  Addmsg('Нажми (#F1#), если нужна помощь.',0);
   OnPaint(NIL);
 end;
 

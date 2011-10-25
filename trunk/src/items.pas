@@ -557,10 +557,10 @@ begin
           pc.status[stHUNGRY] := pc.status[stHUNGRY] - Round(ItemsData[pc.Inv[N].id].defense * pc.Inv[N].mass * 1.3 * (1 + (pc.ability[abEATINSIDE] * AbilitysData[abEATINSIDE].koef) / 100));
           if pc.status[stHUNGRY] < -500 then
           begin
-            AddMsg('[Ты не смог{/ла} доесть '+ItemName(pc.Inv[N], 1, FALSE)+' потому, что очень насытил{ся/ась}... чересчур насытил{ся/ась}...]',0);
+            AddMsg('#Ты не смог{/ла} доесть '+ItemName(pc.Inv[N], 1, FALSE)+' потому, что очень насытил{ся/ась}... чересчур насытил{ся/ась}...#',0);
             pc.status[stHUNGRY] := -500;
           end else
-              AddMsg('[Ты съел{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.]',0);
+              AddMsg('#Ты съел{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.#',0);
           pc.DeleteInvItem(pc.Inv[N], 1);
           pc.turn := 1;
         end else
@@ -581,10 +581,10 @@ begin
             inc(pc.hp, a);
             if pc.Hp >= pc.RHp then
             begin
-              AddMsg('[Ты полностью исцелил{ся/ась}!] ({+'+IntToStr(a)+'})',0);
+              AddMsg('#Ты полностью исцелил{ся/ась}!# ($+'+IntToStr(a)+'$)',0);
               pc.Hp := pc.RHp;
             end else
-              AddMsg('[Тебе стало немного лучше] ({+'+IntToStr(a)+'})',0);
+              AddMsg('#Тебе стало немного лучше# ($+'+IntToStr(a)+'$)',0);
           end else
             AddMsg('Ничего не произошло.',0);
         end;
@@ -593,7 +593,7 @@ begin
         begin
           if pc.Hp < pc.RHp then
           begin
-            AddMsg('[Ты полностью исцелил{ся/ась}!] ({+'+IntToStr(pc.RHp-pc.Hp)+'})',0);
+            AddMsg('#Ты полностью исцелил{ся/ась}!# ($+'+IntToStr(pc.RHp-pc.Hp)+'$)',0);
             pc.Hp := pc.RHp;
           end else
             AddMsg('Ничего не произошло.',0);

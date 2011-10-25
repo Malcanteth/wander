@@ -27,8 +27,6 @@ function WhatToDo(vid : integer) : string;       // Слово 'использовать' для раз
 procedure TakeScreenShot;                        // Сделать скриншот
 function Eq2Vid(cur : byte) : byte;              // Вид вещи соответствующий выбранной ячейки экипировки
 procedure Intro;                                 // Заставка
-function WhatClass : byte;                       // Вернуть цифру класса героя
-function CLName : string;                        // Вернуть название класса
 function ClassColor : longword;                  // Цвет класса
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
 function GenerateName(female : boolean) : string; // Генерация имени
@@ -371,8 +369,8 @@ begin
     Font.Color := cBROWN;
     TextOut(((WindowX-length(s5)) div 2) * CharX, 19*CharY, s5);
     // Версия
-    Font.Color := cPURPLE;
-    TextOut(29*CharY, 21*CharY, 'Версия ' + GameVersion);
+    Font.Color := cBLUEGREEN;
+    TextOut(34*CharY, 13*CharY, GameVersion);
     // Нажите кнопку
     Font.Color := cYELLOW;
     TextOut(((WindowX-length(s6)) div 2) * CharX, 25*CharY, s6);
@@ -385,89 +383,11 @@ begin
   end;
 end;
 
-{ Вернуть цифру класса героя }
-function WhatClass : byte;
-begin
-  Result := 0;
-  case pc.atr[1] of
-    1 : // сила
-    case pc.atr[2] of
-      1 : Result := 1;
-      2 : Result := 2;
-      3 : Result := 3;
-    end;
-    2 : // ловкость
-    case pc.atr[2] of
-      1 : Result := 4;
-      2 : Result := 5;
-      3 : Result := 6;
-    end;
-    3 : // интеллект
-    case pc.atr[2] of
-      1 : Result := 7;
-      2 : Result := 8;
-      3 : Result := 9;
-    end;
-  end;
-end;
-
-{ Вернуть название класса }
-function CLName : string;
-begin
-  case WhatClass of
-    1 :
-    case pc.gender of
-      1 : Result := 'Воин'; 
-      2 : Result := 'Воительница';
-    end;
-    2 :
-    case pc.gender of
-      1 : Result := 'Варвар';
-      2 : Result := 'Амазонка';
-    end;
-    3 :
-    case pc.gender of
-      1 : Result := 'Паладин';
-      2 : Result := 'Паладин';
-    end;
-    4 :
-    case pc.gender of
-      1 : Result := 'Странник';
-      2 : Result := 'Странница';
-    end;
-    5 :
-    case pc.gender of
-      1 : Result := 'Вор';
-      2 : Result := 'Воришка';
-    end;
-    6 :
-    case pc.gender of
-      1 : Result := 'Монах';
-      2 : Result := 'Монахиня';
-    end;
-    7 :
-    case pc.gender of
-      1 : Result := 'Жрец';
-      2 : Result := 'Жрица';
-    end;
-    8 :
-    case pc.gender of
-      1 : Result := 'Колдун';
-      2 : Result := 'Колдунья';
-    end;
-    9 :
-    case pc.gender of
-      1 : Result := 'Мыслитель';
-      2 : Result := 'Мыслительница';
-    end;
-  end;
-end;
-
 { Цвет класса }
 function ClassColor : longword;
 begin
   Result := 0;
-  case WhatClass of
+  case pc.WhatClass of
     1 : Result := cLIGHTBLUE;
     2 : Result := cORANGE;
     3 : Result := cLIGHTGRAY;
