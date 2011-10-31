@@ -506,7 +506,7 @@ begin
                 if M.Item[pc.x,pc.y].amount > 1 then
                 begin
                   // Если золото, то взять все без вопросов
-                  if ItemsData[M.Item[pc.x,pc.y].id].vid = 15 then
+                  if not (ssShift in Shift) then
                     i := M.Item[pc.x,pc.y].amount else
                       begin
                         AddMsg(ItemName(M.Item[pc.x,pc.y], 0, TRUE)+'. Сколько хочешь взять?',0);

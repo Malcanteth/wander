@@ -31,7 +31,7 @@ begin
     TextOut(3*CharX,11*CharY, 'I      - Инвентарь');
     TextOut(3*CharX,12*CharY, 'A      - Атаковать');
     TextOut(3*CharX,13*CharY, 'ENTER  - Спуститься\Подняться по лестнице');
-    TextOut(3*CharX,14*CharY, 'G      - Поднять вещи');
+    TextOut(3*CharX,14*CharY, 'G      - Поднять вещи (Shift + G - поднять определенное количество)');
     TextOut(3*CharX,15*CharY, 'S      - Стрелять');
     TextOut(3*CharX,16*CharY, 'O      - Открыть');
     TextOut(3*CharX,17*CharY, 'X      - Навыки и способности');
