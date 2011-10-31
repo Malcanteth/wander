@@ -88,6 +88,7 @@ procedure Tpc.ClearPlayer;
 begin
   ClearMonster;
   id := 1;
+  idinlist := 1;
   turn := 0;
   level := 0;
   enter := 0;
@@ -423,28 +424,32 @@ begin
     MonstersTurn;
     // Снова открываем глаза:)
     Pc.Fov;
-    // Если переместился на другую клетку - выводим описание, если надо
-    if pc.turn = 2 then AnalysePlace(pc.x,pc.y,0);
-    // Обнулить
-    pc.turn := 0;
-    // Голод растет
-    inc(status[stHUNGRY]);
-    // Пьяный
-    if status[stDRUNK] > 0 then
-      dec(status[stDRUNK]);
-    if status[stHUNGRY] = 1500 then
+    // Если еще не умер
+    if id > 0 then
     begin
-      AddMsg('*Ты был{/a} слишком истощен{/a}...*',0);
-      More;
-      pc.hp := 0;
+      // Если переместился на другую клетку - выводим описание, если надо
+      if pc.turn = 2 then AnalysePlace(pc.x,pc.y,0);
+      // Обнулить
+      pc.turn := 0;
+      // Голод растет
+      inc(status[stHUNGRY]);
+      // Пьяный
+      if status[stDRUNK] > 0 then
+        dec(status[stDRUNK]);
+      if status[stHUNGRY] = 1500 then
+      begin
+        AddMsg('*Ты был{/a} слишком истощен{/a}...*',0);
+        More;
+        pc.hp := 0;
+      end;
+      // Регенерация (если не умирает с голода)
+      if (pc.hp < pc.Rhp) and (pc.status[stHUNGRY] <= 1200) then
+        if Random(Round(40 / (1 + (pc.ability[abQUICKREGENERATION] * AbilitysData[abQUICKREGENERATION].koef)))) + 1 = 1 then
+          inc(pc.hp);
+      if pc.Hp <= 0 then Death;
+      // Осмотреться
+      pc.Search;
     end;
-    // Регенерация (если не умирает с голода)
-    if (pc.hp < pc.Rhp) and (pc.status[stHUNGRY] <= 1200) then
-      if Random(Round(40 / (1 + (pc.ability[abQUICKREGENERATION] * AbilitysData[abQUICKREGENERATION].koef)))) + 1 = 1 then
-        inc(pc.hp);
-    if pc.Hp <= 0 then Death;
-    // Осмотреться
-    pc.Search;
   end;
   MainForm.OnPaint(NIL);
 end;
@@ -837,7 +842,7 @@ begin
     Brush.Color := pc.ColorOfTactic;
     TextOut((((20-length(name)) div 2)+80) * CharX, 2*CharY, name);
     Font.Color := cGRAY;
-    TextOut((((20-(length(CLName)+2)) div 2)+80) * CharX, 3*CharY, '('+CLName+')');
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, 3*CharY, '('+CLName(1)+')');
     Font.Color := cBROWN;
     Brush.Color := cBLACK;
     TextOut(81*CharX, 4*CharY, '-------------------');
@@ -1536,7 +1541,7 @@ var
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   Script.Run('CreatePC.pas');
-  S := Format(V.GetStr('CreatePCStr'), [CLName, PC.Name]);
+  S := Format(V.GetStr('CreatePCStr'), [CLName(1), PC.Name]);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;

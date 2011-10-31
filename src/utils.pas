@@ -27,7 +27,6 @@ function WhatToDo(vid : integer) : string;       // Слово 'использовать' для раз
 procedure TakeScreenShot;                        // Сделать скриншот
 function Eq2Vid(cur : byte) : byte;              // Вид вещи соответствующий выбранной ячейки экипировки
 procedure Intro;                                 // Заставка
-function ClassColor : longword;                  // Цвет класса
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
 function GenerateName(female : boolean) : string; // Генерация имени
 
@@ -380,23 +379,6 @@ begin
       0 :TextOut(1, 41*CharY, 'Режим игры: "ПРИКЛЮЧЕНИЕ" (''C'' чтобы поменять)');
       1 :TextOut(1, 41*CharY, 'Режим игры: "ПОДЗЕМЕЛЬЕ"  (''C'' чтобы поменять)');
     end;
-  end;
-end;
-
-{ Цвет класса }
-function ClassColor : longword;
-begin
-  Result := 0;
-  case pc.WhatClass of
-    1 : Result := cLIGHTBLUE;
-    2 : Result := cORANGE;
-    3 : Result := cLIGHTGRAY;
-    4 : Result := cGREEN;
-    5 : Result := cGRAY;
-    6 : Result := cYELLOW;
-    7 : Result := cBROWN;
-    8 : Result := cPURPLE;
-    9 : Result := cCYAN;
   end;
 end;
 
