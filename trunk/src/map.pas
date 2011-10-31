@@ -86,13 +86,13 @@ begin
             begin
               if M.MonP[x,y] = 1 then
               begin
-                color := ClassColor;
+                color := pc.ClassColor;
                 char := '@';
                 if pc.tactic > 0 then back := pc.ColorOfTactic;
                 if pc.felldown then color:= cGRAY;
               end else
                 begin
-                  color := RealColor(MonstersData[M.MonL[M.MonP[x,y]].id].color);
+                  color := M.MonL[M.MonP[x,y]].ClassColor;
                   if (M.MonL[M.MonP[x,y]].relation = 1) and (M.MonL[M.MonP[x,y]].tactic > 0) then
                     back := M.MonL[M.MonP[x,y]].ColorOfTactic;
                   if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;

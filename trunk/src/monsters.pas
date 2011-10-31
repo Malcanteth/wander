@@ -74,7 +74,7 @@ type
                    writename : boolean) : string;     // Вернуть полное имя монстра
     procedure DecArrows;                              // Минус стрела
     function WhatClass : byte;                        // Класс
-    function CLName : string;                         // Вернуть название класса
+    function ClName(situation : byte) : string;       // Вернуть название класса
     procedure PrepareSkills;                          // Раставить очки умений и экипировать в зависимости от класса
     procedure FavWPNSkill;                            // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
     function BestWPNCL : byte;                        // Самый прокаченный навык в ближ. бою
@@ -83,6 +83,7 @@ type
     function BestWPNFR : byte;                        // Самый прокаченный навык в дальнем бою
     function HowManyBestWPNFR : byte;                 // Сколько одинаковопрокаченных в дальнем бою
     function OneOfTheBestWPNFR(i : byte): boolean;    // Один из лучше прок. навыков
+    function ClassColor : longword;                   // Цвет класса
   end;
 
   TMonData = record
@@ -97,7 +98,12 @@ type
     exp                        : byte;
     mass                       : real;
     coollevel                  : byte;
-    flags                      : longlong;        // Флажки:)
+    flags                      : longlong;        // Флажки
+  end;
+
+  TMonClass = record
+    name1m, name2m, name3m, name4m, name5m, name6m : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
+    name1f, name2f, name3f, name4f, name5f, name6f : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
   end;
 
 const
@@ -269,6 +275,31 @@ const
   mdFANATIK            = 21;
   mdKEYWIFE            = 22;
   mdKEYMAN             = 23;
+
+  {Названия классов}
+  MonsterClassNameAmount = 9;
+
+  MonsterClassName : array[1..MonsterClassNameAmount] of TMonClass =
+  (
+    (name1m : 'Воин'; name2m : 'Воина'; name3m : 'Воину'; name4m : 'Воином'; name5m : 'Воина'; name6m : 'Воинов';
+     name1f : 'Воительница'; name2f : 'Воительницу'; name3f : 'Воительнице'; name4f : 'Воительницой'; name5f : 'Воительницы'; name6f : 'Воительниц'),
+    (name1m : 'Варвар'; name2m : 'Варвара'; name3m : 'Варвару'; name4m : 'Варваром'; name5m : 'Варвара'; name6m : 'Варваров';
+     name1f : 'Амазонка'; name2f : 'Амазонку'; name3f : 'Амазонке'; name4f : 'Амазонкой'; name5f : 'Амазонки'; name6f : 'Амазонок'),
+    (name1m : 'Паладин'; name2m : 'Паладина'; name3m : 'Паладину'; name4m : 'Паладином'; name5m : 'Паладина'; name6m : 'Паладинов';
+     name1f : 'Паладин'; name2f : 'Паладина'; name3f : 'Паладину'; name4f : 'Паладином'; name5f : 'Паладина'; name6f : 'Паладинов'),
+    (name1m : 'Странник'; name2m : 'Странника'; name3m : 'Страннику'; name4m : 'Странником'; name5m : 'Странника'; name6m : 'Странников';
+     name1f : 'Странница'; name2f : 'Странницу'; name3f : 'Страннице'; name4f : 'Странницой'; name5f : 'Странницы'; name6f : 'Странниц'),
+    (name1m : 'Воришка'; name2m : 'Воришку'; name3m : 'Воришке'; name4m : 'Воришкой'; name5m : 'Воришки'; name6m : 'Воришек';
+     name1f : 'Воришка'; name2f : 'Воришку'; name3f : 'Воришке'; name4f : 'Воришкой'; name5f : 'Воришки'; name6f : 'Воришек'),
+    (name1m : 'Монах'; name2m : 'Монаха'; name3m : 'Монаху'; name4m : 'Монахом'; name5m : 'Монаха'; name6m : 'Монахов';
+     name1f : 'Монахиня'; name2f : 'Монахиню'; name3f : 'Монахине'; name4f : 'Монахиней'; name5f : 'Монахини'; name6f : 'Монахинь'),
+    (name1m : 'Жрец'; name2m : 'Жреца'; name3m : 'Жрецу'; name4m : 'Жрецом'; name5m : 'Жреца'; name6m : 'Жрецов';
+     name1f : 'Жрица'; name2f : 'Жрицу'; name3f : 'Жрице'; name4f : 'Жрицей'; name5f : 'Жрицы'; name6f : 'Жриц'),
+    (name1m : 'Колдун'; name2m : 'Колдуна'; name3m : 'Колдуну'; name4m : 'Колдуном'; name5m : 'Колдуна'; name6m : 'Колдунов';
+     name1f : 'Колдунья'; name2f : 'Колдунью'; name3f : 'Колдунье'; name4f : 'Колдуньей'; name5f : 'Колдуньи'; name6f : 'Колдуний'),
+    (name1m : 'Мыслитель'; name2m : 'Мыслителя'; name3m : 'Мыслителю'; name4m : 'Мыслителем'; name5m : 'Мыслителя'; name6m : 'Мыслителей';
+     name1f : 'Мыслительница'; name2f : 'Мыслительницу'; name3f : 'Мыслительнице'; name4f : 'Мыслительницей'; name5f : 'Мыслительницы'; name6f : 'Мыслительниц')
+  );
 
 var
   nx, ny : byte;
@@ -477,11 +508,14 @@ begin
                 end;
           if (AimX > 0) and (AimY > 0) then
           begin
-            // Двигаться к цели
-            if MoveToAim(false) = false then
-              if MoveToAim(true) = false then
-                if Random(10) <= 8 then
-                  MoveRandom;
+           // if (M.MonL[M.MonP[AimX,AimY]].id > 0) then
+            begin
+              // Двигаться к цели
+              if MoveToAim(false) = false then
+                if MoveToAim(true) = false then
+                  if Random(10) <= 8 then
+                    MoveRandom;
+            end;
           end else
             MoveRandom;
       end else
@@ -1448,8 +1482,7 @@ begin
   if hp > 0  then
   begin
     for i:=0 to Random(Random(3)+1)+1 do
-    begin
-
+    begin    
       if TilesData[M.Tile[x+(dx*i),y+(dy*i)]].blood then
         M.blood[x+(dx*i),y+(dy*i)] := Random(2)+1;
       if not(TilesData[M.Tile[x+(dx*i),y+(dy*i)]].move) then
@@ -1557,9 +1590,6 @@ end;
 function TMonster.TacticEffect(situation : byte) : real;
 begin
   Result := 1;
-
-//  AddMsg(IntToStr(Round(TacticEffect(1)*2))+' '+IntToStr(Round(Victim.defense/(Random(Round(Victim.TacticEffect(2)*2))+1)))+' '+IntToStr(Victim.defense)+' '+IntToStr(Round( Victim.TacticEffect(2)*2)+1), 0);
-
   case situation of
     1 :
     case tactic of
@@ -1667,7 +1697,7 @@ begin
   end;
   // Класс монстра
   if ((IsFlag(MonstersData[id].flags, M_ClASS))) and (id > 1) then
-    s := s + '-' + ClName;
+    s := s + '-' + ClName(situation);
   // Если есть имя
   if id > 1 then
     if ((IsFlag(MonstersData[id].flags, M_NAME))) and (writename) then
@@ -1717,57 +1747,45 @@ begin
 end;
 
 { Вернуть название класса }
-function TMonster.CLName : string;
+function TMonster.ClName(situation : byte) : string;
 var
   g : byte;
+  s : string;
 begin
-  if id = 1 then g := pc.gender else g := MonstersData[id].gender;
-  case WhatClass of
+  if id = 1 then
+    g := pc.gender else
+      g := MonstersData[id].gender;
+  case situation of
     1 :
-    case g of
-      1 : Result := 'Воин';
-      2 : Result := 'Воительница';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name1m;
+        2 : Result := MonsterClassName[WhatClass].name1f;
+      end;
     2 :
-    case g of
-      1 : Result := 'Варвар';
-      2 : Result := 'Амазонка';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name2m;
+        2 : Result := MonsterClassName[WhatClass].name2f;
+      end;
     3 :
-    case g of
-      1 : Result := 'Паладин';
-      2 : Result := 'Паладин';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name3m;
+        2 : Result := MonsterClassName[WhatClass].name3f;
+      end;
     4 :
-    case g of
-      1 : Result := 'Странник';
-      2 : Result := 'Странница';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name4m;
+        2 : Result := MonsterClassName[WhatClass].name4f;
+      end;
     5 :
-    case g of
-      1 : Result := 'Вор';
-      2 : Result := 'Воришка';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name5m;
+        2 : Result := MonsterClassName[WhatClass].name5f;
+      end;
     6 :
-    case g of
-      1 : Result := 'Монах';
-      2 : Result := 'Монахиня';
-    end;
-    7 :
-    case g of
-      1 : Result := 'Жрец';
-      2 : Result := 'Жрица';
-    end;
-    8 :
-    case g of
-      1 : Result := 'Колдун';
-      2 : Result := 'Колдунья';
-    end;
-    9 :
-    case g of
-      1 : Result := 'Мыслитель';
-      2 : Result := 'Мыслительница';
-    end;
+      case g of
+        1 : Result := MonsterClassName[WhatClass].name6m;
+        2 : Result := MonsterClassName[WhatClass].name6f;
+      end;
   end;
 end;
 
@@ -2019,7 +2037,7 @@ var
 begin
   best := 1;
   for i:=1 to CLOSEFIGHTAMOUNT do
-    if pc.closefight[i] > pc.closefight[best] then
+    if closefight[i] > closefight[best] then
       best := i;
   Result := best;
 end;
@@ -2032,7 +2050,7 @@ begin
   bestone := BestWPNCL;
   amount := 1;
   for i:=1 to CLOSEFIGHTAMOUNT do
-    if (i <> bestone) and (pc.closefight[i] = pc.closefight[bestone]) then
+    if (i <> bestone) and (closefight[i] = closefight[bestone]) then
       inc(amount);
   Result := amount;
 end;
@@ -2041,7 +2059,7 @@ end;
 function TMonster.OneOfTheBestWPNCL(i : byte): boolean;
 begin
   Result := FALSE;
-  if pc.closefight[i] = pc.closefight[BestWPNCL] then Result := TRUE;
+  if closefight[i] = closefight[BestWPNCL] then Result := TRUE;
 end;
 
 { Самый прокаченный навык в дальнем бою }
@@ -2051,7 +2069,7 @@ var
 begin
   best := 1;
   for i:=1 to FARFIGHTAMOUNT do
-    if pc.farfight[i] > pc.farfight[best] then
+    if farfight[i] > farfight[best] then
       best := i;
   Result := best;
 end;
@@ -2064,7 +2082,7 @@ begin
   bestone := BestWPNFR;
   amount := 1;
   for i:=1 to FARFIGHTAMOUNT do
-    if (i <> bestone) and (pc.farfight[i] = pc.farfight[bestone]) then
+    if (i <> bestone) and (farfight[i] = farfight[bestone]) then
       inc(amount);
   Result := amount;
 end;
@@ -2073,7 +2091,28 @@ end;
 function TMonster.OneOfTheBestWPNFR(i : byte): boolean;
 begin
   Result := FALSE;
-  if pc.farfight[i] = pc.farfight[BestWPNFR] then Result := TRUE;
+  if farfight[i] = farfight[BestWPNFR] then Result := TRUE;
+end;
+
+{ Цвет класса }
+function TMonster.ClassColor : longword;
+begin
+  Result := 0;
+  if (id > 1) and not (IsFlag(MonstersData[id].flags, M_CLASS)) then
+    // Монстр без класса
+    Result := RealColor(MonstersData[id].color) else
+      // Цвет класса
+      case WhatClass of
+        1 : Result := cLIGHTBLUE;
+        2 : Result := cORANGE;
+        3 : Result := cLIGHTGRAY;
+        4 : Result := cGREEN;
+        5 : Result := cGRAY;
+        6 : Result := cYELLOW;
+        7 : Result := cBROWN;
+        8 : Result := cPURPLE;
+        9 : Result := cCYAN;
+      end;
 end;
 
 end.
