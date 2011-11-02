@@ -18,8 +18,6 @@ type
     exp         : integer;                       // Кол-во опыта
     explevel    : byte;                          // Уровень развития
     //
-    status      : array[1..2] of integer;        // Счетчики (1-Голод)
-    //
     warning     : boolean;                       // Монстр в поле зрения
 
     procedure ClearPlayer;                       // Очистить

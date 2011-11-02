@@ -44,23 +44,26 @@ const
   MaxHistory               = 38;
 
   { Константы основных цветов }
+
+  crAmount                 = 16;
+
+  crBLACK                  = 0;
   crRANDOM                 = 1;
-  crBLACK                  = 2;
-  crBLUE                   = 3;
-  crGREEN                  = 4;
-  crRED                    = 5;
-  crCYAN                   = 6;
-  crPURPLE                 = 7;
-  crBROWN                  = 8;
-  crWHITE                  = 9;
-  crGRAY                   = 10;
-  crYELLOW                 = 11;
-  crLIGHTGRAY              = 12;
-  crLIGHTRED               = 13;
-  crLIGHTGREEN             = 14;
-  crLIGHTBLUE              = 15;
-  crORANGE                 = 16;
-  crBLUEGREEN              = 17;
+  crBLUE                   = 2;
+  crGREEN                  = 3;
+  crRED                    = 4;
+  crCYAN                   = 5;
+  crPURPLE                 = 6;
+  crBROWN                  = 7;
+  crWHITE                  = 8;
+  crGRAY                   = 9;
+  crYELLOW                 = 10;
+  crLIGHTGRAY              = 11;
+  crLIGHTRED               = 12;
+  crLIGHTGREEN             = 13;
+  crLIGHTBLUE              = 14;
+  crORANGE                 = 15;
+  crBLUEGREEN              = 16;
 
   cBLACK                   = 0;
   cBLUE                    = 9830400;

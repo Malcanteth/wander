@@ -50,7 +50,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor,
+  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
   conf, sutils, script, mbox, vars;
 
 { Инициализация }
@@ -1136,6 +1136,8 @@ procedure TMainForm.InitGame;
 begin
   GameState := gsPLAY;
   AskForQuit := TRUE;
+  // Цвета и состояния напитков
+  GenerateColorAndStateOfLiquids;
   // Выбор режима приключения
   V.SetInt('PlayMode', PlayMode);
   case PlayMode of

@@ -19,8 +19,8 @@ type
     los, Rlos       : byte;                        // Длина зрения
     relation        : byte;                        // Отношение к герою (0Никак,1Агрессия)
     eq              : array[1..14] of TItem;       // Экипировка
-    inv             : array[1..MaxHandle] of TItem;  // Предметы монстра
-    invmass         : real;                          // Масса инвентаря и экипировки
+    inv             : array[1..MaxHandle] of TItem;// Предметы монстра
+    invmass         : real;                        // Масса инвентаря и экипировки
     //Атрибуты
     Rstr,str,                                      //сила
     Rdex,dex,                                      //ловкость
@@ -40,7 +40,9 @@ type
     farfight        : array[1..FARFIGHTAMOUNT] of real;
     magicfight      : array[1..MAGICSCHOOLAMOUNT] of real;
     //
-    atr             : array[1..2] of byte;           // Приоритетные атрибуты
+    atr             : array[1..2] of byte;             // Приоритетные атрибуты
+    //
+    status          : array[1..2] of integer;         // Счетчики (1-Голод)
 
 
     procedure ClearMonster;                           // Очистить
@@ -312,7 +314,7 @@ procedure MonstersTurn;                    // У каждого монстра есть право на хо
 implementation
 
 uses
-  Map, Player, MapEditor, script, vars, sutils, mbox;
+  Map, Player, MapEditor, Script, Vars, SUtils, MBox, Liquid;
 
 { Создать монстра }
 procedure CreateMonster(n,px,py : byte);
@@ -984,7 +986,7 @@ begin
         mdBARTENDER:
         begin
           w := False;
-          if (Ask(FullName(1, TRUE) + ' говорит: "Могу предложить бутылёк свежего пивасика всего за 15 золотых, хочешь?" [(Y/n)]')) = 'Y' then
+          if (Ask(FullName(1, TRUE) + ' говорит: "Могу предложить бутылёк свежего пивасика всего за 15 золотых, хочешь?" #(Y/n)#')) = 'Y' then
           begin
             if pc.FindCoins = 0 then
               AddMsg('К сожалению, у тебя совсем нет денег.',0) else
@@ -997,10 +999,10 @@ begin
                   pc.RefreshInventory;
                   More;
                   AddMsg('Он их пересчитывает и протягивает бутылку холодного пива.',0);
-                  if pc.PickUp(CreateItem(idCHEAPBEER, 1, 0), FALSE,1) <> 0 then
+                  if pc.PickUp(CreatePotion(lqCHEAPBEER, 1), FALSE,1) <> 0 then
                   begin
                     AddMsg('Оно упало на пол.',0);
-                    PutItem(pc.x,pc.y, CreateItem(idMEAT, 1, 0),1);
+                    PutItem(pc.x,pc.y, CreatePotion(lqCHEAPBEER, 1),1);
                   end;
                   More;
                   AddMsg('"Далеко не уходи - вдруг еще захочешь! Можешь посидеть с нашими постояльцами..."',0);
@@ -1504,7 +1506,7 @@ begin
       begin
         f := false;
         for i:=1 to MaxHandle do
-          if (Inv[i].id = Item.id) and (Inv[i].owner = Item.owner)  then
+          if SameItems(Inv[i], Item) then
           begin
             if (invmass + (Item.mass*amount) < MaxMass) then
             begin
@@ -1750,7 +1752,6 @@ end;
 function TMonster.ClName(situation : byte) : string;
 var
   g : byte;
-  s : string;
 begin
   if id = 1 then
     g := pc.gender else
@@ -1808,8 +1809,8 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
+      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
+      PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
       PickUp(CreateItem(idLAVASH, 2, 0), FALSE,2);
       PickUp(CreateItem(idCOIN, 60, 0), FALSE,60);
@@ -1835,8 +1836,8 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idCHAINARMOR , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
+      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
+      PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
       PickUp(CreateItem(idLAVASH, 3, 0), FALSE,3);
       PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
     end;
@@ -1850,8 +1851,8 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 4, 0), FALSE,4);
-      PickUp(CreateItem(idPOTIONHEAL, 1, 0), FALSE,1);
+      PickUp(CreatePotion(lqCURE, 4), FALSE,4);
+      PickUp(CreatePotion(lqHEAL, 2), FALSE,1);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
       PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
       PickUp(CreateItem(idCOIN, 70, 0), FALSE,70);
@@ -1867,8 +1868,8 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idJACKET , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 3, 0), FALSE,3);
+      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
+      PickUp(CreatePotion(lqCURE, 3), FALSE,3);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
       PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
       PickUp(CreateItem(idCOIN, 90, 0), FALSE,90);
@@ -1881,8 +1882,9 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 3, 0), FALSE,3);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
+      PickUp(CreatePotion(lqCURE, 3), FALSE,3);
+      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
+      PickUp(CreatePotion(lqKEFIR, 2), FALSE,2);
       PickUp(CreateItem(idLAVASH, 8, 0), FALSE,8);
       PickUp(CreateItem(idCOIN, 25, 0), FALSE,25);
     end;
@@ -1894,8 +1896,8 @@ begin
 
       EquipItem(CreateItem(idBOOTS, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
+      PickUp(CreatePotion(lqCURE, 5), FALSE,5);
+      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
       PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
       PickUp(CreateItem(idMEAT, 2, 0), FALSE,2);
       PickUp(CreateItem(idCOIN, 35, 0), FALSE,35);
@@ -1907,8 +1909,8 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 5, 0), FALSE,5);
-      PickUp(CreateItem(idPOTIONHEAL, 2, 0), FALSE,2);
+      PickUp(CreatePotion(lqCURE, 5), FALSE,5);
+      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
       PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
       PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
@@ -1920,8 +1922,8 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idMANTIA , 1, 0));
-      PickUp(CreateItem(idPOTIONCURE, 2, 0), FALSE,2);
-      PickUp(CreateItem(idPOTIONHEAL, 4, 0), FALSE,4);
+      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
+      PickUp(CreatePotion(lqHEAL, 2), FALSE,4);
       PickUp(CreateItem(idLAVASH, 6, 0), FALSE,6);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
       PickUp(CreateItem(idCOIN, 50, 0), FALSE,50);

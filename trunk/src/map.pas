@@ -78,7 +78,7 @@ begin
             // Предметы
             if M.Item[x,y].id > 0 then
             begin
-              color := RealColor(ItemsData[M.Item[x,y].id].color);
+              color := RealColor(ItemColor(M.Item[x,y]));
               char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
             end;
             // Монстры
