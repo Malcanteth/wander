@@ -18,6 +18,7 @@ type
     amount           : word;         // Колличество
     mass             : real;         // Масса
     owner            : byte;         // Указатель на монстра
+    liquidid         : byte;         // ID напитка
   end;
 
   TItemData = record
@@ -63,7 +64,7 @@ const
   );
 
   { Кол-во предметов }
-  ItemsAmount = 37;
+  ItemsAmount = 35;
 
   {  Описание предметов }
   ItemsData : array[1..ItemsAmount] of TItemData =
@@ -179,21 +180,6 @@ const
       attack: 3; defense: 50; chance: 35;
       flags : NOF;
     ),
-    ( name1: 'Зелье лечения'; name2: 'Зелья лечения'; name3: 'Зелье лечения';
-      vid:19; color: crLIGHTBLUE; mass: 0.3;
-      attack: 1; defense: 0; chance: 40;
-      flags : NOF;
-    ),
-    ( name1: 'Зелье исцеления'; name2: 'Зелья исцеления'; name3: 'Зелье исцеления';
-      vid:19; color: crRED; mass: 0.3;
-      attack: 1; defense: 0; chance: 15;
-      flags : NOF;
-    ),
-    ( name1: 'Бутылка дешевого пива'; name2: 'Бутылки дешевого пива'; name3: 'Бутылку дешевого пива';
-      vid:19; color: crBROWN; mass: 0.5;
-      attack: 2; defense: 0; chance: 20;
-      flags : NOF;
-    ),
     ( name1: 'Голова'; name2: 'Головы'; name3: 'Голову';
       vid:14; color: crBROWN; mass: 5.0;
       attack: 2; defense: 40; chance: 0;
@@ -253,6 +239,11 @@ const
       vid:4; color: crBROWN; mass: 10.5;
       attack: 1; defense: 3;  chance: 45; kind: ARMOR_CLOTHES;
       flags : NOF;
+    ),
+    ( name1: 'Бутылка'; name2: 'Бутылки'; name3: 'Бутылку';
+      vid:19; color: crCYAN; mass: 0.1;
+      attack: 1; defense: 0; chance: 40;
+      flags : NOF;
     )
   );
 
@@ -279,21 +270,19 @@ const
   idLAVASH         = 20;
   idGREENAPPLE     = 21;
   idMEAT           = 22;
-  idPOTIONCURE     = 23;
-  idPOTIONHEAL     = 24;
-  idCHEAPBEER      = 25;
-  idHEAD           = 26;
-  idGATESKEY       = 27;
-  idAXE            = 28;
-  idBOW            = 29;
-  idCROSSBOW       = 30;
-  idSLING          = 31;
-  idBLOWPIPE       = 32;
-  idARROW          = 33;
-  idBOLT           = 34;
-  idLITTLEROCK     = 35;
-  idIGLA           = 36;
-  idCAPE           = 37;
+  idHEAD           = 23;
+  idGATESKEY       = 24;
+  idAXE            = 25;
+  idBOW            = 26;
+  idCROSSBOW       = 27;
+  idSLING          = 28;
+  idBLOWPIPE       = 29;
+  idARROW          = 30;
+  idBOLT           = 31;
+  idLITTLEROCK     = 32;
+  idIGLA           = 33;
+  idCAPE           = 34;
+  idBOTTLE         = 35;
 
 
 function HaveItemTypeInDB(wtype : byte) : boolean;            // Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов)
@@ -308,11 +297,13 @@ procedure ItemOnOff(Item : TItem; PutOn : boolean);           // Применить эффек
 function ItemName(Item : TItem; skl : byte;
                              all : boolean) : string;         // Вернуть полное название предмета
 procedure UseItem(n : byte);                                  // Использовать предмет
+function SameItems(I1, I2 : TItem) : boolean;                 // Сравнить два предмета - одинаковы ли они?
+function ItemColor(I : TItem) : byte;                         // Вернуть цвет предмета
 
 implementation
 
 uses
-  Map, Player, Monsters, conf;
+  Map, Player, Monsters, Conf, Liquid;
 
 { Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов) }
 function HaveItemTypeInDB(wtype : byte) : boolean;
@@ -347,21 +338,24 @@ begin
   if amount > 0 then
   begin
     if amount = 1 then
-      Result := CreateItem(list[amount], 1, 0) else
+      i := amount else
       begin
         repeat
           i := Random(amount)+1;
         until
           (Random(100)+1 <= ItemsData[list[i]].chance);
-         Result := CreateItem(list[i], 1, 0)
       end;
   end;
+  if i <> idBOTTLE then
+    Result := CreateItem(list[i], 1, 0) else
+      Result := CreatePotion(list[i], 1);    
 end;
 
 { Создать предмет }
 function CreateItem(n : byte; am : integer; OwnerId : byte) : TItem;
 var
   Item : TItem;
+  i    : integer;
 begin
   with Item do
   begin
@@ -375,6 +369,15 @@ begin
     // Меняем массу головы, на массу 15% веса трупа
     if id = idHEAD then
       mass := Round(MonstersData[owner].mass * 0.15);
+    // Если бутылка, то заполнить ее напитком
+    if id = idBOTTLE then
+    begin
+      repeat
+        i := Random(LiquidAmount)+1;
+      until
+        (Random(100)+1 <= AllLiquid[i].chance);
+      liquidid := i;
+    end;
   end;
   Result := Item;
 end;
@@ -390,7 +393,7 @@ begin
     Result := False else
       if M.Item[px,py].id > 0 then
       begin
-        if (M.Item[px,py].id = Item.id) and (M.Item[px,py].owner = Item.owner) then
+        if SameItems(M.Item[px,py], Item) then
         begin
           inc(M.Item[px,py].amount, Item.amount);
           exit;
@@ -411,7 +414,7 @@ begin
               Result := False else
                 if M.Item[x,y].id > 0 then
                 begin
-                  if (M.Item[x,y].id = Item.id) and (M.Item[px,py].owner = Item.owner) then
+                  if SameItems(M.Item[x,y], Item) then
                   begin
                     inc(M.Item[x,y].amount, Item.amount);
                     Result := True;
@@ -456,7 +459,7 @@ begin
       // Вывести символ предмета
       Font.Color := cGRAY;
       TextOut(49*CharX, 31*CharY, '| |');
-      Font.Color := RealColor(ItemsData[Item.id].color);
+      Font.Color := RealColor(ItemColor(Item));
       TextOut(50*CharX, 31*CharY, ItemTypeData[ItemsData[Item.id].vid].symbol);
       // Тип оружия, если это оружие
       Font.Color := cWHITE;
@@ -505,6 +508,14 @@ begin
     if (Item.amount = 1) or (not ALL) then
      s := ItemsData[Item.id].name3 else
        s := ItemsData[Item.id].name2;
+  end;
+  // Напиток
+  if Item.id = idBOTTLE then
+  begin
+    // Название для идентифицированного напитка:
+    s := s + ' ' + AllLiquid[Item.liquidid].name;
+    // Название для не идентифицированного напитка:
+    //s := s + ' с ' + LiquidState[NowLiquidState[Item.liquidid]] + ' ' + LiquidColor[NowLiquidColor[Item.liquidid]] + ' жидкостью';
   end;
   if Item.owner > 0 then
     if (Item.amount = 1) or (not ALL) then
@@ -570,59 +581,37 @@ begin
       19:
       begin
         AddMsg('Ты выпил{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.',0);
-        // Лечение
-        if pc.Inv[N].id = idPOTIONCURE then
-        begin
-          if pc.Hp < pc.RHp then
-          begin
-            a := Random(11)+5;
-            if pc.hp + a > pc.RHp then
-              a := pc.RHp - pc.Hp;
-            inc(pc.hp, a);
-            if pc.Hp >= pc.RHp then
-            begin
-              AddMsg('#Ты полностью исцелил{ся/ась}!# ($+'+IntToStr(a)+'$)',0);
-              pc.Hp := pc.RHp;
-            end else
-              AddMsg('#Тебе стало немного лучше# ($+'+IntToStr(a)+'$)',0);
-          end else
-            AddMsg('Ничего не произошло.',0);
-        end;
-        // Исцеление
-        if pc.Inv[N].id = idPOTIONHEAL then
-        begin
-          if pc.Hp < pc.RHp then
-          begin
-            AddMsg('#Ты полностью исцелил{ся/ась}!# ($+'+IntToStr(pc.RHp-pc.Hp)+'$)',0);
-            pc.Hp := pc.RHp;
-          end else
-            AddMsg('Ничего не произошло.',0);
-        end;
-        // Пивасик
-        if pc.Inv[N].id = idCHEAPBEER then
-        begin
-          if pc.status[stDRUNK] <= 500 then
-          begin
-            if pc.Hp < pc.RHp then
-            begin
-              a := Random(6)+1;
-              inc(pc.hp, a);
-              if pc.Hp >= pc.RHp then
-              begin
-                pc.Hp := pc.RHp;
-                AddMsg('Это пиво - полная ерунда, но тем не менее ты теперь чувствуешь себя замечательно!',0);
-              end else
-                AddMsg('Пххх.. Отдаёт спиртом...',0);
-            end else
-              AddMsg('Ты довольно быстро осушил{/a} бутылку пива. Не плохо. Освежает!',0);
-            inc(pc.status[stDRUNK], 130);
-          end else
-            AddMsg('Ты попытал{ся/ась} выпить еще, но случайно бутылка выскользнула из твоих рук и разбилась!..',0);
-        end;
+        DrinkLiquid(pc.Inv[N].liquidid, pc);
         pc.DeleteInvItem(pc.Inv[N], 1);
         pc.turn := 1;
       end;
     end;
+end;
+
+{ Сравнить два предмета - одинаковы ли они? }
+function SameItems(I1, I2 : TItem) : boolean;
+begin
+  Result := FALSE;
+  if (I1.id = I2.id) and (I1.owner = I2.owner) then
+  begin
+    // Если это бутылка то сравнить еще по содержимому
+    if I1.id = idBOTTLE then
+    begin
+      if (I1.liquidid = I2.liquidid) then
+        Result := TRUE;
+    end else
+      Result := TRUE;
+  end;
+end;
+
+{ Вернуть цвет предмета }
+function ItemColor(I : TItem) : byte;
+begin
+  Result := 3;
+  Result := ItemsData[I.id].color;
+  // Если напиток
+  if (I.id = idBOTTLE) and (I.liquidid > 0) then
+    Result := NowLiquidColor[I.liquidid];
 end;
 
 end.

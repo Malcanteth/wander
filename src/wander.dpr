@@ -27,7 +27,8 @@ uses
   wlog in 'wlog.pas',
   vars in 'vars.pas',
   script in 'script.pas',
-  mbox in 'mbox.pas';
+  mbox in 'mbox.pas',
+  liquid in 'liquid.pas';
 
 {$R *.res}
 

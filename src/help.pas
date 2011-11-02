@@ -71,29 +71,29 @@ begin
         for x:=1 to Length(History[y].msg) do
         begin
           //Символы начала и конца цвета
-          if History[y].msg[x] = '{' then
-            c := 1 else
-          if History[y].msg[x] = '}' then
-            c := 0 else
-          if History[y].msg[x] = '<' then
-            c := 2 else
-          if History[y].msg[x] = '>' then
-            c := 0 else
-          if History[y].msg[x] = '[' then
-            c := 3 else
-          if History[y].msg[x] = ']' then
-            c := 0 else
+          if History[y].msg[x] = '$' then  // желтый
           begin
-            //Цвет букв
-            case c of
-              0 : Font.Color := MyRGB(160,160,160);  //Серый
-              1 : Font.Color := MyRGB(255,255,0);    //Желтый
-              2 : Font.Color := MyRGB(200,0,0);      //Красный
-              3 : Font.Color := MyRGB(0,200,0);      //Зеленый
+            if c = 0 then c := 1 else c := 0;
+          end else
+          if History[y].msg[x] = '*' then  // красный
+          begin
+            if c= 0 then c := 2 else c := 0;
+          end else
+          if History[y].msg[x] = '#' then  // зеленый
+          begin
+            if c= 0 then c := 3 else c := 0;
+          end else
+            begin
+              //Цвет букв
+              case c of
+                0 : Font.Color := MyRGB(160,160,160);  //Серый
+                1 : Font.Color := MyRGB(255,255,0);    //Желтый
+                2 : Font.Color := MyRGB(200,0,0);      //Красный
+                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
+              end;
+              Textout((t-1)*CharX, (2*CharY)+((y-1)*CharY), History[y].msg[x]);
+              inc(t);
             end;
-            Textout((t-1)*CharX, (2*CharY)+((y-1)*CharY), History[y].msg[x]);
-            inc(t);
-          end;
         end;
         if History[y].amount > 1 then
         begin

@@ -21,7 +21,14 @@ const
 
 
   { Флажки для предметов }
-  I_TWOHANDED        = 1 shl 0;     // Двуручное оружие 
+  I_TWOHANDED        = 1 shl 0;     // Двуручное оружие
+
+  { Флажки для напитков }
+  L_NOSATURATION    =  1 shl 0;     // Напиток не насыщает
+  L_WSATURATION     =  1 shl 1;     // Напиток насыщает вдвойне
+  L_RANDOMPOWER     =  1 shl 2;     // Рандомная мощность эффекта напитка
+  L_LITTLEHEAL      =  1 shl 3;     // Чуть-чуть лечит при употреблении
+  L_WMASS           =  1 shl 4;     // Двойная масса напитка
 
 implementation
 
