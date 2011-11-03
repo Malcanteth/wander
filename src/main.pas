@@ -75,8 +75,6 @@ begin
     end;
   GameTimer.Enabled := False;  
   GameState := gsINTRO;
-  pc.id := 1;
-  pc.idinlist := 1;
   MenuSelected := 1;
 end;
 

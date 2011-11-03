@@ -840,7 +840,11 @@ begin
     Brush.Color := pc.ColorOfTactic;
     TextOut((((20-length(name)) div 2)+80) * CharX, 2*CharY, name);
     Font.Color := cGRAY;
-    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, 3*CharY, '('+CLName(1)+')');
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, 3*CharY, '(');
+    Font.Color := pc.ClassColor;
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1) * CharX, 3*CharY, CLName(1));
+    Font.Color := cGRAY;
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1))) * CharX, 3*CharY, ')');
     Font.Color := cBROWN;
     Brush.Color := cBLACK;
     TextOut(81*CharX, 4*CharY, '-------------------');
@@ -892,9 +896,9 @@ begin
     Font.Color := cLIGHTGRAY;
     if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
       TextOut(82*CharX, 23*CharY, SpecialMaps[M.Special].name) else
-    if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
-      TextOut(82*CharX, 23*CharY, 'ÃËÓÁÈÍÀ  : '+IntToStr(pc.depth)) else
-        TextOut(82*CharX, 23*CharY, 'Ñòğàííîå ìåñòî...');       
+      if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
+        TextOut(82*CharX, 23*CharY, 'ÃËÓÁÈÍÀ  : '+IntToStr(pc.depth)) else
+          TextOut(82*CharX, 23*CharY, 'Ñòğàííîå ìåñòî...');
     Font.Color := cBROWN;
     TextOut(81*CharX, 25*CharY, '-------------------');
     if (hp > 0) then

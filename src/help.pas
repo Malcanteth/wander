@@ -19,7 +19,7 @@ begin
   StartDecorating('<-ПОМОЩЬ->', FALSE);
   with Screen.Canvas do
   begin
-    Font.Color := cCYAN;
+    Font.Color := cBLUEGREEN;
     TextOut(3*CharX,3*CharY, 'Все просто - передвигайте своего героя, используя стрелки управления и используйте команды:');
     Font.Color := cLIGHTGRAY;
     TextOut(3*CharX,5*CharY,  'ESC    - Выйти из игры');
@@ -40,6 +40,7 @@ begin
     TextOut(3*CharX,20*CharY, 'F      - Есть');
     TextOut(3*CharX,21*CharY, 'D      - Пить');
 
+    Font.Color := cPURPLE;
     TextOut(3*CharX,24*CharY, 'F1     - Помощь (эта страничка)');
     TextOut(3*CharX,25*CharY, 'F2     - Сохранить игру и выйти          {Пока не работает}');
     TextOut(3*CharX,26*CharY, 'F5     - Сделать скриншот');
