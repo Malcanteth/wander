@@ -33,7 +33,7 @@ function GenerateName(female : boolean) : string; // Генерация имени
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils;
+  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -440,6 +440,12 @@ end;
 
 { Генерация случайного имени }
 function GenerateName(female : boolean) : string;
+begin
+  V.SetBool('GenName.Female', Female);
+  Script.Run('GenName.pas');
+  Result := Trim(V.GetStr('GenName.Name'));
+end;
+{ Старый вариант ф-ции GenerateName
 const
   name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
   name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
@@ -456,7 +462,7 @@ begin
     s := s + fends[random(3)+1];
   Result := s;
 end;
-
+}
 var
   EX: TExplodeResult;
 
