@@ -350,7 +350,7 @@ begin
       Font.Color := cRED;
       TextOut(6*CharX, (2+MenuSelected)*CharY, '*');
       // Описание
-      DrawBorder(5,37,90,2);
+      DrawBorder(5,37,90,2,crLIGHTGRAY);
       Font.Color := cWHITE;
       TextOut((((85-length(AbilitysData[FullAbilitys[MenuSelected]].descr)) div 2) + 8) * CharX, 38*CharY, AbilitysData[FullAbilitys[MenuSelected]].descr);
     end else

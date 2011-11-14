@@ -9,14 +9,6 @@ uses
 type
   TMainForm = class(TForm)
     GameTimer: TTimer;
-    MM: TMainMenu;
-    N1: TMenuItem;
-    N2: TMenuItem;
-    N3: TMenuItem;
-    N4: TMenuItem;
-    N5: TMenuItem;
-    N6: TMenuItem;
-    N7: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -28,12 +20,6 @@ type
     procedure InitGame;
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure N2Click(Sender: TObject);
-    procedure FormKeyUp(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
-    procedure N4Click(Sender: TObject);
-    procedure N5Click(Sender: TObject);
-    procedure N7Click(Sender: TObject);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -44,9 +30,10 @@ type
 
 var
   MainForm             : TMainForm;
-  Screen               : TBitMap;              // Картинка для двойной-буфферизации
+  Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
   WaitMore             : boolean;              // --Далее--
   WaitEnter            : boolean;              // Ждем нажатия Enter
+  GameMenu             : boolean;              // Игровое меню
   Inputing             : boolean;              // Режим ввода
   GameState            : byte;                 // Состояние игры
   GameVersion          : string;               // Версия игры
@@ -83,6 +70,11 @@ begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
+  with GrayScreen do
+  begin
+    Width := ClientWidth;
+    Height := ClientHeight;
+  end;
   // Если режим приключений то нужно загрузить карты
   if PlayMode = AdventureMode then
     if not MainEdForm.LoadSpecialMaps then
@@ -90,9 +82,10 @@ begin
       MsgBox('Ошибка загрузки карт!');
       Halt;
     end;
-  GameTimer.Enabled := False;  
+  GameTimer.Enabled := False;
   GameState := gsINTRO;
   MenuSelected := 1;
+  GameMenu := TRUE;
 end;
 
 { Отрисовка }
@@ -137,10 +130,22 @@ begin
     GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
     ShowInput;                  // Показываем поле для ввода имени персонажа
   end;
+  // Игровое Меню
+  if GameMenu then
+  begin
+    // Сделать заднюю картинку серой
+    if GameState <> gsINTRO then
+    begin
+      BlackWhite(Screen);
+      GrayScreen := Screen;
+    end;
+    // Вывести меню
+    DrawGameMenu;
+  end;
   // Отображаем растягиваемый буфер
   SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
   StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
+  Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
 end;
 
 { Нажатие на клавиши }
@@ -156,10 +161,10 @@ begin
   begin
   // Скриншот
   if Key = 116 then TakeScreenShot else
-    // Пробел для продолжения
+    // Пробел или Enter для продолжения
     if WaitMore then
     begin
-      if Key = 32 then WaitMore := False;
+      if (Key = 32) or (Key = 13) then WaitMore := False;
     end else
       // Enter для продолжения
       if WaitENTER then
@@ -209,6 +214,43 @@ begin
         begin
           if key = 32 then Answer := '' else Answer := UpCase (Chr(Key));
         end else
+          // Игровое меню
+          if GameMenu then
+          begin
+            case Key of
+              // Esc
+              27 :
+                if GameState <> gsINTRO then GameMenu := FALSE;
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
+              end;
+              // Ok...
+              13 :
+              begin
+                GameMenu := FALSE;
+                case MenuSelected of
+                  gmNEWGAME :
+                  begin
+                    GameState := gsHERORANDOM;
+                  end;
+                  gmEXIT    :
+                  begin
+                    GameMenu := FALSE;
+                    if GameState = gsINTRO then AskForQuit := FALSE;
+                    MainForm.Close;
+                  end;
+                end;
+              end;
+            end;
+            OnPaint(SENDER);            
+          end else
       // Все остальное
       begin
         ClearMsg;
@@ -449,8 +491,12 @@ begin
               33,105,57    : if ssShift in Shift then pc.Run(1,-1) else pc.Move(1,-1);
               13           : pc.UseStairs;
               { Комманды }
-              // Выйти 'Esc'
-              27        : Close;
+              // Меню 'Esc'
+              27        :
+              begin
+                MenuSelected := 1;
+                GameMenu := TRUE;
+              end;
               // Закрыть дверь 'c'
               67        : pc.SearchForDoors;
               // Смотреть 'l'
@@ -1117,6 +1163,7 @@ begin
   end else
     if (GameState = gsPLAY) or (GameState = gsLOOK) or (GameState = gsCLOSE) or (GameState = gsCHOOSEMONSTER) then
     begin
+      MenuSelected := 1;
       if (Ask('Покинуть мир, совершив суицид? #(Y/n)#')) = 'Y' then
       begin
         CanClose := TRUE;
@@ -1149,9 +1196,6 @@ end;
 { Начальные данные }
 procedure TMainForm.InitGame;
 begin
-  // Активировать пункты меню, доступные только во время игры
-  N4.Enabled := True; // Акт. пункт "Помощь"
-  N5.Enabled := True; // Акт. пункт "Сообщения"
   // Состояние игры -> игра
   GameState := gsPLAY;
   AskForQuit := TRUE;
@@ -1264,65 +1308,11 @@ begin
   DeleteDC(DC);
 end;
 
-procedure TMainForm.N2Click(Sender: TObject);
-begin
-  Halt;
-end;
-
-procedure TMainForm.FormKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
-begin
-  case Key of
-    // F6 - Показать\Спрятать главное меню
-    117: if Menu <> nil then begin
-      Menu  := nil;
-      ClientHeight := ClientHeight - 20;
-    end else begin
-      Menu := MM;
-      ClientHeight := ClientHeight + 20;
-    end;
-  end;
-end;
-
-procedure TMainForm.N4Click(Sender: TObject);
-begin
-  // Пункт меню "Помощь"
-  if GameState <> gsPLAY then Exit;
-  // Заполняем картинку черным цветом
-  Screen.Canvas.Brush.Color := 0;
-  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
-  // Показываем окно справки
-  ShowHelp;
-  // Отображаем растягиваемый буфер
-  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
-  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
-end;
-
-procedure TMainForm.N5Click(Sender: TObject);
-begin
-  // Пункт меню "Сообщения"
-  if GameState <> gsPLAY then Exit;
-  // Заполняем картинку черным цветом
-  Screen.Canvas.Brush.Color := 0;
-  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
-  // Показываем окно справки
-  ShowHistory;
-  // Отображаем растягиваемый буфер
-  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
-  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
-end;
-
-procedure TMainForm.N7Click(Sender: TObject);
-begin
-  MsgBox('WANDER v.' + GameVersion + ' | Павел Дивненко aka BreakMeThunder | breakmt@mail.ru');
-end;
-
 initialization
   Randomize;
   // Создаем картинку (буфер)
   Screen := TBitMap.Create;
+  GrayScreen := TBitMap.Create;
   // Разумные границы
   if (FontSize < 8 ) then FontSize := 8;
   if (FontSize > 20) then FontSize := 20;

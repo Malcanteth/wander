@@ -3,7 +3,7 @@ unit utils;
 interface
 
 uses
-  SysUtils, Main, Cons, Windows, Graphics;
+  SysUtils, Main, Cons, Windows, Graphics, JPEG, Classes;
 
 function MyRGB(R,G,B : byte) : LongWord;         // Цвет
 function RealColor(c : byte) : longword;
@@ -17,7 +17,7 @@ function IsFlag(flags : LongWord;
                  flag : LongWord) : boolean;     // Проверка флага
 procedure StartDecorating(header : string;
                     withoutexit : boolean);      // Рамочка, название
-procedure DrawBorder(x,y,w,h : byte);            // Рамка для инф. о предмете
+procedure DrawBorder(x,y,w,h,color : byte);      // Рамка для инф. о предмете
 function ExistFile(n : string) : boolean;        // Существет ли такой файл?
 function ReturnColor(Rn,n : integer;
                           ow : byte) : integer;  // Вернуть цвет в зависимости от процентов
@@ -30,6 +30,7 @@ procedure Intro;                                 // Заставка
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
 function GenerateName(female : boolean) : string;// Генерация имени
 function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
+procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 
 implementation
                          
@@ -172,13 +173,13 @@ begin
 end;
 
 { Рамочка для информации о предмете}
-procedure DrawBorder(x,y,w,h : byte);
+procedure DrawBorder(x,y,w,h,color : byte);
 var
   i : byte;
 begin
   with Screen.Canvas do
   begin
-    Font.Color := cGRAY;
+    Font.Color := RealColor(color);
     TextOut(x*CharX,y*CharY,'.');
     TextOut((x+w)*CharX,y*CharY,'.');
     TextOut(x*CharX,(y+h)*CharY,'''');
@@ -345,35 +346,32 @@ end;
 { Заставка }
 procedure Intro;
 const
+  up = 5;
   s0 = '#       #   #   #          #### #     ';
   s1 = ' #  #  #   ##   ##  # ###  #    ###   ';
   s2 = ' ## # ##  #  #  # # # #  # #### #  #  ';
   s3 = '  # # #   ####  #  ## #  # #    ###   ';
   s4 = '   ###   #    # #   # #  # #### #  #  ';
   s5 = '        #           # ###           # ';
-  s6 = '< Нажми ENTER для того, чтобы начать >';
 begin
   with Screen.Canvas do
   begin
     // WANDER
     Font.Color := cLIGHTGRAY;
-    TextOut(((WindowX-length(s0)) div 2) * CharX, 14*CharY, s0);
+    TextOut(((WindowX-length(s0)) div 2) * CharX, up*CharY, s0);
     Font.Color := cLIGHTBLUE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
+    TextOut(((WindowX-length(s1)) div 2) * CharX, (up+1)*CharY, s1);
     Font.Color := cBLUE;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, 16*CharY, s2);
+    TextOut(((WindowX-length(s2)) div 2) * CharX, (up+2)*CharY, s2);
     Font.Color := cBLUE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, 17*CharY, s3);
+    TextOut(((WindowX-length(s3)) div 2) * CharX, (up+3)*CharY, s3);
     Font.Color := cBROWN;
-    TextOut(((WindowX-length(s4)) div 2) * CharX, 18*CharY, s4);
+    TextOut(((WindowX-length(s4)) div 2) * CharX, (up+4)*CharY, s4);
     Font.Color := cBROWN;
-    TextOut(((WindowX-length(s5)) div 2) * CharX, 19*CharY, s5);
+    TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
     // Версия
     Font.Color := cBLUEGREEN;
-    TextOut(34*CharY, 13*CharY, GameVersion);
-    // Нажите кнопку
-    Font.Color := cYELLOW;
-    TextOut(((WindowX-length(s6)) div 2) * CharX, 25*CharY, s6);
+    TextOut(34*CharY, (up+1)*CharY, GameVersion);
     // Режим
     Font.Color := cBROWN;
     case PlayMode of
@@ -476,6 +474,46 @@ begin
   Result := s;
 end;
 }
+
+procedure BlackWhite(var AnImage: TBitMap);
+var
+  JPGImage: TJPEGImage;
+  BMPImage: TBitmap; 
+  MemStream: TMemoryStream;
+begin 
+  BMPImage := TBitmap.Create; 
+  try 
+    BMPImage.Width  := AnImage.Width;
+    BMPImage.Height := AnImage.Height; 
+
+    JPGImage := TJPEGImage.Create; 
+    try 
+      JPGImage.Assign(AnImage); 
+      JPGImage.CompressionQuality := 100; 
+      JPGImage.Compress; 
+      JPGImage.Grayscale := True;
+
+      BMPImage.Canvas.Draw(0, 0, JPGImage); 
+
+      MemStream := TMemoryStream.Create; 
+      try 
+        BMPImage.SaveToStream(MemStream); 
+        //you need to reset the position of the MemoryStream to 0 
+        MemStream.Position := 0; 
+
+        AnImage.LoadFromStream(MemStream); 
+        //AnImage.Refresh; 
+      finally 
+        MemStream.Free; 
+      end; 
+    finally 
+      JPGImage.Free; 
+    end; 
+  finally 
+    BMPImage.Free; 
+  end; 
+end;
+
 var
   EX: TExplodeResult;
 

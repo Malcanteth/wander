@@ -441,7 +441,7 @@ begin
   if Item.id > 0 then
     with Screen.Canvas do
     begin
-      DrawBorder(15,31,70,4);
+      DrawBorder(15,31,70,4,crLIGHTGRAY);
       // Начать описание предмета
       s := '';
       {Атака - выводить только если это - оружие (ближнего боя и стрела}
