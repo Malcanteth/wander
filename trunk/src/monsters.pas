@@ -164,25 +164,25 @@ const
     ( name1 : 'Гоблин'; name2 : 'Гоблина'; name3 : 'Гоблину'; name4 : 'Гоблином'; name5 : 'Гоблина'; name6 : 'Гоблинов';
       char : 'g'; color : crGREEN; gender : genMALE;
       hp : 13; speed : 115; los : 6; str : 5; dex : 7; int : 2;  at : 5; def : 5;
-      exp : 4; mass : 30.5; coollevel : 1;
+      exp : 4; mass : 30.5; coollevel : 2;
       flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
     ),
     ( name1 : 'Орк'; name2 : 'Орка'; name3 : 'Орку'; name4 : 'Орком'; name5 : 'Орка'; name6 : 'Орков';
       char : 'o'; color : crLIGHTGREEN; gender : genMALE;
       hp : 15; speed : 105; los : 6; str : 6; dex : 6; int : 3;  at : 7; def : 7;
-      exp : 5; mass : 55.0; coollevel : 2;
+      exp : 5; mass : 55.0; coollevel : 3;
       flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
     ),
     ( name1 : 'Огр'; name2 : 'Огра'; name3 : 'Огру'; name4 : 'Огром'; name5 : 'Огра'; name6 : 'Огров';
       char : 'o'; color : crBROWN; gender : genMALE;
       hp : 20; speed : 85; los : 5; str : 9; dex : 6; int : 2;  at : 10; def : 9;
-      exp : 6; mass : 70.9; coollevel : 3;
+      exp : 6; mass : 70.9; coollevel : 4;
       flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
     ),
     ( name1 : 'Слепая Зверюга'; name2 : 'Слепую Зверюгу'; name3 : 'Слепой Зверюге'; name4 : 'Слепой Зверюгой'; name5 : 'Слепой Зверюги'; name6 : 'Слепых Зверюг';
       char : 'M'; color : crCYAN; gender : genFEMALE;
       hp : 70; speed : 70; los : 2; str : 15; dex : 6; int : 3;  at : 15; def : 11;
-      exp : 14; mass : 85.0; coollevel : 4;
+      exp : 14; mass : 85.0; coollevel : 5;
       flags : NOF or M_ALWAYSANSWERED or M_TACTIC;
     ),
     ( name1 : 'Пьяница'; name2 : 'Пьяницу'; name3 : 'Пьянице'; name4 : 'Пьяницой'; name5 : 'Пьяницы'; name6 : 'Пьяниц';

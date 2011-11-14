@@ -1308,7 +1308,7 @@ procedure Tpc.UseMenu;
 begin
   with Screen.Canvas do
   begin
-    DrawBorder(75,2,20,HOWMANYVARIANTS+1);
+    DrawBorder(75,2,20,HOWMANYVARIANTS+1,crLIGHTGRAY);
     Font.Color := cBROWN;
     TextOut(77*CharX, 3*CharY, '[ ]');
     Font.Color := cWHITE;
