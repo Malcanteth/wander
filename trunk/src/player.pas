@@ -832,123 +832,206 @@ end;
 
 { Вывести информацию на экран справа }
 procedure Tpc.WriteInfo;
+var
+  HLine: Byte;
+  MB, WW: Integer;
 begin
   with Screen.Canvas do
   begin
+    // Ширина бара
+    WW := (98*CharX) - (82*CharX);
     // Имя
+    HLine := 1;
     Font.Color := cLIGHTGRAY;
     Brush.Color := pc.ColorOfTactic;
-    TextOut((((20-length(name)) div 2)+80) * CharX, 2*CharY, name);
+    Inc(HLine);
+    TextOut((((20-length(name)) div 2)+80) * CharX, HLine*CharY, name);
     Font.Color := cGRAY;
-    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, 3*CharY, '(');
+    Inc(HLine);
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, HLine*CharY, '(');
     Font.Color := pc.ClassColor;
-    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1) * CharX, 3*CharY, CLName(1));
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1) * CharX, HLine*CharY, CLName(1));
     Font.Color := cGRAY;
-    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1))) * CharX, 3*CharY, ')');
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1))) * CharX, HLine*CharY, ')');
     Font.Color := cBROWN;
     Brush.Color := cBLACK;
-    TextOut(81*CharX, 4*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    if Hp < 0 then Hp := 0;
     Font.Color := cLIGHTGRAY;
-    TextOut(82*CharX, 6*CharY, 'ЗДОРОВЬЕ :');
+    TextOut(82*CharX, HLine*CharY, 'ЗДОРОВЬЕ :');
     Font.Color := ReturnColor(Rhp, hp, 1);
-    TextOut(92*CharX, 6*CharY, IntToStr(hp));
+    TextOut(92*CharX, HLine*CharY, IntToStr(hp));
     Font.Color := cLIGHTGRAY;
-    TextOut(95*CharX, 6*CharY, '('+IntToStr(Rhp)+')');
+    TextOut(95*CharX, HLine*CharY, '('+IntToStr(Rhp)+')');
+    // Полоса здоровья
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if (Hp > 0) then
+      begin
+        Pen.Color := cLIGHTRED;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(HP, RHP, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    //
+    Inc(HLine);
+    if Mp < 0 then Mp := 0;
     Font.Color := cLIGHTGRAY;
-    TextOut(82*CharX, 7*CharY, 'МАНА     :');
+    TextOut(82*CharX, HLine*CharY, 'МАНА     :');
     Font.Color := ReturnColor(Rmp, mp, 2);
-    TextOut(92*CharX, 7*CharY, IntToStr(mp));
+    TextOut(92*CharX, HLine*CharY, IntToStr(mp));
     Font.Color := cLIGHTGRAY;
-    TextOut(95*CharX, 7*CharY, '('+IntToStr(Rmp)+')');
-    Font.Color := cLIGHTGRAY;
+    TextOut(95*CharX, HLine*CharY, '('+IntToStr(Rmp)+')');
+    // Полоса маны
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if (Mp > 0) then
+      begin
+        Pen.Color := cLIGHTBLUE;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    //
     Font.Color := cBROWN;
-    TextOut(81*CharX, 9*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
     Font.Color := cLIGHTGRAY;
-    TextOut(82*CharX, 11*CharY, 'СИЛА     :');
+    TextOut(82*CharX, HLine*CharY, 'СИЛА     :');
     if str > Rstr then
       Font.Color := cLIGHTGREEN else
         if str < Rstr then
           Font.Color := cLIGHTRED else
             Font.Color := cLIGHTGRAY;
-    TextOut(92*CharX, 11*CharY, IntToStr(str));
-    TextOut(82*CharX, 12*CharY, 'ЛОВКОСТЬ :');
+    TextOut(92*CharX, HLine*CharY, IntToStr(str));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ЛОВКОСТЬ :');
     if dex > Rdex then
       Font.Color := cLIGHTGREEN else
         if dex < Rdex then
           Font.Color := cLIGHTRED else
             Font.Color := cLIGHTGRAY;
-    TextOut(92*CharX, 12*CharY, IntToStr(dex));
-    TextOut(82*CharX, 13*CharY, 'ИНТЕЛЛЕКТ:');
+    TextOut(92*CharX, HLine*CharY, IntToStr(dex));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ИНТЕЛЛЕКТ:');
     if int > Rint then
       Font.Color := cLIGHTGREEN else
         if int < Rint then
           Font.Color := cLIGHTRED else
             Font.Color := cLIGHTGRAY;
-    TextOut(92*CharX, 13*CharY, IntToStr(int));
+    TextOut(92*CharX, HLine*CharY, IntToStr(int));
     Font.Color := cBROWN;
-    TextOut(81*CharX, 15*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
     Font.Color := cLIGHTGRAY;
-    TextOut(82*CharX, 17*CharY, 'УРОВЕНЬ  :'+IntToStr(explevel));
-    TextOut(82*CharX, 18*CharY, 'ОПЫТ     :'+IntToStr(pc.exp));
-    TextOut(82*CharX, 19*CharY, 'НУЖНО    :'+IntToStr(pc.ExpToNxtLvl));
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'УРОВЕНЬ  :'+IntToStr(explevel));
+    // Полоса опыта
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if pc.exp < 0 then pc.exp := 0;
+      if (pc.exp > 0) then
+      begin
+        Pen.Color := cBLUEGREEN;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(pc.exp, pc.ExpToNxtLvl, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    //
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ОПЫТ     :'+IntToStr(pc.exp));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'НУЖНО    :'+IntToStr(pc.ExpToNxtLvl));
     Font.Color := cBROWN;
-    TextOut(81*CharX, 21*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
     Font.Color := cLIGHTGRAY;
     if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
-      TextOut(82*CharX, 23*CharY, SpecialMaps[M.Special].name) else
-      if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
-        TextOut(82*CharX, 23*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth)) else
-          TextOut(82*CharX, 23*CharY, 'Странное место...');
+      TextOut(82*CharX, HLine*CharY, SpecialMaps[M.Special].name) else
+      if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and
+        (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
+        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth)) else
+          TextOut(82*CharX, HLine*CharY, 'Странное место...');
     Font.Color := cBROWN;
-    TextOut(81*CharX, 25*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
     if (hp > 0) then
     case pc.status[stHUNGRY] of
       -500..-400:
       begin
         Font.Color := cLIGHTRED;
-        TextOut(82*CharX, 27*CharY, 'Тошнит...');
+        TextOut(82*CharX, HLine*CharY, 'Тошнит...');
       end;
       -399..-1  :
       begin
         Font.Color := cGREEN;
-        TextOut(82*CharX, 27*CharY, GetMsg('Переел{/a}...',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Переел{/a}...',gender));
       end;
       0..450    :
       begin
         Font.Color := cGRAY;
-        TextOut(82*CharX, 27*CharY, GetMsg('Сыт{ый/ая}',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Сыт{ый/ая}',gender));
       end;
       451..750  :
       begin
         Font.Color := cYELLOW;
-        TextOut(82*CharX, 27*CharY, GetMsg('Проголодал{ся/ась}',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Проголодал{ся/ась}',gender));
       end;
       751..1200  :
       begin
         Font.Color := cLIGHTRED;
-        TextOut(82*CharX, 27*CharY, GetMsg('Голод{ен/на}',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Голод{ен/на}',gender));
       end;
       1201..1500 :
       begin
         Font.Color := cRED;
-        TextOut(82*CharX, 27*CharY, GetMsg('Умираешь от голода!',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Умираешь от голода!',gender));
       end;
     end else
     begin
       Font.Color := cGRAY;
-      TextOut(82*CharX, 27*CharY, GetMsg('Мертв{ый/ая}',gender));
+      TextOut(82*CharX, HLine*CharY, GetMsg('Мертв{ый/ая}',gender));
     end;
-    if (hp > 0) then
-    case pc.status[stDRUNK] of
+    if (hp > 0) then begin
+      Inc(HLine);
+      case pc.status[stDRUNK] of
       350..500:
       begin
         Font.Color := cYELLOW;
-        TextOut(82*CharX, 28*CharY, GetMsg('Пьян{ый/ая}',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Пьян{ый/ая}',gender));
       end;
       501..800:
       begin
         Font.Color := cLIGHTRED;
-        TextOut(82*CharX, 28*CharY, GetMsg('Пьян{ый/ая}! Ик!',gender));
+        TextOut(82*CharX, HLine*CharY, GetMsg('Пьян{ый/ая}! Ик!',gender));
+      end;
       end;
     end;
   end;

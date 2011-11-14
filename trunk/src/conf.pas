@@ -18,6 +18,10 @@ var
   Path: String;
   // Режим игры
   PlayMode: Byte = 0;
+  // Полоска здоровья на @
+  ShowPCBar: Byte = 1;
+  // Информ. полоски на правой панели
+  ShowBars: Byte = 1;
 
 implementation
 
@@ -39,6 +43,8 @@ initialization
     FontStyle := Ini.ReadInteger('FONT', 'Style', 0);
     PlayMode  := Ini.ReadInteger('GAME', 'Mode', AdventureMode);
     FlySpeed  := Ini.ReadInteger('GAME', 'FlySpeed', 70);
+    ShowPCBar := Ini.ReadInteger('GAME', 'ShowPCBar', 1);
+    ShowBars  := Ini.ReadInteger('GAME', 'ShowBars', 1);
   finally
     Ini.Free;
   end;

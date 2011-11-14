@@ -193,7 +193,7 @@ begin
   // Вывести навыки
   with Screen.Canvas do
   begin
-    // Ближнеий бой
+    // Ближний бой
     DrawStyleLine(top*CharY);
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, top*CharY, s1);
