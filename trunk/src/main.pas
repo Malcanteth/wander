@@ -3,11 +3,20 @@ unit main;
 interface
 
 uses
-  Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math;
+  Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
+  Menus;
 
 type
   TMainForm = class(TForm)
     GameTimer: TTimer;
+    MM: TMainMenu;
+    N1: TMenuItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
+    N4: TMenuItem;
+    N5: TMenuItem;
+    N6: TMenuItem;
+    N7: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -19,6 +28,12 @@ type
     procedure InitGame;
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure N2Click(Sender: TObject);
+    procedure FormKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure N4Click(Sender: TObject);
+    procedure N5Click(Sender: TObject);
+    procedure N7Click(Sender: TObject);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -58,6 +73,8 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   // контекст главной формы
   DC := GetDC(MainForm.Handle);
+  // Прячем главное меню
+  Menu := nil;
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
@@ -1132,6 +1149,10 @@ end;
 { Начальные данные }
 procedure TMainForm.InitGame;
 begin
+  // Активировать пункты меню, доступные только во время игры
+  N4.Enabled := True; // Акт. пункт "Помощь"
+  N5.Enabled := True; // Акт. пункт "Сообщения"
+  // Состояние игры -> игра
   GameState := gsPLAY;
   AskForQuit := TRUE;
   // Цвета и состояния напитков
@@ -1241,6 +1262,54 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   ReleaseDC(MainForm.Handle, DC);
   DeleteDC(DC);
+end;
+
+procedure TMainForm.N2Click(Sender: TObject);
+begin
+  Halt;
+end;
+
+procedure TMainForm.FormKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  case Key of
+    117: if Menu <> nil then Menu  := nil else Menu := MM;
+  end;
+end;
+
+procedure TMainForm.N4Click(Sender: TObject);
+begin
+  // Пункт меню "Помощь"
+  if GameState <> gsPLAY then Exit;
+  // Заполняем картинку черным цветом
+  Screen.Canvas.Brush.Color := 0;
+  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  // Показываем окно справки
+  ShowHelp;
+  // Отображаем растягиваемый буфер
+  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
+         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
+end;
+
+procedure TMainForm.N5Click(Sender: TObject);
+begin
+  // Пункт меню "Помощь"
+  if GameState <> gsPLAY then Exit;
+  // Заполняем картинку черным цветом
+  Screen.Canvas.Brush.Color := 0;
+  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  // Показываем окно справки
+  ShowHistory;
+  // Отображаем растягиваемый буфер
+  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
+         Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
+end;
+
+procedure TMainForm.N7Click(Sender: TObject);
+begin
+  MsgBox('WANDER v.' + GameVersion + ' | Павел Дивненко aka BreakMeThunder | breakmt@mail.ru');
 end;
 
 initialization

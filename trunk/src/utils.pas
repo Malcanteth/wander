@@ -31,7 +31,7 @@ function Rand(A, B: Integer): Integer;           // Случайное целое число из диа
 function GenerateName(female : boolean) : string; // Генерация имени
 
 implementation
-
+                         
 uses
   Player, Monsters, Map, Items, Msg, conf, sutils, vars, script;
 
