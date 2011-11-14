@@ -135,7 +135,8 @@ begin
          begin
             // ’елс-бар
             if (M.Saw[x,y] = 2) and (M.MonP[x,y] > 0)  then
-              if (M.MonL[M.MonP[x,y]].relation = 1) or ((x=pc.x)and(y=pc.y)) then
+              if (M.MonL[M.MonP[x,y]].relation = 1)
+                or ((ShowPCBar=1)and(x=pc.x)and(y=pc.y)) then
               begin
                 Pen.Color := cGRAY;
                 Pen.Width := 3;
@@ -149,7 +150,8 @@ begin
                     LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
                 end else
                   if M.MonL[M.MonP[x,y]].Hp > 0 then
-                    LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2)) / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
+                    LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2))
+                     / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
               end;
         end;
     Font.Name := FontMsg;

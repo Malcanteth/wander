@@ -28,7 +28,8 @@ procedure TakeScreenShot;                        // Сделать скриншот
 function Eq2Vid(cur : byte) : byte;              // Вид вещи соответствующий выбранной ячейки экипировки
 procedure Intro;                                 // Заставка
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
-function GenerateName(female : boolean) : string; // Генерация имени
+function GenerateName(female : boolean) : string;// Генерация имени
+function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
 
 implementation
                          
@@ -436,6 +437,18 @@ begin
    except
    end;
   end;
+end;
+
+// Ширина бара
+function BarWidth(Cx, Mx, Wd: Integer): Integer;
+var
+  I: Integer;
+begin
+  if (Mx <=0) then Mx := 1;
+  I := (Cx * Wd) div Mx;
+  if I <= 0 then I := 0;
+  if (Cx >= Mx) then I := Wd;
+  Result := I;
 end;
 
 { Генерация случайного имени }
