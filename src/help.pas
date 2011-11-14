@@ -44,10 +44,11 @@ begin
     TextOut(3*CharX,24*CharY, 'F1     - Помощь (эта страничка)');
     TextOut(3*CharX,25*CharY, 'F2     - Сохранить игру и выйти          {Пока не работает}');
     TextOut(3*CharX,26*CharY, 'F5     - Сделать скриншот');
+    TextOut(3*CharX,27*CharY, 'F6     - Показать/Спрятать главное меню');
 
     Font.Color := cGRAY;
-    TextOut(3*CharX,28*CharY, 'Команды не чувствительны к регистру и языку.');
-    TextOut(3*CharX,29*CharY, 'Двигаться по диагонали так же можно зажав ALT + стрелки.');
+    TextOut(3*CharX,31*CharY, 'Команды не чувствительны к регистру и языку.');
+    TextOut(3*CharX,32*CharY, 'Двигаться по диагонали так же можно зажав ALT + стрелки.');
     Font.Color := cLIGHTGRAY;
     TextOut(3*CharX,38*CharY, 'Игру разработал Павел Дивненко aka BreakMeThunder');
     Font.Color := cGRAY;
