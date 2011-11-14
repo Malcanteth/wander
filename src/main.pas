@@ -1273,7 +1273,14 @@ procedure TMainForm.FormKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   case Key of
-    117: if Menu <> nil then Menu  := nil else Menu := MM;
+    // F6 - Показать\Спрятать главное меню
+    117: if Menu <> nil then begin
+      Menu  := nil;
+      ClientHeight := ClientHeight - 20;
+    end else begin
+      Menu := MM;
+      ClientHeight := ClientHeight + 20;
+    end;
   end;
 end;
 
@@ -1294,7 +1301,7 @@ end;
 
 procedure TMainForm.N5Click(Sender: TObject);
 begin
-  // Пункт меню "Помощь"
+  // Пункт меню "Сообщения"
   if GameState <> gsPLAY then Exit;
   // Заполняем картинку черным цветом
   Screen.Canvas.Brush.Color := 0;
