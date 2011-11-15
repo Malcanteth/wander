@@ -46,6 +46,7 @@ var
   a                    : integer;
   wtd                  : byte;                 // Что сделать при выборе монстра
   DC                   : HDC;                  // Контекст устройства
+  PlayMode             : byte;                 // Выбранный режим игры
 
 implementation
 
@@ -75,13 +76,6 @@ begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
-  // Если режим приключений то нужно загрузить карты
-  if PlayMode = AdventureMode then
-    if not MainEdForm.LoadSpecialMaps then
-    begin
-      MsgBox('Ошибка загрузки карт!');
-      Halt;
-    end;
   GameTimer.Enabled := False;
   GameState := gsINTRO;
   MenuSelected := 1;
@@ -110,6 +104,7 @@ begin
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if WasEq then pc.Equipment else pc.Inventory; pc.UseMenu; end;
+    gsCHOOSEMODE   : pc.ChooseMode;
     gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
     gsHERORANDOM   : pc.HeroRandom;
@@ -217,42 +212,50 @@ begin
           // Игровое меню
           if GameMenu then
           begin
-            if (Key = 67) and (GameState = gsINTRO) then
-            begin
-              if PlayMode = 0 then PlayMode := 1 else PlayMode := 0;
-            end else
-              case Key of
-                // Esc
-                27 :
-                  if GameState <> gsINTRO then GameMenu := FALSE;
-                // Вверх
-                38,104,56 :
-                begin
-                  if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
-                end;
-                // Вниз
-                40,98,50 :
-                begin
-                  if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
-                end;
-                // Ok...
-                13 :
-                begin
-                  GameMenu := FALSE;
-                  case MenuSelected of
-                    gmNEWGAME :
-                    begin
-                      GameState := gsHERORANDOM;
-                    end;
-                    gmEXIT    :
-                    begin
-                      GameMenu := FALSE;
-                      if GameState = gsINTRO then AskForQuit := FALSE;
-                      MainForm.Close;
-                    end;
+            case Key of
+              // Esc
+              27 :
+                if GameState <> gsINTRO then GameMenu := FALSE;
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
+              end;
+              // Ok...
+              13 :
+              begin
+                GameMenu := FALSE;
+                case MenuSelected of
+                  gmNEWGAME :
+                  begin
+                    if Mode = 0 then
+                      GameState := gsCHOOSEMODE else
+                        begin
+                          PlayMode := Mode;
+                          // Если режим приключений то нужно загрузить карты
+                          if PlayMode = AdventureMode then
+                            if not MainEdForm.LoadSpecialMaps then
+                            begin
+                              MsgBox('Ошибка загрузки карт!');
+                              Halt;
+                            end;
+                          GameState := gsHERORANDOM;
+                        end;
+                  end;
+                  gmEXIT    :
+                  begin
+                    GameMenu := FALSE;
+                    if GameState = gsINTRO then AskForQuit := FALSE;
+                    MainForm.Close;
                   end;
                 end;
               end;
+            end;
             OnPaint(SENDER);
           end else
       // Все остальное
@@ -260,6 +263,34 @@ begin
         ClearMsg;
         pc.turn := 0;
         case GameState of
+          // Выбор режима игры
+          gsCHOOSEMODE:
+          begin
+            pc.ChooseMode;
+            case Key of
+              // Вверх/Вниз
+              38,104,56,40,98,50 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                PlayMode := MenuSelected;
+                // Если режим приключений то нужно загрузить карты
+                if PlayMode = AdventureMode then
+                  if not MainEdForm.LoadSpecialMaps then
+                  begin
+                    MsgBox('Ошибка загрузки карт!');
+                    Halt;
+                  end;
+                GameState := gsHERORANDOM;
+                MenuSelected := 1;
+                OnPaint(Sender);
+              end;
+            end;
+          end;
           // Рандомный герой?
           gsHERORANDOM:
           begin

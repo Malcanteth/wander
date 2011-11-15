@@ -53,7 +53,7 @@ type
     procedure Search;                            // Искать
     function HaveItemVid(vid : byte) : boolean;  // Есть ли хоть один предмет этого вида?
     procedure HeroRandom;                        // Сделать рандомного
-    procedure StartHeroName;                 // Окно ввода имени
+    procedure StartHeroName;                     // Окно ввода имени
     procedure HeroName;                          // Окно ввода имени
     procedure HeroGender;                        // Окно выбора пола
     procedure HeroAtributes;                     // Расстановка приоритетов
@@ -62,6 +62,7 @@ type
     procedure CreateFrWList;
     procedure HeroFarWeapon;                     // Оружие дальнего боя
     procedure HeroCreateResult;                  // Подтвердить
+    procedure ChooseMode;                    // Выбрать режим игры
   end;
 
 var
@@ -1641,6 +1642,29 @@ begin
     TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, GetMsg(S,gender));
     Font.Color := cYELLOW;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
+  end;
+end;
+
+{ Выбрать режим игры }
+procedure TPc.ChooseMode;
+const
+  s1 = 'В каком режиме игры ты хочешь играть?';
+begin
+  StartDecorating('<-ВЫБОР РЕЖИМА ИГРЫ->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 15*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 15*CharY, 'Приключение');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 16*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 16*CharY, 'Подземелье');
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
   end;
 end;
 

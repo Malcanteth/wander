@@ -384,12 +384,6 @@ begin
     // Версия
     Font.Color := cBLUEGREEN;
     TextOut(34*CharY, (up+1)*CharY, GameVersion);
-    // Режим
-    Font.Color := cBROWN;
-    case PlayMode of
-      0 :TextOut(1, 41*CharY, 'Режим игры: "ПРИКЛЮЧЕНИЕ" (''C'' чтобы поменять)');
-      1 :TextOut(1, 41*CharY, 'Режим игры: "ПОДЗЕМЕЛЬЕ"  (''C'' чтобы поменять)');
-    end;
   end;
 end;
 
