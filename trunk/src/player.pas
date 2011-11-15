@@ -969,13 +969,21 @@ begin
     TextOut(81*CharX, HLine*CharY, '-------------------');
     Inc(HLine);
     Inc(HLine);
+    // Название текущей карты
     Font.Color := cLIGHTGRAY;
     if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
       TextOut(82*CharX, HLine*CharY, SpecialMaps[M.Special].name) else
+    begin
       if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and
         (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
-        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth)) else
+      begin
+        // Отображаем название подземелья и его глубину
+        TextOut(82*CharX, HLine*CharY, DungeonModeMapName);
+        Inc(HLine);
+        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth))
+      end else
           TextOut(82*CharX, HLine*CharY, 'Странное место...');
+    end;
     Font.Color := cBROWN;
     Inc(HLine);
     Inc(HLine);
