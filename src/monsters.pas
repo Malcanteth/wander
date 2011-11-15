@@ -1241,8 +1241,8 @@ begin
   if M.MonP[Victim.x, victim.y] > 0 then
   begin
     if Eq[7].id > 0 then
-      AddMsg(FullName(1, FALSE)+', использу€ '+ItemsData[eq[7].id].name3+', выстрелил в '+Victim.FullName(2, FALSE)+'!',id) else
-        AddMsg(FullName(1, FALSE)+' швырнул '+ItemsData[eq[13].id].name3+' в '+Victim.FullName(2, FALSE)+'!',id);
+      AddMsg(FullName(1, FALSE)+', использу€ '+ItemsData[eq[7].id].name3+', выстрелил{/a} в '+Victim.FullName(2, FALSE)+'!',id) else
+        AddMsg(FullName(1, FALSE)+' швырнул{/a} '+ItemsData[eq[13].id].name3+' в '+Victim.FullName(2, FALSE)+'!',id);
     // ”клонитьс€
     if Random(Round(TacticEffect(2)*(dex+(ability[abACCURACY]*AbilitysData[abACCURACY].koef))))+1 > Random(Round(Victim.TacticEffect(1)*((Victim.dex/4)+(Victim.ability[abDODGER]*AbilitysData[abDODGER].koef))))+1 then
     begin

@@ -34,9 +34,10 @@ begin
 end;
 
 { Добавить сообщение }
-procedure WanderAddMsg(s: string; id : integer);
+procedure WanderAddMsg(S: string; Id : integer);
 begin
-  Msg.AddDrawMsg(s, id);
+  Msg.AddDrawMsg(S, Id);
+  S := '';
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)

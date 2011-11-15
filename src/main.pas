@@ -153,7 +153,7 @@ procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
   i : integer;
-  n : string;
+  n : string;        
   Item : TItem;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ

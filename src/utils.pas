@@ -31,6 +31,7 @@ function Rand(A, B: Integer): Integer;           // Случайное целое число из диа
 function GenerateName(female : boolean) : string;// Генерация имени
 function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
 procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
+procedure GetDungeonModeMapName;
 
 implementation
                          
@@ -456,24 +457,6 @@ begin
   Script.Run('GenName.pas');
   Result := Trim(V.GetStr('GenName.Name'));
 end;
-{ Старый вариант ф-ции GenerateName
-const
-  name1 : array[1..7]of string[3] = ('Гр','Ад','Вил','Кен','Лур','Тил','Гэл');
-  name2 : array[1..6]of string[2] = ('ид','ар','ор','ов','ик','ом');
-  name3 : array[1..6]of string[3] = ('эн','е','и','о','д','ер');
-  fends : array[1..3]of string[3] = ('оя','ия','еа');
-var
-  s : string[40];
-begin
-  s := name1[random(7)+1];
-  s := s + name2[random(6)+1];
-  if random(2)+1 = 2 then
-    s := s + name3[random(6)+1];
-  if female then
-    s := s + fends[random(3)+1];
-  Result := s;
-end;
-}
 
 procedure BlackWhite(var AnImage: TBitMap);
 var
@@ -514,10 +497,19 @@ begin
   end; 
 end;
 
+procedure GetDungeonModeMapName;
+begin
+  V.SetInt('GenDungeon.Depth', PC.Depth);
+  V.SetStr('GenDungeon.Name', '');
+  Script.Run('GenDungeon.pas');
+  DungeonModeMapName := Trim(V.GetStr('GenDungeon.Name'));
+end;
+
 var
   EX: TExplodeResult;
 
 initialization
+  // Версия игры
   EX := Explode('.', FileVersion(Paramstr(0)));
   GameVersion := EX[0] + '.' + EX[1] + EX[2];
 

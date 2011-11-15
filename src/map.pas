@@ -31,15 +31,16 @@ type
   end;
 
 var
-  M         : TMap;
-  FlyX,FlyY : byte;
-  FlyS      : string[1];
-  FlyC      : byte;
+  DungeonModeMapName: string[20] = '';
+  M                 : TMap;
+  FlyX,FlyY         : byte;
+  FlyS              : string[1];
+  FlyC              : byte;
 
 implementation
 
 uses
-  MapEditor, conf;
+  MapEditor, conf, mbox;
 
 { Очистить карту }
 procedure TMap.Clear;
@@ -620,7 +621,7 @@ var
               x2 := Random(MaxWidth-MinWidth)+MinWidth+x1;
               y2 := Random(MaxHeight-MinHeight)+MinHeight+y1;
             end;
-            // Если комната влазиет, то строем ее
+            // Если комната влезает, то строем ее
             if CheckBounds then BuildRoom else Continue;
             // Ищем двери
             r:=1;
@@ -762,6 +763,7 @@ var
     Changes;
     PlaceMonsters;
     PlaceItems;
+    GetDungeonModeMapName();
 end;
 
 { Сохранить }

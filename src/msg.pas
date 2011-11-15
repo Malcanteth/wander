@@ -33,10 +33,13 @@ procedure ShowInput;
 
 implementation
 
-uses SysUtils, Conf, Player, Windows, Graphics, Monsters;
+uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
 
-{ Добавить сообщение }
+// Добавить сообщение
 procedure AddMsg(s: string; id : integer);
+
+// Подпрограмма рекурсивно добавляет сообщения
+procedure UseMsg(s: string; id : integer);
 var
   a,i,j : byte;
   w,o : string;
@@ -92,15 +95,26 @@ begin
               end;
           end;
       end;
-      if o <> '' then AddMsg(o,id);
+      if o <> '' then UseMsg(o,id);
       break;
     end else
-      if (Msgs[a] = '')and(a = MsgAmount) then
+      if (Msgs[a] = '')and(a = MsgAmount) then    
       begin
         More;
-        AddMsg(s,id);
+        UseMsg(s,id);
         break;
       end;
+end;
+
+begin
+  // Доб. сообщение
+  UseMsg(S, ID);
+  // Добавляем сообщ. в лог
+  if id < 2 then
+    S := GetMsg(S, pc.gender) else
+      S := GetMsg(S, MonstersData[id].gender);
+  //    
+  Log(S);
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
