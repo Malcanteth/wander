@@ -314,11 +314,20 @@ procedure TakeScreenShot;
 var
   t : TSystemTime;
   s: string;
+  F: TJPEGImage;
 begin
   GetSystemTime(t);
   CreateDir(Path + 'screens');
   if pc.name = '' then s := 'unknown' else s := pc.name;
-  Screen.SaveToFile(Path + 'screens/' + s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.bmp');
+  F := TJPEGImage.Create;
+  try
+    F.Assign(Screen);
+    F.CompressionQuality := 100;
+    F.Compress;
+    F.SaveToFile(Path + 'screens/' + s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.jpg');
+  finally
+    F.Free;
+  end;
   AddMsg('[Скриншот...]',0);
   MainForm.OnPaint(NIL);
 end;
@@ -469,11 +478,11 @@ begin
     BMPImage.Width  := AnImage.Width;
     BMPImage.Height := AnImage.Height; 
 
-    JPGImage := TJPEGImage.Create; 
+    JPGImage := TJPEGImage.Create;
     try 
       JPGImage.Assign(AnImage); 
-      JPGImage.CompressionQuality := 100; 
-      JPGImage.Compress; 
+      JPGImage.CompressionQuality := 100;
+      JPGImage.Compress;
       JPGImage.Grayscale := True;
 
       BMPImage.Canvas.Draw(0, 0, JPGImage); 
