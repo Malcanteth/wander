@@ -115,18 +115,18 @@ const
 var
   i : byte;
 begin
-  DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-1, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
+  DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
   with Screen.Canvas do
   begin
     for i:=1 to GMChooseAmount do
     begin
       Font.Color := cBROWN;
-      TextOut((TableX+2)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-1+(1+i))*CharY, '[ ]');
+      TextOut((TableX+2)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, '[ ]');
       Font.Color := cCYAN;
-      TextOut((TableX+6)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-1+(1+i))*CharY, MenuNames[i]);
+      TextOut((TableX+6)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, MenuNames[i]);
     end;
     Font.Color := cYELLOW;
-    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-1+(1+MenuSelected))*CharY, '*');
+    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+MenuSelected))*CharY, '*');
   end;
 end;
 

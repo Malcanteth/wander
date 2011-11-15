@@ -7,8 +7,8 @@ const
   MapEditorVersion         = '0.7.0.0';
 
   { Константы режимов игры }
-  AdventureMode            = 0;
-  DungeonMode              = 1;
+  AdventureMode            = 1;
+  DungeonMode              = 2;
 
   { Константы  окна }
   WindowX                  = 100;
@@ -106,6 +106,7 @@ const
   gsWPNSKILLS              = 21;
   gsAIM                    = 22;
   gsHERORANDOM             = 23;
+  gsCHOOSEMODE             = 24;
 
   { Статусы героя}
   stHUNGRY                 = 1;
