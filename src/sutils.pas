@@ -2,7 +2,7 @@
 unit sutils;
 
 interface
-
+                   
 type
   TExplodeResult = array of string;               // Тип для разбивания строки на фрагменты
 
