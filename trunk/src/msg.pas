@@ -37,6 +37,8 @@ uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
 
 // Добавить сообщение
 procedure AddMsg(s: string; id : integer);
+var
+  b : integer;
 
 // Подпрограмма рекурсивно добавляет сообщения
 procedure UseMsg(s: string; id : integer);
@@ -109,12 +111,16 @@ end;
 begin
   // Доб. сообщение
   UseMsg(S, ID);
-  // Добавляем сообщ. в лог
+  // Корректируем сообщение в зависимости от пола
   if id < 2 then
     S := GetMsg(S, pc.gender) else
       S := GetMsg(S, MonstersData[id].gender);
-  //    
-  Log(S);
+  // Исключаем служебные символы
+  for b:=1 to Length(s) do
+    if (s[b] = '*') or (s[b] = '$') or (s[b] = '#') then
+      Delete(s,b,1);  
+  // Добавляем в лог
+  if (S <> '') and (S <> ' ') then Log(S);
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
