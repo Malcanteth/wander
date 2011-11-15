@@ -217,53 +217,49 @@ begin
           // Игровое меню
           if GameMenu then
           begin
-            case Key of
-              // Esc
-              27 :
-                if GameState <> gsINTRO then GameMenu := FALSE;
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
-              end;
-              // Ok...
-              13 :
-              begin
-                GameMenu := FALSE;
-                case MenuSelected of
-                  gmNEWGAME :
-                  begin
-                    GameState := gsHERORANDOM;
-                  end;
-                  gmEXIT    :
-                  begin
-                    GameMenu := FALSE;
-                    if GameState = gsINTRO then AskForQuit := FALSE;
-                    MainForm.Close;
+            if (Key = 67) and (GameState = gsINTRO) then
+            begin
+              if PlayMode = 0 then PlayMode := 1 else PlayMode := 0;
+            end else
+              case Key of
+                // Esc
+                27 :
+                  if GameState <> gsINTRO then GameMenu := FALSE;
+                // Вверх
+                38,104,56 :
+                begin
+                  if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
+                end;
+                // Вниз
+                40,98,50 :
+                begin
+                  if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
+                end;
+                // Ok...
+                13 :
+                begin
+                  GameMenu := FALSE;
+                  case MenuSelected of
+                    gmNEWGAME :
+                    begin
+                      GameState := gsHERORANDOM;
+                    end;
+                    gmEXIT    :
+                    begin
+                      GameMenu := FALSE;
+                      if GameState = gsINTRO then AskForQuit := FALSE;
+                      MainForm.Close;
+                    end;
                   end;
                 end;
               end;
-            end;
-            OnPaint(SENDER);            
+            OnPaint(SENDER);
           end else
       // Все остальное
       begin
         ClearMsg;
         pc.turn := 0;
         case GameState of
-          // Заставка
-          gsINTRO:
-          begin
-            case Key of
-              13, 32 : GameState := gsHERORANDOM;
-              67     : if PlayMode = 0 then PlayMode := 1 else PlayMode := 0;
-            end;
-          end;
           // Рандомный герой?
           gsHERORANDOM:
           begin
