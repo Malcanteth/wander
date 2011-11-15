@@ -313,22 +313,24 @@ end;
 procedure TakeScreenShot;
 var
   t : TSystemTime;
-  s: string;
+  s, fname: string;
   F: TJPEGImage;
 begin
   GetSystemTime(t);
   CreateDir(Path + 'screens');
   if pc.name = '' then s := 'unknown' else s := pc.name;
   F := TJPEGImage.Create;
+  fname := '<FAIL>';
   try
     F.Assign(Screen);
     F.CompressionQuality := 100;
     F.Compress;
-    F.SaveToFile(Path + 'screens/' + s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.jpg');
+    fname := s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.jpg';
+    F.SaveToFile(Path + 'screens/' + fname);
   finally
     F.Free;
   end;
-  AddMsg('[Скриншот...]',0);
+  AddMsg('#Сделан скриншот# ($'+fname+'$).',0);
   MainForm.OnPaint(NIL);
 end;
 
