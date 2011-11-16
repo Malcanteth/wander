@@ -28,7 +28,11 @@ uses
   vars in 'vars.pas',
   script in 'script.pas',
   mbox in 'mbox.pas',
-  liquid in 'liquid.pas';
+  liquid in 'liquid.pas',
+  pngimage in 'PNGImage\PNGImage.pas',
+  zlibpas in 'PNGImage\ZLibPas.pas',
+  pnglang in 'PNGImage\PNGLang.pas',
+  pngextra in 'PNGImage\PNGExtra.pas';
 
 {$R *.res}
 
