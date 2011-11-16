@@ -36,7 +36,7 @@ function GetDungeonModeMapName : string;         // Генерировать название подзем
 implementation
                          
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script;
+  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -315,21 +315,20 @@ procedure TakeScreenShot;
 var
   t : TSystemTime;
   s, fname: string;
-  F: TJPEGImage;
+  P: TPNGObject;
 begin
   GetSystemTime(t);
   CreateDir(Path + 'screens');
   if pc.name = '' then s := 'unknown' else s := pc.name;
-  F := TJPEGImage.Create;
   fname := '<FAIL>';
+  fname := s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond);
+  // PNG
+  P := TPNGObject.Create;
   try
-    F.Assign(Screen);
-    F.CompressionQuality := 100;
-    F.Compress;
-    fname := s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond)+'.jpg';
-    F.SaveToFile(Path + 'screens/' + fname);
+    P.Assign(Screen);
+    P.SaveToFile(Path + 'screens/' + fname + '.png');
   finally
-    F.Free;
+    P.Free;
   end;
   AddMsg('#Сделан скриншот# ($'+fname+'$).',0);
   MainForm.OnPaint(NIL);
