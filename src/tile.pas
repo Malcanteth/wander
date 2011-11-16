@@ -64,7 +64,7 @@ const
   tdMOUNT    = 9;
   tdROAD     = 10;
   tdWATER    = 11;
-  tdREDFLOOR = 12;
+  tdREDFLOOR = 12;     
   tdHOTROCK  = 13;
   tdCHATCH   = 14;
   tdBIGGATES = 15;

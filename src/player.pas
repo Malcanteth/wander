@@ -455,13 +455,13 @@ end;
 
 { Описать место }
 procedure TPc.AnalysePlace(px,py : byte; All : byte);
-var
-  s : string;
+var                
+  s : string;       
 begin
   // Тайл
   if (All=2)or(TilesData[M.Tile[px,py]].important) or ((M.Blood[px,py] > 0) and (All <> 1)) then
     if M.Blood[px,py] > 0 then
-      AddMsg(TilesData[M.Tile[px,py]].name+' в крови.',0) else
+      AddMsg('*' + TilesData[M.Tile[px,py]].name+' в крови.*',0) else
         AddMsg(TilesData[M.Tile[px,py]].name+'.',0);
   // Монстр
   if All > 0 then

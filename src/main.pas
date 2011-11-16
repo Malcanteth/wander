@@ -200,7 +200,7 @@ begin
                 Inc(InputPos);
               end;
             end;
-          end;
+          end;                 
           OnPaint(Sender);
         end;
       end else
@@ -217,7 +217,7 @@ begin
               27 :
                 if GameState <> gsINTRO then GameMenu := FALSE;
               // ¬верх
-              38,104,56 :
+              38,104,56 :    
               begin
                 if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
               end;
