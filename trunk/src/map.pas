@@ -8,7 +8,8 @@ uses
 type
   { Структура карты }
   TMap = object
-    Special  : byte;                            // Текущая спец. карта 
+    Special  : byte;                            // Текущая спец. карта
+    name : string[17];                          // Имя карты
     tip  : byte;                                // Тип пещеры
     Tile : array [1..MapX,1..MapY] of byte;     // Тайлы
     Blood: array [1..MapX,1..MapY] of byte;     // Кровь
@@ -763,7 +764,6 @@ var
     Changes;
     PlaceMonsters;
     PlaceItems;
-    GetDungeonModeMapName();
 end;
 
 { Сохранить }
@@ -777,6 +777,7 @@ begin
   AssignFile(f,'swap/'+pc.name+'/'+IntToStr(pc.level)+'_'+IntToStr(pc.enter)+'_'+IntToStr(pc.depth)+'.lev');
   {$I-}
   Rewrite(f,1);
+  BlockWrite(f,name,SizeOf(name));
   BlockWrite(f,Special,SizeOf(Special));
   // Убрать видимость
   for x:=1 to MapX do
@@ -823,6 +824,7 @@ begin
   begin
     Result := true;
     M.Clear;
+    BlockRead(f,name,SizeOf(name));
     BlockRead(f,Special,SizeOf(Special));
     // Прочитать информацию о тайлах
     BlockRead(f,Tile,SizeOf(Tile));

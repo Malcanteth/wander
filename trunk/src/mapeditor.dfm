@@ -1,6 +1,6 @@
 object MainEdForm: TMainEdForm
-  Left = 285
-  Top = 235
+  Left = 216
+  Top = 106
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'MainEdForm'
@@ -311,7 +311,7 @@ object MainEdForm: TMainEdForm
     Left = 584
     Top = 0
     Width = 369
-    Height = 513
+    Height = 537
     Caption = #1057#1074#1086#1081#1089#1090#1074#1072' '#1083#1077#1089#1090#1085#1080#1094#1099
     TabOrder = 1
     Visible = False
@@ -352,10 +352,10 @@ object MainEdForm: TMainEdForm
       TabOrder = 0
     end
     object Button7: TButton
-      Left = 288
+      Left = 280
       Top = 384
       Width = 75
-      Height = 25
+      Height = 41
       Caption = #1051#1072#1076#1085#1086'!'
       TabOrder = 1
       OnClick = Button7Click
@@ -883,7 +883,7 @@ object MainEdForm: TMainEdForm
     end
     object Memo1: TMemo
       Left = 16
-      Top = 416
+      Top = 440
       Width = 337
       Height = 89
       Font.Charset = RUSSIAN_CHARSET
@@ -916,6 +916,31 @@ object MainEdForm: TMainEdForm
       ItemHeight = 16
       ParentFont = False
       TabOrder = 42
+    end
+    object DungeonName: TEdit
+      Left = 16
+      Top = 400
+      Width = 257
+      Height = 31
+      Enabled = False
+      Font.Charset = RUSSIAN_CHARSET
+      Font.Color = clBlack
+      Font.Height = -19
+      Font.Name = 'Arial Narrow'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 43
+    end
+    object RandomName: TCheckBox
+      Left = 8
+      Top = 376
+      Width = 257
+      Height = 17
+      Caption = #1056#1072#1085#1076#1086#1084#1085#1086#1077' '#1085#1072#1079#1074#1072#1085#1080#1077
+      Checked = True
+      State = cbChecked
+      TabOrder = 44
+      OnClick = RandomNameClick
     end
   end
   object GroupBox7: TGroupBox

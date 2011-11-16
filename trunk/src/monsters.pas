@@ -1868,6 +1868,7 @@ begin
 
       EquipItem(CreateItem(idLAPTI, 1, 0));
       EquipItem(CreateItem(idJACKET , 1, 0));
+      EquipItem(CreateItem(idDAGGER , 1, 0));
       PickUp(CreatePotion(lqCURE, 2), FALSE,2);
       PickUp(CreatePotion(lqCURE, 3), FALSE,3);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
