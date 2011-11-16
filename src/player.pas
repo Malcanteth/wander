@@ -358,7 +358,7 @@ var
       if M.MonP[x,y] > 0 then
       begin
         M.MemS[x,y] := MonstersData[M.MonL[M.MonP[x,y]].id].char;
-        M.MemC[x,y] := MonstersData[M.MonL[M.MonP[x,y]].id].color;
+        M.MemC[x,y] := M.MonL[M.MonP[x,y]].ClassColor;
       end else
         if M.Item[x,y].id > 0 then
         begin
@@ -533,6 +533,7 @@ end;
 procedure TPc.UseStairs;
 var
   i, wasenter, waslevel : byte;
+  dunname : string[17];
 begin
   if (M.Tile[pc.x,pc.y] = tdDSTAIRS) or (M.Tile[pc.x,pc.y] = tdOHATCH) or (M.Tile[pc.x,pc.y] = tdDUNENTER) then
   begin
@@ -547,9 +548,16 @@ begin
         if (SpecialMaps[pc.level].Ladders[i].x = pc.x) and (SpecialMaps[pc.level].Ladders[i].y = pc.y) then
         begin
           pc.enter := i;
+          if SpecialMaps[pc.level].Ladders[i].name = '' then
+            dunname := GetDungeonModeMapName() else
+              dunname := SpecialMaps[pc.level].Ladders[i].name;
           break;
         end;
-    end;
+    end else
+      begin
+        if M.name <> '' then
+          dunname := M.name;
+      end;
     // Этаж ниже
     inc(pc.depth);
     waslevel := pc.level;
@@ -565,9 +573,11 @@ begin
         if (pc.depth = 10) or (SpecialMaps[pc.level].Ladders[pc.enter].Levels[pc.depth+1].IsHere = FALSE) then
           M.GenerateCave(SpecialMaps[pc.level].Ladders[pc.enter].Levels[pc.depth].DungeonType, FALSE) else
             M.GenerateCave(SpecialMaps[pc.level].Ladders[pc.enter].Levels[pc.depth].DungeonType, TRUE);
+        M.name := DunName;
       end else
         // Спец. уровень
           M.MakeSpMap(pc.level);
+      if DunName <> '' then M.name := DunName;
     end;
     PlaceAtTile(tdUSTAIRS);
     pc.turn := 2;
@@ -575,6 +585,7 @@ begin
   end else
     if M.Tile[pc.x,pc.y] = tdUSTAIRS then
     begin
+      dunname := M.name;
       // Убрать указатель на героя
       M.MonP[pc.x,pc.y] := 0;
       // Сохранить уровень
@@ -595,6 +606,7 @@ begin
         AskForQuit := FALSE;
         MainForm.Close;
       end;
+      if SpecialMaps[M.Special].name = '' then M.name := DunName else M.name := SpecialMaps[M.Special].name;
       if M.Special > 0 then
         pc.level := M.Special;
       // Поместить героя
@@ -788,7 +800,7 @@ begin
       begin
         if M.MonP[a,b] = 0 then
         begin
-          AddMsg('Ты с трудом открыл{}/a люк.',0);
+          AddMsg('Ты с трудом открыл{/a} люк.',0);
           M.Tile[a,b] := tdOHATCH;
           pc.turn := 1;
         end else
@@ -979,7 +991,7 @@ begin
         (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
       begin
         // Отображаем название подземелья и его глубину
-        TextOut(82*CharX, HLine*CharY, DungeonModeMapName);
+        TextOut(82*CharX, HLine*CharY, M.name);
         Inc(HLine);
         TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth))
       end else

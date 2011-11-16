@@ -94,6 +94,8 @@ type
     Label4: TLabel;
     Label5: TLabel;
     SpeedButton2: TSpeedButton;
+    DungeonName: TEdit;
+    RandomName: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FillClick(Sender: TObject);
@@ -123,6 +125,7 @@ type
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
+    procedure RandomNameClick(Sender: TObject);
   private
   public
   end;
@@ -140,7 +143,8 @@ type
   end;
 
   TLadder = record
-    x, y : byte;                    // Расположение лестницы
+    name   : string[17];                    // Название подзмелья
+    x, y   : byte;                          // Расположение лестницы
     Levels : array[1..MaxDepth] of TLevel;  // Характеристики каждого уровня
   end;
 
@@ -403,7 +407,7 @@ end;
 function TMainEdForm.SaveSpecialMaps : boolean;
 var
   f : file;
-  i,kol,m,k,x,y,z : byte;
+  i,kol,m,k,x,y,z,b : byte;
 begin
   CreateDir('data');
   // Локации
@@ -630,6 +634,13 @@ begin
                   NumberChange.Items.Add(IntToStr(i) + '-' + 'свободно!');
             NumberChange.ItemIndex := 0;
             Number.Caption := '№'+IntToStr(n);
+            if SpecialMaps[NowMap].Ladders[n].name = '' then
+              RandomName.Checked := TRUE else
+                begin
+                  RandomName.Checked := FALSE;
+                  DungeonName.Enabled := TRUE;
+                  DungeonName.Text := SpecialMaps[NowMap].Ladders[n].name;
+                end;
             { Забыл как делать поиск компонента, а тот что вспомнил почему-то не работает...
                                                                          Короче, сделал тупо :)}
             with Pregen1 do
@@ -916,6 +927,9 @@ begin
   WaitForLadderClick := False;
   with GroupBox6 do
   begin
+    if (RandomName.Checked) or (DungeonName.Text = '') then
+      SpecialMaps[NowMap].Ladders[n].name := '' else
+        SpecialMaps[NowMap].Ladders[n].name := DungeonName.Text;
     //
     SpecialMaps[NowMap].Ladders[n].Levels[1].IsHere := CheckBox1.Checked;
     SpecialMaps[NowMap].Ladders[n].Levels[1].PregenLevel := Pregen1.ItemIndex;
@@ -1039,6 +1053,11 @@ begin
                 y := 0;
              end;
     end;
+end;
+
+procedure TMainEdForm.RandomNameClick(Sender: TObject);
+begin
+  if RandomName.Checked then DungeonName.Enabled := FALSE else DungeonName.Enabled := TRUE;
 end;
 
 end.

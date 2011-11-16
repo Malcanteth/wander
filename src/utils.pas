@@ -31,7 +31,7 @@ function Rand(A, B: Integer): Integer;           // Случайное целое число из диа
 function GenerateName(female : boolean) : string;// Генерация имени
 function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
 procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
-procedure GetDungeonModeMapName;
+function GetDungeonModeMapName : string;         // Генерировать название подземелья
 
 implementation
                          
@@ -491,23 +491,24 @@ begin
 
         AnImage.LoadFromStream(MemStream); 
         //AnImage.Refresh; 
-      finally 
-        MemStream.Free; 
-      end; 
-    finally 
-      JPGImage.Free; 
-    end; 
-  finally 
-    BMPImage.Free; 
-  end; 
+      finally
+        MemStream.Free;
+      end;
+    finally
+      JPGImage.Free;
+    end;
+  finally
+    BMPImage.Free;
+  end;
 end;
 
-procedure GetDungeonModeMapName;
+{ Генерировать название подземелья }
+function GetDungeonModeMapName : string;
 begin
   V.SetInt('GenDungeon.Depth', PC.Depth);
   V.SetStr('GenDungeon.Name', '');
   Script.Run('GenDungeon.pas');
-  DungeonModeMapName := Trim(V.GetStr('GenDungeon.Name'));
+  Result := Trim(V.GetStr('GenDungeon.Name'));
 end;
 
 var

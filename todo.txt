@@ -23,5 +23,4 @@ TODO
 
 Доработка функций:
 ~~~~~~~~~~~~~~~~~
-        - более красивая и богатая генерация имен PC в Utils.GenerateName (Apromix)
         - доработать Utils.DeleteSwap (Apromix)
