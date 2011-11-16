@@ -114,6 +114,7 @@ begin
 end;
 
 { Удалить файлы сохранения }
+{ TODO -oPD -cminor : Доработать }
 procedure DeleteSwap;
 var
   s : TSearchRec;
