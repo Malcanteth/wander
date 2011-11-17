@@ -1175,7 +1175,7 @@ begin
                       if IsInNewAreaSkill(closefight[c], closefight[c] +  d) then
                       begin
                         closefight[c] := closefight[c] +  d;
-                        AddMsg('Теперь ты лучше владеешь навыком "'+CLOSEWPNNAME[c]+'"! Теперь ты им владеешь просто '+RateToStr(RateSkill(pc.CloseFight[c]))+'!',id);
+                        AddMsg('#Теперь ты лучше владеешь навыком "#$'+CLOSEWPNNAME[c]+'$#"!#',id);
                         More;
                       end else
                         closefight[c] := closefight[c] +  d;
@@ -1188,8 +1188,8 @@ begin
                       begin
                         if IsInNewAreaSkill(Closefight[i], closefight[i] -  d) then
                         begin
-                          closefight[c] := closefight[c] +  d;
-                          AddMsg('Ты вдруг понял, что из-за долгого отсутствия тренировок твой навык "'+CLOSEWPNNAME[c]+'" стал забываться. Теперь ты им владеешь просто '''+RateToStr(RateSkill(pc.CloseFight[i]))+'''.',id);
+                          closefight[i] := closefight[i] -  d;
+                          AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренировок твой навык "*$'+CLOSEWPNNAME[c]+'$*" стал забываться.*',id);
                           More;
                         end else
                           CloseFight[i] := CloseFight[i] - d;
