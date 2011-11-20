@@ -43,6 +43,8 @@ type
     atr             : array[1..2] of byte;             // Приоритетные атрибуты
     //
     status          : array[1..2] of integer;         // Счетчики (1-Голод)
+    //
+    underhit        : boolean;
 
 
     procedure ClearMonster;                           // Очистить
@@ -61,10 +63,10 @@ type
     procedure Death;                                  // Умереть
     procedure GiveItem(var Victim : TMonster;
                                  var GivenItem : TItem); // Отдать вещь
-    procedure BloodStreem(dx,dy : shortint);
+    procedure BloodStream(dx,dy : shortint);
     function PickUp(Item : TItem;FromEq : boolean;
                              amount : integer) : byte;// Поместить вещь в инвентарь (0-успешно,1-ничего нет,2-нет места,3-перегружен
-    function MaxMass : real;
+    function MaxMass : real;                          // Максимальная масса переносимых предметов
     procedure DeleteInvItem(var I : TItem;
                       amount : integer);              // Удалить предмет из инвентаря
     procedure RefreshInventory;                       // Перебрать инвентарь
@@ -77,6 +79,7 @@ type
     procedure DecArrows;                              // Минус стрела
     function WhatClass : byte;                        // Класс
     function ClName(situation : byte) : string;       // Вернуть название класса
+    function RCName(situation : byte) : string;       // Вернуть название расы 
     procedure PrepareSkills;                          // Раставить очки умений и экипировать в зависимости от класса
     procedure FavWPNSkill;                            // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
     function BestWPNCL : byte;                        // Самый прокаченный навык в ближ. бою
@@ -85,7 +88,9 @@ type
     function BestWPNFR : byte;                        // Самый прокаченный навык в дальнем бою
     function HowManyBestWPNFR : byte;                 // Сколько одинаковопрокаченных в дальнем бою
     function OneOfTheBestWPNFR(i : byte): boolean;    // Один из лучше прок. навыков
-    function ClassColor : longword;                   // Цвет класса
+    function ClassColor : byte;                       // Цвет класса
+    procedure DoDamage(damage : integer;
+                   var Victim : TMonster);            // Отнять жизни
   end;
 
   TMonData = record
@@ -106,6 +111,13 @@ type
   TMonClass = record
     name1m, name2m, name3m, name4m, name5m, name6m : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
     name1f, name2f, name3f, name4f, name5f, name6f : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
+  end;
+
+  TSpot = record
+    nx,ny : integer;
+    speedx, speedy : byte;
+    color : byte;
+    live : boolean;
   end;
 
 const
@@ -303,8 +315,12 @@ const
      name1f : 'Мыслительница'; name2f : 'Мыслительницу'; name3f : 'Мыслительнице'; name4f : 'Мыслительницей'; name5f : 'Мыслительницы'; name6f : 'Мыслительниц')
   );
 
+  SpotAmount = 8;
+
 var
   nx, ny : byte;
+  blooded : boolean;
+  Spot : array[1..SpotAmount] of TSpot;
 
 procedure CreateMonster(n,px,py : byte);   // Создать монстра
 procedure FillMonster(i,n,px,py : byte);
@@ -1157,8 +1173,8 @@ begin
                     More;
                   end;
                   // Отнять жизни
-                  Victim.hp := Victim.hp - Dam;
-                  Victim.BloodStreem( -(x - Victim.x), -(y - Victim.y));
+                  DoDamage(Dam, Victim);
+                  Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
                   AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+'! (*'+IntToStr(Dam)+'*)',id);
                   // Ранил
                   if Victim.hp > 0 then
@@ -1271,8 +1287,8 @@ begin
             AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+', но не пробил{/а} броню.',id) else
               begin
                 // Отнять жизни
-                Victim.hp := Victim.hp - Dam;
-                Victim.BloodStreem( -(x - Victim.x), -(y - Victim.y));
+                DoDamage(Dam, Victim);
+                Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
                 // Ранил
                 if Victim.hp > 0 then
                 begin
@@ -1477,14 +1493,14 @@ begin
 end;
 
 { Кровь! }
-procedure TMonster.BloodStreem(dx,dy : shortint);
+procedure TMonster.BloodStream(dx,dy : shortint);
 var
   i : shortint;
 begin
   if hp > 0  then
   begin
     for i:=0 to Random(Random(3)+1)+1 do
-    begin    
+    begin
       if TilesData[M.Tile[x+(dx*i),y+(dy*i)]].blood then
         M.blood[x+(dx*i),y+(dy*i)] := Random(2)+1;
       if not(TilesData[M.Tile[x+(dx*i),y+(dy*i)]].move) then
@@ -1504,47 +1520,59 @@ begin
   if Item.id = 0 then
     Result := 1 else
       begin
-        f := false;
-        for i:=1 to MaxHandle do
-          if SameItems(Inv[i], Item) then
+        // Если поднимается аммуниция которая сейчас задействана в экипировке, то прибавить к ней
+        if SameItems(Eq[13], Item) then
+        begin
+          if (invmass + (Item.mass*amount) < MaxMass) then
           begin
-            if (invmass + (Item.mass*amount) < MaxMass) then
-            begin
-              inc(Inv[i].amount, amount);
-              invmass := invmass + (Item.mass*amount);
-              f := TRUE;
-              break;
-            end else
+            inc(Eq[13].amount, amount);
+            invmass := invmass + (Item.mass*amount);
+          end else
+              Result := 3;
+        end else
+          begin
+            f := false;
+            for i:=1 to MaxHandle do
+              if SameItems(Inv[i], Item) then
               begin
-                Result := 3;
-                break;
-              end;
-          end;
-        if f = false then
-          for i:=1 to MaxHandle do
-            if Inv[i].id = 0 then
-            begin
-              if (invmass + (Item.mass*amount) < MaxMass) or (FromEq) then
-              begin
-                Inv[i] := Item;
-                Inv[i].amount := amount;
-                invmass := invmass + (Item.mass*amount);
-                break;
-              end else
+                if (invmass + (Item.mass*amount) < MaxMass) then
                 begin
-                  Result := 3;
+                  inc(Inv[i].amount, amount);
+                  invmass := invmass + (Item.mass*amount);
+                  f := TRUE;
                   break;
-                end;
-            end else
-              if (i = MaxHandle) and(Inv[i].id <> 0) then
-                Result := 2;
+                end else
+                  begin
+                    Result := 3;
+                    break;
+                  end;
+              end;
+            if f = false then
+              for i:=1 to MaxHandle do
+                if Inv[i].id = 0 then
+                begin
+                  if (invmass + (Item.mass*amount) < MaxMass) or (FromEq) then
+                  begin
+                    Inv[i] := Item;
+                    Inv[i].amount := amount;
+                    invmass := invmass + (Item.mass*amount);
+                    break;
+                  end else
+                    begin
+                      Result := 3;
+                      break;
+                    end;
+                end else
+                  if (i = MaxHandle) and(Inv[i].id <> 0) then
+                    Result := 2;
+          end;
       end;
 end;
 
 { Сколько может нести монстр }
 function TMonster.MaxMass : real;
 begin
-  Result := str * 15.8;
+  Result := str * 25;
 end;
 
 { Удалить предмет из инвентаря }
@@ -1647,7 +1675,10 @@ begin
       end;
     Result := 1;
   end else
-    eq[cell] := Item;
+    begin
+      eq[cell] := Item;
+      InvMass := InvMass + (eq[cell].mass*eq[cell].amount);
+    end;
   if cell <> EqAmount then
     if eq[cell].amount > 1 then eq[cell].amount := 1;
 end;
@@ -1745,6 +1776,48 @@ begin
       2 : Result := 8;
       3 : Result := 9;
     end;
+  end;
+end;
+
+{ Вернуть название расы }
+function TMonster.RCName(situation : byte) : string;
+var
+  g : byte;
+begin
+  if id = 1 then
+    g := pc.gender else
+      g := MonstersData[id].gender;
+  case situation of
+    1 :
+      case g of
+        1 : Result := 'Человек';
+        2 : Result := 'Человек';
+      end;
+    2 :
+      case g of
+        1 : Result := 'Человека';
+        2 : Result := 'Человека';
+      end;
+    3 :
+      case g of
+        1 : Result := 'Человеку';
+        2 : Result := 'Человеку';
+      end;
+    4 :
+      case g of
+        1 : Result := 'Человеком';
+        2 : Result := 'Человеком';
+      end;
+    5 :
+      case g of
+        1 : Result := 'Человека';
+        2 : Result := 'Человека';
+      end;
+    6 :
+      case g of
+        1 : Result := 'Людей';
+        2 : Result := 'Людей';
+      end;
   end;
 end;
 
@@ -2098,24 +2171,39 @@ begin
 end;
 
 { Цвет класса }
-function TMonster.ClassColor : longword;
+function TMonster.ClassColor : byte;
 begin
   Result := 0;
-  if (id > 1) and not (IsFlag(MonstersData[id].flags, M_CLASS)) then
+  if (id > 1) and (IsFlag(MonstersData[id].flags, M_CLASS)) then
+  begin
+    // Цвет класса
+    case WhatClass of
+      1 : Result := crLIGHTBLUE;
+      2 : Result := crORANGE;
+      3 : Result := crLIGHTGRAY;
+      4 : Result := crGREEN;
+      5 : Result := crGRAY;
+      6 : Result := crYELLOW;
+      7 : Result := crBROWN;
+      8 : Result := crPURPLE;
+      9 : Result := crCYAN;
+    end;
+  end else
     // Монстр без класса
-    Result := RealColor(MonstersData[id].color) else
-      // Цвет класса
-      case WhatClass of
-        1 : Result := cLIGHTBLUE;
-        2 : Result := cORANGE;
-        3 : Result := cLIGHTGRAY;
-        4 : Result := cGREEN;
-        5 : Result := cGRAY;
-        6 : Result := cYELLOW;
-        7 : Result := cBROWN;
-        8 : Result := cPURPLE;
-        9 : Result := cCYAN;
-      end;
+    Result := MonstersData[id].color;
+end;
+
+{ Отнять жизни }
+procedure TMonster.DoDamage(damage : integer; var Victim : TMonster);
+begin
+  Victim.hp := Victim.hp - Damage;
+  Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
+  if (UnderHitSpeed > 0) and (Victim.Hp > 0) then
+  begin
+    Victim.underhit := TRUE;
+    MainForm.OnPaint(NIL);
+    sleep(UnderHitSpeed);
+  end;
 end;
 
 end.

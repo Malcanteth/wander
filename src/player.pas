@@ -57,12 +57,13 @@ type
     procedure HeroName;                          // Окно ввода имени
     procedure HeroGender;                        // Окно выбора пола
     procedure HeroAtributes;                     // Расстановка приоритетов
-    procedure CreateClWList;
+    procedure CreateClWList;                     // Создать список навыков ближнего боя
     procedure HeroCloseWeapon;                   // Оружие ближнего боя
-    procedure CreateFrWList;
+    procedure CreateFrWList;                     // Создать список навыков дальнего боя
     procedure HeroFarWeapon;                     // Оружие дальнего боя
     procedure HeroCreateResult;                  // Подтвердить
-    procedure ChooseMode;                    // Выбрать режим игры
+    procedure ChooseMode;                        // Выбрать режим игры
+    procedure WriteAboutInvMass;                 // Показать массу всего инвентаря и макс. переносимую ГГ
   end;
 
 var
@@ -700,8 +701,8 @@ begin
               case whattodo of
                 1 : Fight(M.MonL[M.MonP[a,b]], 0); // Атаковать
                 2 : Talk(M.MonL[M.MonP[a,b]]);     // Говорить
-                3 : if waseq then GiveItem(M.MonL[M.MonP[a,b]], pc.Eq[MenuSelected]) else
-                                        GiveItem(M.MonL[M.MonP[a,b]], pc.Inv[MenuSelected]);   // Отдать
+                3 : if LastGameState = gsEQUIPMENT then GiveItem(M.MonL[M.MonP[a,b]], pc.Eq[MenuSelected]) else
+                      GiveItem(M.MonL[M.MonP[a,b]], pc.Inv[MenuSelected]);   // Отдать
               end;
               pc.turn := 1;
               Exit;
@@ -729,8 +730,8 @@ begin
   FillMemory(@MList, SizeOf(MList), 0);
   k := 1;
   // Составим список окружающих монстров
-  for a:=x-20 to x+20 do
-    for b:=y-20 to y+20 do
+  for a := x - 20 to x + 20 do
+    for b := y - 20 to y + 20 do
       if (a>0) and (a<=MapX) and (b>0) and (b<=MapY) then
         if M.Saw[a,b] = 2 then
           if M.MonP[a,b] > 1 then
@@ -854,7 +855,7 @@ begin
     // Ширина бара
     WW := (98*CharX) - (82*CharX);
     // Имя
-    HLine := 1;
+    HLine := 0;
     Font.Color := cLIGHTGRAY;
     Brush.Color := pc.ColorOfTactic;
     Inc(HLine);
@@ -862,7 +863,7 @@ begin
     Font.Color := cGRAY;
     Inc(HLine);
     TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, HLine*CharY, '(');
-    Font.Color := pc.ClassColor;
+    Font.Color := RealColor(pc.ClassColor);
     TextOut((((20-(length(CLName(1))+2)) div 2)+80+1) * CharX, HLine*CharY, CLName(1));
     Font.Color := cGRAY;
     TextOut((((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1))) * CharX, HLine*CharY, ')');
@@ -1175,6 +1176,7 @@ begin
     TextOut(6*CharX, (10+MenuSelected)*CharY,'*');
   end;
   WriteSomeAboutItem(pc.Eq[MenuSelected]);
+  WriteAboutInvMass;
 end;
 
 { Инвентарь }
@@ -1217,6 +1219,7 @@ begin
       end else
         break;
     WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]]);
+    WriteAboutInvMass;
   end;
 end;
 
@@ -1333,7 +1336,7 @@ begin
     Font.Color := cBROWN;
     TextOut(77*CharX, 3*CharY, '[ ]');
     Font.Color := cWHITE;
-    if WasEq then
+    if LastGameState = gsEQUIPMENT then
       // В экипировке
       TextOut(81*CharX, 3*CharY, 'В инвентарь') else
         // В инвентаре
@@ -1364,8 +1367,8 @@ procedure TPc.AfterDeath;
 begin
   AddMsg('*Ты умер{/лa}!!!*',0);
   Apply;
-  AskForQuit := FALSE;
-  MainForm.Close;
+  ChangeGameState(gsINTRO);
+  StartGameMenu;
 end;
 
 { Найти ячейку с монетами }
@@ -1537,6 +1540,7 @@ begin
   end;
 end;
 
+{ Создать список навыков ближнего боя }
 procedure TPc.CreateClWList;
 var
   i,k    : byte;
@@ -1588,6 +1592,7 @@ begin
   end;
 end;
 
+{ Создать список навыков дальнего боя }
 procedure TPc.CreateFrWList;
 var
   i,k    : byte;
@@ -1677,6 +1682,19 @@ begin
     TextOut(44*CharX, 16*CharY, 'Подземелье');
     Font.Color := cYELLOW;
     TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
+{ Показать массу всего инвентаря и макс. переносимую ГГ }
+procedure Tpc.WriteAboutInvMass;
+var
+  weight : string;
+begin
+  with Screen.Canvas do
+  begin
+    Font.Color := cLIGHTGRAY;
+    weight :=  'Масса всех предметов: '+FloatToStr(pc.invmass)+' Максимальная масса: '+FloatToStr(pc.maxmass);
+    TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
   end;
 end;
 

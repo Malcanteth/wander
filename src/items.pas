@@ -436,7 +436,7 @@ end;
 { Вывести некоторые хар-ки предмета }
 procedure WriteSomeAboutItem(Item : TItem);
 var
-  s, weight : string;
+  s : string;
 begin
   if Item.id > 0 then
     with Screen.Canvas do
@@ -452,17 +452,19 @@ begin
       case ItemsData[Item.id].vid of
         1,3,4,11,12 : s := s + 'Защита: '+IntToStr(ItemsData[Item.id].defense)+' ';
       end;
+      // Масса предмета
+      s := s + 'Масса: '+FloatToStr(Item.mass);
       // Вывести некоторые характеристики предмета
       Font.Color := cCYAN;
       // Атака для оружия, защита для брони или информация о еде и тд
       TextOut(17*CharX, 32*CharY, s);
       // Вывести символ предмета
-      Font.Color := cGRAY;
+      Font.Color := cLIGHTGRAY;
       TextOut(49*CharX, 31*CharY, '| |');
       Font.Color := RealColor(ItemColor(Item));
       TextOut(50*CharX, 31*CharY, ItemTypeData[ItemsData[Item.id].vid].symbol);
       // Тип оружия, если это оружие
-      Font.Color := cWHITE;
+      Font.Color := cGREEN;
       if (ItemsData[Item.id].vid = 6) then
         TextOut((83-Length(CLOSEWPNNAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+CLOSEWPNNAME[ItemsData[Item.id].kind]+'"');
       if (ItemsData[Item.id].vid = 7) or (ItemsData[Item.id].vid = 13) then
@@ -470,10 +472,6 @@ begin
       // Тип брони, если это броня или обувь
       if (ItemsData[Item.id].vid = 4) or (ItemsData[Item.id].vid = 12) then
         TextOut((83-Length(ARMORTYPENAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+ARMORTYPENAME[ItemsData[Item.id].kind]+'"');
-      // Вывести вес предмета и общий вес инвентаря
-      Font.Color := cLIGHTGRAY;
-      weight := 'Масса предмета: '+FloatToStr(Item.mass)+'  Общая масса инвентаря: '+FloatToStr(pc.invmass);
-      TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
     end;
 end;
 
@@ -518,9 +516,17 @@ begin
     //s := s + ' с ' + LiquidState[NowLiquidState[Item.liquidid]] + ' ' + LiquidColor[NowLiquidColor[Item.liquidid]] + ' жидкостью';
   end;
   if Item.owner > 0 then
-    if (Item.amount = 1) or (not ALL) then
-      s := s + ' ' + MonstersData[Item.owner].name5 else
-        s := s + ' ' + MonstersData[Item.owner].name6;
+  begin
+    // Если обладатель - ГГ
+    if Item.owner = 1 then
+    begin
+    end else
+      begin
+        if (Item.amount = 1) or (not ALL) then
+          s := s + ' ' + MonstersData[Item.owner].name5 else
+            s := s + ' ' + MonstersData[Item.owner].name6;
+      end;
+  end;
   if (Item.amount > 1) and (ALL) then
     s := s + ' ('+IntToStr(Item.amount)+' шт)';
   Result := s;

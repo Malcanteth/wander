@@ -52,11 +52,11 @@ end;
 { Вывести карту }
 procedure TMap.DrawScene;
 var
-  x, y    : integer;
+  x, y, i   : integer;
   color,
   back       : longword;
   char       : string[1];
-  dx,dy,i,sx,sy,check,e:integer;
+  dx,dy,sx,sy,check,e:integer;
   onway      : boolean;
 begin
   with Screen.Canvas do
@@ -88,17 +88,33 @@ begin
             begin
               if M.MonP[x,y] = 1 then
               begin
-                color := pc.ClassColor;
+                color := RealColor(pc.ClassColor);
                 char := '@';
                 if pc.tactic > 0 then back := pc.ColorOfTactic;
                 if pc.felldown then color:= cGRAY;
+                if pc.underhit then
+                begin
+                  case Random(2)+1 of
+                    1 :color := cLIGHTRED;
+                    2 :color := cRED;
+                  end;
+                  pc.underhit := FALSE;
+                end;
               end else
                 begin
-                  color := M.MonL[M.MonP[x,y]].ClassColor;
+                  color := RealColor(M.MonL[M.MonP[x,y]].ClassColor);
                   if (M.MonL[M.MonP[x,y]].relation = 1) and (M.MonL[M.MonP[x,y]].tactic > 0) then
                     back := M.MonL[M.MonP[x,y]].ColorOfTactic;
                   if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
                   char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
+                  if M.MonL[M.MonP[x,y]].underhit then
+                  begin
+                    case Random(2)+1 of
+                      1 :color := cLIGHTRED;
+                      2 :color := cRED;
+                    end;
+                    M.MonL[M.MonP[x,y]].underhit := FALSE;
+                  end;
                 end;
             end;
             // Курсор просмотра
