@@ -2174,7 +2174,7 @@ end;
 function TMonster.ClassColor : byte;
 begin
   Result := 0;
-  if (id > 1) and (IsFlag(MonstersData[id].flags, M_CLASS)) then
+  if (id > 0) and (IsFlag(MonstersData[id].flags, M_CLASS)) then
   begin
     // ÷вет класса
     case WhatClass of
