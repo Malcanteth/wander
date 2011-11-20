@@ -25,7 +25,5 @@ object MainForm: TMainForm
     Enabled = False
     Interval = 200
     OnTimer = GameTimerTimer
-    Left = 160
-    Top = 112
   end
 end

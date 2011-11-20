@@ -31,22 +31,22 @@ type
 var
   MainForm             : TMainForm;
   Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
-  WaitMore             : boolean;              // --Далее--
-  WaitEnter            : boolean;              // Ждем нажатия Enter
-  GameMenu             : boolean;              // Игровое меню
+  WaitMore,                                    // --Далее--
+  WaitEnter,                                   // Ждем нажатия Enter
+  GameMenu,                                    // Игровое меню
+  AskForQuit,                                  // Подтверждение выхода
   Inputing             : boolean;              // Режим ввода
-  GameState            : byte;                 // Состояние игры
+  GameState,                                   // Состояние игры
+  MenuSelected2,                               // Выбранный элемент в меню
+  VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
+  wtd,                                         // Что сделать при выборе монстра
+  LastGameState,                               // Последнее состояние игры
+  PlayMode             : byte;                 // Выбранный режим игры
   GameVersion          : string;               // Версия игры
   Answer               : string[1];            // Ожидается ответ
-  AskForQuit           : boolean;              // Подтверждение выхода
   MenuSelected,
-  MenuSelected2        : byte;                 // Выбранный элемент в меню
-  VidFilter            : byte;                 // Предметы какого вида отоброжать в инвентаре (0-все)
-  WasEq                : boolean;              // Перед вызовом меню действий с предметом был инвентарь или экипировка
   a                    : integer;
-  wtd                  : byte;                 // Что сделать при выборе монстра
   DC                   : HDC;                  // Контекст устройства
-  PlayMode             : byte;                 // Выбранный режим игры
 
 implementation
 
@@ -77,7 +77,7 @@ begin
     Height := ClientHeight;
   end;
   GameTimer.Enabled := False;
-  GameState := gsINTRO;
+  ChangeGameState(gsINTRO);
   MenuSelected := 1;
   GameMenu := TRUE;
 end;
@@ -103,7 +103,7 @@ begin
     gsEQUIPMENT    : pc.Equipment;
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
-    gsUSEMENU      : begin if WasEq then pc.Equipment else pc.Inventory; pc.UseMenu; end;
+    gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
     gsCHOOSEMODE   : pc.ChooseMode;
     gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
@@ -234,7 +234,7 @@ begin
                   gmNEWGAME :
                   begin
                     if Mode = 0 then
-                      GameState := gsCHOOSEMODE else
+                      ChangeGameState(gsCHOOSEMODE) else
                         begin
                           PlayMode := Mode;
                           // Если режим приключений то нужно загрузить карты
@@ -244,7 +244,7 @@ begin
                               MsgBox('Ошибка загрузки карт!');
                               Halt;
                             end;
-                          GameState := gsHERORANDOM;
+                          ChangeGameState(gsHERORANDOM);
                         end;
                   end;
                   gmEXIT    :
@@ -285,7 +285,7 @@ begin
                     MsgBox('Ошибка загрузки карт!');
                     Halt;
                   end;
-                GameState := gsHERORANDOM;
+                ChangeGameState(gsHERORANDOM);
                 MenuSelected := 1;
                 OnPaint(Sender);
               end;
@@ -306,7 +306,7 @@ begin
               13 :
               begin
                 if MenuSelected = 1 then
-                  GameState := gsHEROGENDER else
+                  ChangeGameState(gsHEROGENDER) else
                     // Всё рандомно
                     begin
                       // пол
@@ -332,7 +332,7 @@ begin
                         pc.CreateFrWList;
                         f_choose := Wlist[Random(wlistsize)+1];
                       end;
-                      GameState := gsHEROCRRESULT;
+                      ChangeGameState(gsHEROCRRESULT);
                     end;
                 OnPaint(Sender);
               end;
@@ -388,8 +388,8 @@ begin
                 MenuSelected := 1;
                 MenuSelected2 := 1;
                 if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
-                  GameState := gsHEROFRWPN else
-                    GameState := gsHEROCRRESULT;
+                  ChangeGameState(gsHEROFRWPN) else
+                    ChangeGameState(gsHEROCRRESULT);
                 OnPaint(Sender);
               end;
             end;
@@ -428,7 +428,7 @@ begin
                 f_choose := Wlist[MenuSelected];
                 MenuSelected := 1;
                 MenuSelected2 := 1;
-                GameState := gsHEROCRRESULT;
+                ChangeGameState(gsHEROCRRESULT);
                 OnPaint(Sender);
               end;
             end;
@@ -464,10 +464,10 @@ begin
                     pc.Prepare;
                     pc.PrepareSkills;
                     if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
-                      GameState := gsHEROCLWPN else
+                      ChangeGameState(gsHEROCLWPN) else
                         if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
-                          GameState := gsHEROFRWPN else
-                            GameState := gsHEROCRRESULT;
+                          ChangeGameState(gsHEROFRWPN) else
+                            ChangeGameState(gsHEROCRRESULT);
                   end;
                 OnPaint(Sender);
               end;
@@ -486,7 +486,7 @@ begin
               27     :
               begin
                 MenuSelected := 1;
-                GameState := gsHERORANDOM;
+                ChangeGameState(gsHERORANDOM);
               end;
             end;
           end;
@@ -529,7 +529,7 @@ begin
               // Смотреть 'l'
               76        :
               begin
-                GameState := gsLOOK;
+                ChangeGameState(gsLOOK);
                 lx := pc.x;
                 ly := pc.y;
                 pc.AnalysePlace(lx,ly,2);
@@ -539,7 +539,7 @@ begin
               // Список квестов 'q'
               81        :
               begin
-                GameState := gsQUESTLIST;
+                ChangeGameState(gsQUESTLIST);
               end;
               // Съесть 'f'
               70        :
@@ -548,7 +548,7 @@ begin
                 begin
                   MenuSelected := 1;
                   VidFilter := 14;
-                  GameState := gsINVENTORY;
+                  ChangeGameState(gsINVENTORY);
                 end else
                   AddMsg('У тебя нет ничего съестного!',0);
               end;
@@ -559,7 +559,7 @@ begin
                 begin
                   MenuSelected := 1;
                   VidFilter := 19;
-                  GameState := gsINVENTORY;
+                  ChangeGameState(gsINVENTORY);
                 end else
                   AddMsg('В инвентаре нет ничего, что можно выпить!',0);
               end;
@@ -567,7 +567,7 @@ begin
               69        :
               begin
                   MenuSelected := 1;
-                  GameState := gsEQUIPMENT;
+                  ChangeGameState(gsEQUIPMENT);
               end;
               // Инвентарь 'i'
               73        :
@@ -576,14 +576,14 @@ begin
                 begin
                   MenuSelected := 1;
                   VidFilter := 0;
-                  GameState := gsINVENTORY;
+                  ChangeGameState(gsINVENTORY);
                 end else
                   AddMsg('Твой инвентарь пуст!',0);
               end;
               // Помощь '?'
               112       :
               begin
-                GameState := gsHELP;
+                ChangeGameState(gsHELP);
               end;
               // Атаковать 'a'
               65        : pc.SearchForAlive(1);
@@ -635,17 +635,17 @@ begin
               79        :
               begin
                 AddMsg('Что ты хочешь открыть?',0);
-                GameState := gsOPEN;
+                ChangeGameState(gsOPEN);
               end;
               // Войти в меню Навыки и Способности 'x'
               88        :
               begin
                 MenuSelected := 1;
-                GameState := gsSKILLSMENU;
+                ChangeGameState(gsSKILLSMENU);
               end;
               // История сообщений 'm'
               77        :
-                GameState := gsHISTORY;
+                ChangeGameState(gsHISTORY);
               // Крикнуть 'y'
               89        :
               begin
@@ -669,13 +669,13 @@ begin
                       lx := M.MonL[i].x;
                       ly := M.MonL[i].y;
                       pc.AnalysePlace(lx,ly,1);
-                      GameState := gsAIM;
+                      ChangeGameState(gsAIM);
                     end else
                       begin
                         lx := pc.x;
                         ly := pc.y;
                         pc.AnalysePlace(lx,ly,1);
-                        GameState := gsAIM;
+                        ChangeGameState(gsAIM);
                       end;
                   end else
                     AddMsg(ItemsData[pc.eq[13].id].name2+' и '+ItemsData[pc.eq[7].id].name1+' - не совместимы!',0);
@@ -736,7 +736,7 @@ begin
                 AddDrawMsg('Указано неправильное направление!',0);
             end;
             pc.turn := 1;
-            GameState := gsPLAY;
+            ChangeGameState(gsPLAY);
           end;
           // Открыть
           gsOPEN:
@@ -754,7 +754,7 @@ begin
                 AddDrawMsg('Указано неправильное направление!',0);
             end;
             pc.turn := 1;
-            GameState := gsPLAY;
+            ChangeGameState(gsPLAY);
           end;
           // Атаковать!
           gsCHOOSEMONSTER:
@@ -764,63 +764,63 @@ begin
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y+1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Inv[MenuSelected]);
               end;
               40,98,50  :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y+1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Eq[MenuSelected]) else
+                       pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Inv[MenuSelected]);
               end;
               34,99,51  :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y+1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Inv[MenuSelected]);
               end;
               37,100,52 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Inv[MenuSelected]);
               end;
               39,102,54 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Inv[MenuSelected]);
               end;
               36,103,55 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y-1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Inv[MenuSelected]);
               end;
               38,104,56 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y-1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Inv[MenuSelected]);
               end;
               33,105,57 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y-1]]);
-                3 : if waseq then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Eq[MenuSelected]) else
-                                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Eq[MenuSelected]) else
+                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Inv[MenuSelected]);
               end;
               else
                 AddDrawMsg('Указано неправильное направление!',0);
             end;
             pc.turn := 1;
-            GameState := gsPLAY;
+            ChangeGameState(gsPLAY);
           end;
           // Управление курсором осмотра
           gsLOOK:
@@ -837,7 +837,7 @@ begin
               33,105,57 : pc.MoveLook(1,-1);
               13        : AnimFly(pc.x,pc.y,lx,ly,'`',crBrown);
               else
-                GameState := gsPlay;
+                ChangeGameState(gsPlay);
               M.DrawScene;
             end;
           end;
@@ -858,12 +858,12 @@ begin
                 if (lx = pc.x) and (ly = pc.y) then
                   AddMsg('Проще нажми ESC, если уж так хочешь умереть!',0) else
                   begin
-                    GameState := gsPLAY;
+                    ChangeGameState(gsPLAY);
                     AnimFly(pc.x,pc.y,lx,ly, ItemTypeData[ItemsData[pc.Eq[13].id].vid].symbol, ItemsData[pc.Eq[13].id].color);
                     pc.turn := 1;
                   end;
               ELSE
-                GameState := gsPlay;
+                ChangeGameState(gsPLAY);
               M.DrawScene;
             end;
           end;
@@ -871,7 +871,12 @@ begin
           gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsABILITYS, gsHISTORY, gsSKILLSMENU,
           gsUSEMENU, gsWPNSKILLS:
           begin
-            if (Key = 27) or (Key = 32) then GameState := gsPLAY;
+            if GameState = gsUSEMENU then
+            begin
+              if Key = 27 then
+                ChangeGameState(LastGameState);
+            end else
+              if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
             // Чит в навыках
             if GameState = gsWPNSKILLS then
             begin
@@ -897,7 +902,7 @@ begin
                   MenuSelected := 1;
                   VidFilter := 0;
                   pc.Inventory;
-                  GameState := gsINVENTORY;
+                  ChangeGameState(gsINVENTORY);
                 end;
                 // Вверх
                 38,104,56 :
@@ -911,17 +916,16 @@ begin
                   // Снять
                   if pc.eq[MenuSelected].id > 0 then
                   begin
-                    WasEq := TRUE;
                     MenuSelected2 := 1;
                     pc.UseMenu;
-                    GameState := gsUSEMENU;
+                    ChangeGameState(gsUSEMENU);
                   end else
                     if pc.HaveItemVid(Eq2Vid(MenuSelected)) then
                     begin
                       VidFilter := Eq2Vid(MenuSelected);
                       MenuSelected := 1;
                       pc.Inventory;
-                      GameState := gsINVENTORY;
+                      ChangeGameState(gsINVENTORY);
                     end;
                 end;
               end;
@@ -936,7 +940,7 @@ begin
                 begin
                   MenuSelected := 1;
                   pc.Equipment;
-                  GameState := gsEQUIPMENT;
+                  ChangeGameState(gsEQUIPMENT);
                 end;
                 // Вверх
                 38,104,56 :
@@ -957,14 +961,13 @@ begin
                 begin
                   if VidFilter = 0 then
                   begin
-                    WasEq := FALSE;
                     MenuSelected2 := 1;
                     pc.UseMenu;
-                    GameState := gsUSEMENU;
+                    ChangeGameState(gsUSEMENU);
                   end else
                     begin
                       UseItem(InvList[MenuSelected]);
-                      GameState := gsPLAY;
+                      ChangeGameState(gsPLAY);
                     end;
                 end;
               end;
@@ -1020,9 +1023,9 @@ begin
                 case MenuSelected2 of
                   1: // Использовать
                   begin
-                    GameState := gsPLAY;
+                    ChangeGameState(gsPLAY);
                     //В экипировке
-                    if WasEq then
+                    if LastGameState = gsEQUIPMENT then
                     begin
                       case pc.PickUp(pc.eq[MenuSelected], TRUE,pc.eq[MenuSelected].amount) of
                         0 :
@@ -1040,8 +1043,8 @@ begin
                   end;
                   2: // Рассмотреть
                   begin
-                    GameState := gsPLAY;
-                    if WasEq then
+                    ChangeGameState(gsPLAY);
+                    if LastGameState = gsEQUIPMENT then
                       ExamineItem(pc.Eq[MenuSelected]) else
                         ExamineItem(pc.Inv[MenuSelected]);
                     pc.turn := 1;
@@ -1056,8 +1059,8 @@ begin
                   end;
                   5: // Выкинуть
                   begin
-                    GameState := gsPLAY;
-                    if WasEq then
+                    ChangeGameState(gsPLAY);
+                    if LastGameState = gsEQUIPMENT then
                     begin
                       i := 1;
                       if pc.Eq[MenuSelected].amount > 1 then
@@ -1149,9 +1152,9 @@ begin
               begin
                 case MenuSelected of
                   3 : // Особенные способности
-                  GameState := gsWPNSKILLS;
+                  ChangeGameState(gsWPNSKILLS);
                   4 : // Особенные способности
-                  GameState := gsABILITYS;
+                  ChangeGameState(gsABILITYS);
                 end;
                 MenuSelected := 1;
                 OnPaint(Sender);
@@ -1201,7 +1204,7 @@ begin
       begin
         if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
         begin
-          GameState := gsPLAY;
+          ChangeGameState(gsPLAY);
           OnPaint(SENDER);
         end;
       end;
@@ -1224,7 +1227,7 @@ end;
 procedure TMainForm.InitGame;
 begin
   // Состояние игры -> игра
-  GameState := gsPLAY;
+  ChangeGameState(gsPLAY);
   AskForQuit := TRUE;
   // Цвета и состояния напитков
   GenerateColorAndStateOfLiquids;
@@ -1284,8 +1287,6 @@ begin
     end;
     if check=1 then FlyY:=FlyY+sy else FlyX:=FlyX+sx;
     e:=e+2*dy;
-    OnPaint(NIL);
-    sleep(FlySpeed);
     // А теперь проверить с чем столкнулось
     if not TilesData[M.Tile[FlyX,FlyY]].void then
     begin
@@ -1298,7 +1299,12 @@ begin
         autoaim := M.MonP[FlyY,FlyY];
         pc.Fire(M.MonL[M.MonP[FlyX,FlyY]]);
           break;
-      end;
+      end else
+        begin
+          OnPaint(NIL);
+          sleep(FlySpeed);
+        end;
+
   end;
   pc.DecArrows;
   FlyX := 0;

@@ -14,6 +14,8 @@ var
   CharY: Byte = 16;
   // Скорость анимации полета
   FlySpeed: Byte = 70;
+  // Скорость анимации брызг крови
+  UnderHitSpeed: Byte = 10;
   // Путь
   Path: String;
   // Режим игры
@@ -43,6 +45,7 @@ initialization
     FontStyle := Ini.ReadInteger('FONT', 'Style', 0);
     Mode      := Ini.ReadInteger('GAME', 'Mode', AdventureMode);
     FlySpeed  := Ini.ReadInteger('GAME', 'FlySpeed', 70);
+    UnderHitSpeed  := Ini.ReadInteger('GAME', 'UnderHitSpeed', 10);
     ShowPCBar := Ini.ReadInteger('GAME', 'ShowPCBar', 1);
     ShowBars  := Ini.ReadInteger('GAME', 'ShowBars', 1);
   finally

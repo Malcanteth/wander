@@ -32,9 +32,11 @@ function GenerateName(female : boolean) : string;// Генерация имени
 function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
 procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 function GetDungeonModeMapName : string;         // Генерировать название подземелья
+procedure ChangeGameState(NewState : byte);      // Поменять состояние игры
+procedure StartGameMenu;                         // Отобразить игровое меню 
 
 implementation
-                         
+
 uses
   Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
 
@@ -124,8 +126,8 @@ begin
   begin
     AssignFile(f, Path + 'swap/' + pc.name + '/' + s.name);
     {$I-}
-    Erase(f);
     CloseFile(f);
+    Erase(f);
     {$I+}
     FindNext(s);
   end;
@@ -509,6 +511,20 @@ begin
   V.SetStr('GenDungeon.Name', '');
   Script.Run('GenDungeon.pas');
   Result := Trim(V.GetStr('GenDungeon.Name'));
+end;
+
+{ Поменять состояние игры }
+procedure ChangeGameState(NewState : byte);
+begin
+  LastGameState := GameState;
+  GameState := NewState;
+end;
+
+{ Отобразить игровое меню }
+procedure StartGameMenu;
+begin
+  GameMenu := TRUE;
+  MenuSelected := 1;
 end;
 
 var
