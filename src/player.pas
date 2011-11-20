@@ -1714,12 +1714,12 @@ begin
       MayShoot := FALSE;
       AddMsg('Слот амуниции в экипировке пуст!',0);
    end else
-      if (Bow.id = 0) then
+      if (Bow.id = 0) and (Arrow.id <> idLITTLEROCK) then
       begin
         MayShoot := FALSE;
         AddMsg('В экипировке не выбрано оружие для стрельбы!',0);
       end else
-        if (ItemsData[Bow.id].kind <> ItemsData[Arrow.id].kind) then
+        if (ItemsData[Bow.id].kind <> ItemsData[Arrow.id].kind) and (Bow.id <> 0) then
         begin
           MayShoot := FALSE;
           AddMsg(ItemsData[Bow.id].name2+' и '+ItemsData[Arrow.id].name1+' - не совместимы!',0);

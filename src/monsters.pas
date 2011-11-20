@@ -1900,12 +1900,12 @@ begin
   case WhatClass of
     1: //Воин
     begin
-      closefight[1] := 50;
-      closefight[2] := 50;
-      closefight[5] := 50;
-      closefight[6] := 50;
-      farfight[1] := 40;
-      farfight[2] := 40;
+      closefight[CLOSE_TWO] := 60;
+      closefight[CLOSE_BLADE] := 60;
+      closefight[CLOSE_AXE] := 60;
+      closefight[CLOSE_ARM] := 60;
+      farfight[FAR_THROW] := 30;
+      farfight[FAR_BOW] := 30;
 
       EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
       EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
@@ -1917,12 +1917,12 @@ begin
     end;
     2: //Варвар
     begin
-      closefight[3] := 50;
-      closefight[4] := 40;
-      closefight[6] := 50;
-      farfight[1] := 50;
-      farfight[3] := 40;
-      farfight[4] := 40;
+      closefight[CLOSE_CLUB] := 50;
+      closefight[CLOSE_STAFF] := 30;
+      closefight[CLOSE_ARM] := 50;
+      farfight[FAR_THROW] := 30;
+      farfight[FAR_SLING] := 20;
+      farfight[FAR_PIPE] := 20;
 
       EquipItem(CreateItem(idCAPE, 1, 0),FALSE);
       PickUp(CreateItem(idMEAT, 5, 0), FALSE,5);
@@ -1930,9 +1930,10 @@ begin
     end;
     3: //Паладин
     begin
-      closefight[2] := 50;
-      farfight[1] := 40;
-      farfight[2] := 40;
+      closefight[CLOSE_TWO] := 60;
+      closefight[CLOSE_BLADE] := 60;
+      farfight[FAR_THROW] := 30;
+      farfight[FAR_BOW] := 30;
 
       EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
       EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
@@ -1943,11 +1944,11 @@ begin
     end;
     4: //Странник
     begin
-      closefight[2] := 40;
-      closefight[4] := 40;
-      closefight[6] := 40;
-      farfight[1] := 40;
-      farfight[3] := 40;
+      closefight[CLOSE_BLADE] := 35;
+      closefight[CLOSE_STAFF] := 35;
+      closefight[CLOSE_ARM] := 35;
+      farfight[FAR_THROW] := 30;
+      farfight[FAR_SLING] := 30;
 
       EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
       EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
@@ -1959,12 +1960,12 @@ begin
     end;
     5: //Воришка
     begin
-      closefight[2] := 30;
-      closefight[6] := 40;
-      farfight[1] := 30;
-      farfight[2] := 30;
-      farfight[3] := 30;
-      farfight[4] := 30;
+      closefight[CLOSE_BLADE] := 30;
+      closefight[CLOSE_ARM] := 40;
+      farfight[FAR_THROW ] := 20;
+      farfight[FAR_BOW ] := 20;
+      farfight[FAR_SLING] := 20;
+      farfight[FAR_PIPE] := 20;
 
       EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
       EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
@@ -1977,9 +1978,9 @@ begin
     end;
     6: //Монах
     begin
-      closefight[6] := 60;
-      farfight[1] := 40;
-      farfight[4] := 50;
+      closefight[CLOSE_ARM] := 65;
+      farfight[FAR_THROW] := 50;
+      farfight[FAR_PIPE ] := 25;
 
       EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
       EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
@@ -1991,9 +1992,9 @@ begin
     end;
     7: //Жрец
     begin
-      closefight[4] := 30;
-      farfight[1] := 30;
-      farfight[3] := 30;
+      closefight[CLOSE_STAFF] := 40;
+      farfight[FAR_THROW] := 30;
+      farfight[FAR_SLING] := 30;
 
       EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
       EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
@@ -2005,8 +2006,8 @@ begin
     end;
     8: //Колдун
     begin
-      closefight[4] := 25;
-      farfight[3]   := 25;
+      closefight[CLOSE_STAFF] := 25;
+      farfight[FAR_SLING]   := 25;
 
       EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
       EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
@@ -2018,8 +2019,8 @@ begin
     end;
     9: //Мыслитель
     begin
-      closefight[4] := 25;
-      farfight[3] := 25;
+      closefight[CLOSE_STAFF] := 25;
+      farfight[FAR_PIPE] := 25;
 
       EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
       EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
@@ -2058,75 +2059,71 @@ begin
         f_choose := i;
         break;
       end;
+  // Повысить навык ближнего боя
+  closefight[c_choose] := closefight[c_choose] + 15;
+  // Дать соответственное оружие
   case c_choose of
     // Двуручное
     1 :
     begin
-      closefight[1] := closefight[1] + 25;
       EquipItem(CreateItem(idLONGSWORD, 1, 0),FALSE);
     end;
     // Меч
     2 :
     begin
-      closefight[2] := closefight[2] + 25;
       EquipItem(CreateItem(idSHORTSWORD, 1, 0),FALSE);
     end;
     // Дубина
     3 :
     begin
-      closefight[3] := closefight[3] + 25;
       EquipItem(CreateItem(idDUBINA, 1, 0),FALSE);
     end;
     // Посох
     4 :
     begin
-      closefight[4] := closefight[4] + 25;
       EquipItem(CreateItem(idSTAFF, 1, 0),FALSE);
     end;
     // Топор
     5 :
     begin
-      closefight[5] := closefight[5] + 25;
       EquipItem(CreateItem(idAXE, 1, 0),FALSE);
     end;
     // Рукопашный бой
     6 :
     begin
-      closefight[6] := closefight[6] + 25;
       attack := attack * 2;
     end;
   end;
+  // Повысить навык дальнего боя
+  farfight[f_choose] := farfight[f_choose] + 15;
+  // Дать соответственное оружие дальнего боя
   case f_choose of
     // Кидать
     1 :
     begin
-      farfight[1] := farfight[1] + 25;
+      EquipItem(CreateItem(idLITTLEROCK, 80, 0),FALSE);
     end;
     // Лук
     2 :
     begin
-      farfight[2] := farfight[2] + 25;
       EquipItem(CreateItem(idBOW, 1, 0),FALSE);
       EquipItem(CreateItem(idARROW, 30, 0),FALSE);
     end;
     // Праща
     3 :
     begin
-      farfight[3] := farfight[3] + 25;
       EquipItem(CreateItem(idSLING, 1, 0),FALSE);
       EquipItem(CreateItem(idLITTLEROCK, 50, 0),FALSE);
     end;
     // Духовая трубка
     4 :
     begin
-      farfight[4] := farfight[4] + 25;
       EquipItem(CreateItem(idBLOWPIPE, 1, 0),FALSE);
       EquipItem(CreateItem(idIGLA, 40, 0),FALSE);
     end;
     // Арбалет
     5 :
     begin
-      farfight[5] := farfight[5] + 25;
       EquipItem(CreateItem(idCROSSBOW, 1, 0),FALSE);
       EquipItem(CreateItem(idBOLT, 25, 0),FALSE);
     end;
