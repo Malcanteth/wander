@@ -26,6 +26,7 @@ function ReturnInvListAmount : byte;             // Вернуть колличество отфильтр
 function WhatToDo(vid : integer) : string;       // Слово 'использовать' для разных видов предметов
 procedure TakeScreenShot;                        // Сделать скриншот
 function Eq2Vid(cur : byte) : byte;              // Вид вещи соответствующий выбранной ячейки экипировки
+function Vid2Eq(vid : byte) : byte;              // Номер ячейки в экипировки для этого вида предмета
 procedure Intro;                                 // Заставка
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
 function GenerateName(female : boolean) : string;// Генерация имени
@@ -33,7 +34,7 @@ function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
 procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 function GetDungeonModeMapName : string;         // Генерировать название подземелья
 procedure ChangeGameState(NewState : byte);      // Поменять состояние игры
-procedure StartGameMenu;                         // Отобразить игровое меню 
+procedure StartGameMenu;                         // Отобразить игровое меню
 
 implementation
 
@@ -354,6 +355,27 @@ begin
     11 : Result := 11;
     12 : Result := 12;
     13 : Result := 13;
+  end;
+end;
+
+{ Номер ячейки в экипировки для этого вида предмета }
+function Vid2Eq(vid : byte) : byte;
+begin
+  Result := 0;
+  case vid of
+    1 : Result := 1; // Шлем
+    2 : Result := 2; // Амулет
+    3 : Result := 3; // Плащ
+    4 : Result := 4; // Броня на тело
+    5 : Result := 5; // Ремень
+    6 : Result := 6; // Оружие ближнего боя
+    7 : Result := 7; // Оружие дальнего боя
+    8 : Result := 8; // Щит
+    9 : Result := 9; // Браслет
+    10: Result := 10; // Кольцо
+    11: Result := 11; // Перчатки
+    12: Result := 12; // Обувь
+    13: Result := 13; // Аммуниция
   end;
 end;
 

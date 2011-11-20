@@ -61,18 +61,19 @@ type
     procedure AttackNeutral(Victim : TMonster);       // Атаковать нейтрального
     procedure KillSomeOne(Victim : byte);             // Действия после убийства
     procedure Death;                                  // Умереть
-    procedure GiveItem(var Victim : TMonster;
-                                 var GivenItem : TItem); // Отдать вещь
+    procedure GiveItem(ItemId : integer; FromWhere : byte;
+                              var Victim : TMonster); // Отдать вещь
     procedure BloodStream(dx,dy : shortint);
     function PickUp(Item : TItem;FromEq : boolean;
                              amount : integer) : byte;// Поместить вещь в инвентарь (0-успешно,1-ничего нет,2-нет места,3-перегружен
     function MaxMass : real;                          // Максимальная масса переносимых предметов
-    procedure DeleteInvItem(var I : TItem;
-                      amount : integer);              // Удалить предмет из инвентаря
+    procedure DeleteItemInv(i : byte; amount : integer;
+                                FromWhere : byte);    // Удалить предмет из инвентаря
     procedure RefreshInventory;                       // Перебрать инвентарь
     function ColorOfTactic: longword;                 // Вернуть цвет заднего фона монстра при использовании тактики
     function TacticEffect(situation : byte) : real;   // Вернуть множитель (0.5, 1 или 2 - эффект от тактики)
-    function EquipItem(Item : TItem) : byte;          // Снарядить предмет (0-успешно,1-ячейка занята)
+    function EquipItem(Item : TItem;
+                       FromInv : boolean) : byte;     // Снарядить предмет (0-успешно,1-ячейка занята)
     function ExStatus(situation : byte) : string;     // Вернуть описание состояние монстра (одержимый, проклятый и тд)
     function FullName(situation : byte;
                    writename : boolean) : string;     // Вернуть полное имя монстра
@@ -91,6 +92,7 @@ type
     function ClassColor : byte;                       // Цвет класса
     procedure DoDamage(damage : integer;
                    var Victim : TMonster);            // Отнять жизни
+    procedure StartShooting(mode : byte);             // Стрельнуть / кинуть
   end;
 
   TMonData = record
@@ -318,9 +320,11 @@ const
   SpotAmount = 8;
 
 var
-  nx, ny : byte;
-  blooded : boolean;
-  Spot : array[1..SpotAmount] of TSpot;
+  nx, ny     : byte;
+  blooded    : boolean;
+  Spot       : array[1..SpotAmount] of TSpot;
+  ShootingMode : byte;                         // 1-Выстрелить, 2-Швырнуть
+  Bow, Arrow : TItem;                          // Выбранные вещи для стрельбы / бросания
 
 procedure CreateMonster(n,px,py : byte);   // Создать монстра
 procedure FillMonster(i,n,px,py : byte);
@@ -1256,9 +1260,9 @@ var
 begin
   if M.MonP[Victim.x, victim.y] > 0 then
   begin
-    if Eq[7].id > 0 then
-      AddMsg(FullName(1, FALSE)+', используя '+ItemsData[eq[7].id].name3+', выстрелил{/a} в '+Victim.FullName(2, FALSE)+'!',id) else
-        AddMsg(FullName(1, FALSE)+' швырнул{/a} '+ItemsData[eq[13].id].name3+' в '+Victim.FullName(2, FALSE)+'!',id);
+    if Bow.id > 0 then
+      AddMsg(FullName(1, FALSE)+', используя '+ItemsData[Bow.id].name3+', выстрелил{/a} в '+Victim.FullName(2, FALSE)+'!',id) else
+        AddMsg(FullName(1, FALSE)+' швырнул{/a} '+ItemsData[Arrow.id].name3+' в '+Victim.FullName(2, FALSE)+'!',id);
     // Уклониться
     if Random(Round(TacticEffect(2)*(dex+(ability[abACCURACY]*AbilitysData[abACCURACY].koef))))+1 > Random(Round(Victim.TacticEffect(1)*((Victim.dex/4)+(Victim.ability[abDODGER]*AbilitysData[abDODGER].koef))))+1 then
     begin
@@ -1272,13 +1276,18 @@ begin
         begin
           Dam := 0;
           // Рассчитать дамаг
-          if Eq[7].id > 0 then
+          if Bow.id > 0 then
           begin
-            if farfight[ItemsData[Eq[7].id].kind] > 0 then
-              Dam := Round((Random(Round(ItemsData[Eq[13].id].attack+(str/3)))+1) * (farfight[ItemsData[Eq[7].id].kind] / 100));
+            if farfight[ItemsData[Bow.id].kind] > 0 then
+              Dam := Round((Random(Round(ItemsData[Arrow.id].attack+(str/6)))+1) * (farfight[ItemsData[Bow.id].kind] / 100)) else
+                Dam := 0;
           end else
             // Бросок предета
-            if farfight[FAR_THROW] > 0 then Dam := Round(Random(Round(ItemsData[Eq[13].id].attack+(str/3)))+1 * (farfight[FAR_THROW] / 100));
+            begin
+              if farfight[FAR_THROW] > 0 then
+                Dam := Round(Random(Round(ItemsData[Arrow.id].attack+(str/3)))+1 * (farfight[FAR_THROW] / 100)) else
+                  Dam := 0;
+            end;
           TempDam := Dam;
           // Уменьшение дамага за счет брони
           Dam := (Round(Dam/(Random(Round(TacticEffect(1)*2))+1))) - Random(Round(Victim.defense/(Random(Round(Victim.TacticEffect(2)*2))+1)));
@@ -1299,13 +1308,13 @@ begin
                   begin
                     // Увеличить навык этого оружия
                     d := (TempDam * 0.03) / Dam;
-                    if Eq[7].id > 0 then
-                      c := ItemsData[Eq[7].id].kind else
+                    if Bow.id > 0 then
+                      c := ItemsData[Bow.id].kind else
                         c := FAR_THROW;
                     if IsInNewAreaSkill(farfight[c], farfight[c] +  d) then
                     begin
                       farfight[c] := farfight[c] +  d;
-                      AddMsg('Теперь ты лучше владеешь навыком "'+CLOSEWPNNAME[c]+'"! Теперь ты им владеешь просто '+RateToStr(RateSkill(pc.CloseFight[c]))+'!',id);
+                      AddMsg('#Теперь ты лучше владеешь навыком "$'+FARWPNNAME[c]+'$"!#',id);
                       More;
                     end else
                       farfight[c] := farfight[c] +  d;
@@ -1319,7 +1328,7 @@ begin
                       if IsInNewAreaSkill(Farfight[i], Farfight[i] -  d) then
                       begin
                         Farfight[c] := Farfight[c] +  d;
-                        AddMsg('Ты вдруг понял, что из-за долгого отсутствия тренеровок твой навык "'+CLOSEWPNNAME[c]+'" стал забываться. Теперь ты им владеешь просто '''+RateToStr(RateSkill(pc.CloseFight[i]))+'''.',id);
+                        AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренеровок твой навык "$'+FARWPNNAME[c]+'$" стал забываться.*',id);
                         More;
                       end else
                         FarFight[i] := FarFight[i] - d;
@@ -1333,7 +1342,7 @@ begin
     end else
       begin
         AddMsg(FullName(1, FALSE)+' промахнул{ся/ась} по '+Victim.FullName(3, FALSE)+'.',id);
-        Item := pc.eq[13];
+        Item := Arrow;
         Item.amount := 1;
         PutItem(Victim.x, Victim.y, Item,1);
       end;
@@ -1459,9 +1468,15 @@ begin
   idinlist := 0;
 end;
 
-{ Отдать вещь }
-procedure TMonster.GiveItem(var Victim : TMonster; var GivenItem : TItem);
+{ Отдать вещь From Where 1 - ивентарь 2 - экипировка }
+procedure TMonster.GiveItem(ItemId : integer; FromWhere : byte; var Victim : TMonster);
+var
+  GivenItem : TItem;
 begin
+  case FromWhere of
+    1 : GivenItem := Inv[ItemId];
+    2 : GivenItem := Eq[ItemID];
+  end;
   if ((Victim.relation = 0) and (id = 1)) or (id > 1) then
   begin
     if Ask('Точно отдать '+ItemName(GivenItem, 1, TRUE)+' '+Victim.FullName(3, TRUE)+'? #(Y/n)#') = 'Y' then
@@ -1479,7 +1494,10 @@ begin
           if GivenItem.id = idGATESKEY then
             if pc.quest[2] > 1 then
               pc.quest[2] := 3;
-          DeleteInvItem(GivenItem, 1);
+          case FromWhere of
+            1 : DeleteItemInv(ItemId, Inv[ItemID].amount, 1);
+            2 : DeleteItemInv(ItemId, Eq[ItemID].amount, 2);
+          end;
           RefreshInventory;
         end;
         1 : AddMsg(FullName(1, TRUE)+' отдал{/а} '+Victim.FullName(3, TRUE)+' глюк!',id);
@@ -1521,7 +1539,7 @@ begin
     Result := 1 else
       begin
         // Если поднимается аммуниция которая сейчас задействана в экипировке, то прибавить к ней
-        if SameItems(Eq[13], Item) then
+        if (SameItems(Eq[13], Item)) and not (FromEq) then
         begin
           if (invmass + (Item.mass*amount) < MaxMass) then
           begin
@@ -1535,10 +1553,11 @@ begin
             for i:=1 to MaxHandle do
               if SameItems(Inv[i], Item) then
               begin
-                if (invmass + (Item.mass*amount) < MaxMass) then
+                if (invmass + (Item.mass*amount) < MaxMass) or (FromEq) then
                 begin
                   inc(Inv[i].amount, amount);
-                  invmass := invmass + (Item.mass*amount);
+                  if not FromEq then
+                    invmass := invmass + (Item.mass*amount);
                   f := TRUE;
                   break;
                 end else
@@ -1555,7 +1574,8 @@ begin
                   begin
                     Inv[i] := Item;
                     Inv[i].amount := amount;
-                    invmass := invmass + (Item.mass*amount);
+                    if not FromEq then
+                      invmass := invmass + (Item.mass*amount);
                     break;
                   end else
                     begin
@@ -1575,19 +1595,38 @@ begin
   Result := str * 25;
 end;
 
-{ Удалить предмет из инвентаря }
-procedure TMonster.DeleteInvItem(var I : TItem; amount : integer);
+{ Удалить предмет из инвентаря FromWhere 1 -  Инвентарь, 2 - Экипировка}
+procedure TMonster.DeleteItemInv(i : byte; amount : integer; FromWhere : byte);
 begin
-  // Масса
-  invmass := invmass - (I.mass*I.amount);
-  if (I.amount > 1) and (amount > 0) then
-  begin
-    dec(I.amount,amount);
-    if I.amount < 1 then
-      FillMemory(@I, SizeOf(TItem), 0);
-  end else
-    FillMemory(@I, SizeOf(TItem), 0);
-  RefreshInventory;
+  case FromWhere of
+    1 :
+    begin
+      // Масса
+      invmass := invmass - (Inv[i].mass*Inv[i].amount);
+      // Удалить
+      if (Inv[i].amount > 1) and (amount > 0) then
+      begin
+        dec(Inv[i].amount,amount);
+        if Inv[i].amount < 1 then
+          FillMemory(@Inv[i], SizeOf(TItem), 0);
+      end else
+        FillMemory(@Inv[i], SizeOf(TItem), 0);
+      RefreshInventory;
+    end;
+    2 :
+    begin
+      // Масса
+      invmass := invmass - (Eq[i].mass*Eq[i].amount);
+      // Удалить
+      if (Eq[i].amount > 1) and (amount > 0) then
+      begin
+        dec(Eq[i].amount,amount);
+        if Eq[i].amount < 1 then
+          FillMemory(@Eq[i], SizeOf(TItem), 0);
+      end else
+        FillMemory(@Eq[i], SizeOf(TItem), 0);
+    end;
+  end;
 end;
 
 { Перебрать инвентарь }
@@ -1635,33 +1674,20 @@ begin
 end;
 
 { Снарядить предмет }
-function TMonster.EquipItem(Item : TItem) : byte;
+function TMonster.EquipItem(Item : TItem; FromInv : boolean) : byte;
 var
   TempItem : TItem;
+  cell : byte;
 begin
   Result := 0;
-  case ItemsData[Item.id].vid of
-    1 : cell := 1; // Шлем
-    2 : cell := 2; // Амулет
-    3 : cell := 3; // Плащ
-    4 : cell := 4; // Броня на тело
-    5 : cell := 5; // Ремень
-    6 : cell := 6; // Оружие ближнего боя
-    7 : cell := 7; // Оружие дальнего боя
-    8 : cell := 8; // Щит
-    9 : cell := 9; // Браслет
-    10: cell := 10; // Кольцо
-    11: cell := 11; // Перчатки
-    12: cell := 12; // Обувь
-    13: cell := 13; // Аммуниция
-  end;
+  cell := Vid2Eq(ItemsData[Item.id].vid);
   // Ячейка занята
   if (eq[cell].id > 0) then
   begin
     TempItem := eq[cell];
     ItemOnOff(eq[cell], FALSE);
     eq[cell] := Item;
-    DeleteInvItem(inv[MenuSelected], 0);
+    DeleteItemInv(MenuSelected, inv[MenuSelected].amount, 1);
     if (id = 1) then
       case PickUp(TempItem, TRUE,TempItem.amount) of
         0 :
@@ -1677,7 +1703,8 @@ begin
   end else
     begin
       eq[cell] := Item;
-      InvMass := InvMass + (eq[cell].mass*eq[cell].amount);
+      if not FromInv then
+        InvMass := InvMass + (eq[cell].mass*eq[cell].amount);
     end;
   if cell <> EqAmount then
     if eq[cell].amount > 1 then eq[cell].amount := 1;
@@ -1880,8 +1907,8 @@ begin
       farfight[1] := 40;
       farfight[2] := 40;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0));
+      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
+      EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 2), FALSE,2);
       PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
@@ -1897,7 +1924,7 @@ begin
       farfight[3] := 40;
       farfight[4] := 40;
 
-      EquipItem(CreateItem(idCAPE, 1, 0));
+      EquipItem(CreateItem(idCAPE, 1, 0),FALSE);
       PickUp(CreateItem(idMEAT, 5, 0), FALSE,5);
       PickUp(CreateItem(idCOIN, 5, 0), FALSE,5);
     end;
@@ -1907,8 +1934,8 @@ begin
       farfight[1] := 40;
       farfight[2] := 40;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0));
+      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
+      EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 2), FALSE,2);
       PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
       PickUp(CreateItem(idLAVASH, 3, 0), FALSE,3);
@@ -1922,8 +1949,8 @@ begin
       farfight[1] := 40;
       farfight[3] := 40;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idJACKET , 1, 0));
+      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
+      EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 4), FALSE,4);
       PickUp(CreatePotion(lqHEAL, 2), FALSE,1);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
@@ -1939,9 +1966,9 @@ begin
       farfight[3] := 30;
       farfight[4] := 30;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idJACKET , 1, 0));
-      EquipItem(CreateItem(idDAGGER , 1, 0));
+      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
+      EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
+      EquipItem(CreateItem(idDAGGER , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 2), FALSE,2);
       PickUp(CreatePotion(lqCURE, 3), FALSE,3);
       PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
@@ -1954,8 +1981,8 @@ begin
       farfight[1] := 40;
       farfight[4] := 50;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
+      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
+      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 3), FALSE,3);
       PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
       PickUp(CreatePotion(lqKEFIR, 2), FALSE,2);
@@ -1968,8 +1995,8 @@ begin
       farfight[1] := 30;
       farfight[3] := 30;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
+      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
+      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 5), FALSE,5);
       PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
       PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
@@ -1981,8 +2008,8 @@ begin
       closefight[4] := 25;
       farfight[3]   := 25;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
+      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
+      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 5), FALSE,5);
       PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
       PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
@@ -1994,8 +2021,8 @@ begin
       closefight[4] := 25;
       farfight[3] := 25;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0));
-      EquipItem(CreateItem(idMANTIA , 1, 0));
+      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
+      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
       PickUp(CreatePotion(lqCURE, 2), FALSE,2);
       PickUp(CreatePotion(lqHEAL, 2), FALSE,4);
       PickUp(CreateItem(idLAVASH, 6, 0), FALSE,6);
@@ -2036,31 +2063,31 @@ begin
     1 :
     begin
       closefight[1] := closefight[1] + 25;
-      EquipItem(CreateItem(idLONGSWORD, 1, 0));
+      EquipItem(CreateItem(idLONGSWORD, 1, 0),FALSE);
     end;
     // Меч
     2 :
     begin
       closefight[2] := closefight[2] + 25;
-      EquipItem(CreateItem(idSHORTSWORD, 1, 0));
+      EquipItem(CreateItem(idSHORTSWORD, 1, 0),FALSE);
     end;
     // Дубина
     3 :
     begin
       closefight[3] := closefight[3] + 25;
-      EquipItem(CreateItem(idDUBINA, 1, 0));
+      EquipItem(CreateItem(idDUBINA, 1, 0),FALSE);
     end;
     // Посох
     4 :
     begin
       closefight[4] := closefight[4] + 25;
-      EquipItem(CreateItem(idSTAFF, 1, 0));
+      EquipItem(CreateItem(idSTAFF, 1, 0),FALSE);
     end;
     // Топор
     5 :
     begin
       closefight[5] := closefight[5] + 25;
-      EquipItem(CreateItem(idAXE, 1, 0));
+      EquipItem(CreateItem(idAXE, 1, 0),FALSE);
     end;
     // Рукопашный бой
     6 :
@@ -2079,29 +2106,29 @@ begin
     2 :
     begin
       farfight[2] := farfight[2] + 25;
-      EquipItem(CreateItem(idBOW, 1, 0));
-      EquipItem(CreateItem(idARROW, 30, 0));
+      EquipItem(CreateItem(idBOW, 1, 0),FALSE);
+      EquipItem(CreateItem(idARROW, 30, 0),FALSE);
     end;
     // Праща
     3 :
     begin
       farfight[3] := farfight[3] + 25;
-      EquipItem(CreateItem(idSLING, 1, 0));
-      EquipItem(CreateItem(idLITTLEROCK, 50, 0));
+      EquipItem(CreateItem(idSLING, 1, 0),FALSE);
+      EquipItem(CreateItem(idLITTLEROCK, 50, 0),FALSE);
     end;
     // Духовая трубка
     4 :
     begin
       farfight[4] := farfight[4] + 25;
-      EquipItem(CreateItem(idBLOWPIPE, 1, 0));
-      EquipItem(CreateItem(idIGLA, 40, 0));
+      EquipItem(CreateItem(idBLOWPIPE, 1, 0),FALSE);
+      EquipItem(CreateItem(idIGLA, 40, 0),FALSE);
     end;
     // Арбалет
     5 :
     begin
       farfight[5] := farfight[5] + 25;
-      EquipItem(CreateItem(idCROSSBOW, 1, 0));
-      EquipItem(CreateItem(idBOLT, 25, 0));
+      EquipItem(CreateItem(idCROSSBOW, 1, 0),FALSE);
+      EquipItem(CreateItem(idBOLT, 25, 0),FALSE);
     end;
   end;
 end;
@@ -2204,6 +2231,13 @@ begin
     MainForm.OnPaint(NIL);
     sleep(UnderHitSpeed);
   end;
+end;
+
+{ Стрельнуть / кинуть Mode 1 стрельнуть 2 швырнуть}
+procedure TMonster.StartShooting(mode : byte);
+begin
+  if mode = 2 then Bow.id := 0;
+  MainForm.AnimFly(x,y,lx,ly, ItemTypeData[ItemsData[Arrow.id].vid].symbol, ItemsData[Arrow.id].color);
 end;
 
 end.

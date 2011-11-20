@@ -7,70 +7,67 @@ uses
 
 type
   Tpc = object (TMonster)
-    turn        : byte;                          // Сделан ход? (0Нет,1Да,2Да+Перемещение)
-    level       : byte;                          // Номер локации
-    enter       : byte;                          // Номер входа в пещеру на локации
-    depth       : byte;                          // Глубина в пещере
-    quest       : array[1..QuestsAmount] of byte;// Квесты: 0не взял квест,1взял,2выполнил,3рассказал заказчику,4выполнил
-    color       : longword;                      // Цвет
-    gender      : byte;                          // Пол
-    //
-    exp         : integer;                       // Кол-во опыта
-    explevel    : byte;                          // Уровень развития
-    //
-    warning     : boolean;                       // Монстр в поле зрения
+    turn        : byte;                                // Сделан ход? (0Нет,1Да,2Да+Перемещение)
+    level       : byte;                                // Номер локации
+    enter       : byte;                                // Номер входа в пещеру на локации
+    depth       : byte;                                // Глубина в пещере
+    quest       : array[1..QuestsAmount] of byte;      // Квесты: 0не взял квест,1взял,2выполнил,3рассказал заказчику,4выполнил
+    color       : longword;                            // Цвет
+    gender      : byte;                                // Пол
+    exp         : integer;                             // Кол-во опыта
+    explevel    : byte;                                // Уровень развития
+    warning     : boolean;                             // Монстр в поле зрения
 
-    procedure ClearPlayer;                       // Очистить
-    procedure Prepare;                           // Подготовка в самом начале игры
-    procedure Move(dx,dy : shortint);            // Двигать героя
-    procedure Run(dx,dy : shortint);             // Shift + Двигать героя
-    procedure FOV;                               // Поле видимости
-    procedure AfterTurn;                         // Действия после хода героя
-    procedure AnalysePlace(px,py: byte;          // Описать место
-                        All : byte);
-    procedure PlaceHere(px,py : byte);           // Поставить героя в это место
-    procedure UseStairs;                         // Спуститься или подняться по лестнице
-    procedure PlaceAtTile(t : byte);             // Переместить героя на тайл
-    procedure SearchForDoors;                    // Сколько дверей рядом
-    procedure SearchForAlive
-                        (whattodo : byte);       // Сколько монстров рядом (1-Атаковать, 2-Говорить, 3-Отдать)
-    function SearchForAliveField : byte;         // Найти самого ближайщего монстра
-    procedure CloseDoor(dx,dy : shortint);       // Закрыть дверь
-    procedure Open(dx,dy : shortint);            // Открыть
-    procedure MoveLook(dx,dy : shortint);        // Двигать курсор осмотра
-    procedure MoveAim(dx,dy : shortint);         // Двигать курсор прицела
-    procedure WriteInfo;                         // Вывести информацию на экран справа
-    procedure Talk(Mon : TMonster);              // Говорить
-    procedure QuestList;                         // Список квестов
-    procedure Equipment;                         // Экипировка
-    procedure Inventory;                         // Инвентарь
-    function ItemsAmount : byte;                 // Колличество вещей
-    procedure GainLevel;                         // Повышение уровня
-    function ExpToNxtLvl : integer;              // Сколько нужно опыта для следующего уровня
-    procedure UseMenu;                           // Меню действия с предметом
-    procedure AfterDeath;                        // Действия после смерти героя
-    function FindCoins : byte;                   // Найти ячейку с монетами
-    procedure Search;                            // Искать
-    function HaveItemVid(vid : byte) : boolean;  // Есть ли хоть один предмет этого вида?
-    procedure HeroRandom;                        // Сделать рандомного
-    procedure StartHeroName;                     // Окно ввода имени
-    procedure HeroName;                          // Окно ввода имени
-    procedure HeroGender;                        // Окно выбора пола
-    procedure HeroAtributes;                     // Расстановка приоритетов
-    procedure CreateClWList;                     // Создать список навыков ближнего боя
-    procedure HeroCloseWeapon;                   // Оружие ближнего боя
-    procedure CreateFrWList;                     // Создать список навыков дальнего боя
-    procedure HeroFarWeapon;                     // Оружие дальнего боя
-    procedure HeroCreateResult;                  // Подтвердить
-    procedure ChooseMode;                        // Выбрать режим игры
-    procedure WriteAboutInvMass;                 // Показать массу всего инвентаря и макс. переносимую ГГ
+    procedure ClearPlayer;                             // Очистить
+    procedure Prepare;                                 // Подготовка в самом начале игры
+    procedure Move(dx,dy : shortint);                  // Двигать героя
+    procedure Run(dx,dy : shortint);                   // Shift + Двигать героя
+    procedure FOV;                                     // Поле видимости
+    procedure AfterTurn;                               // Действия после хода героя
+    procedure AnalysePlace(px,py: byte; All : byte);   // Описать место
+
+    procedure PlaceHere(px,py : byte);                 // Поставить героя в это место
+    procedure UseStairs;                               // Спуститься или подняться по лестнице
+    procedure PlaceAtTile(t : byte);                   // Переместить героя на тайл
+    procedure SearchForDoors;                          // Сколько дверей рядом
+    procedure SearchForAlive(whattodo : byte);         // Сколько монстров рядом (1-Атаковать, 2-Говорить, 3-Отдать)
+    function SearchForAliveField : byte;               // Найти самого ближайщего монстра
+    procedure CloseDoor(dx,dy : shortint);             // Закрыть дверь
+    procedure Open(dx,dy : shortint);                  // Открыть
+    procedure MoveLook(dx,dy : shortint);              // Двигать курсор осмотра
+    procedure MoveAim(dx,dy : shortint);               // Двигать курсор прицела
+    procedure WriteInfo;                               // Вывести информацию на экран справа
+    procedure Talk(Mon : TMonster);                    // Говорить
+    procedure QuestList;                               // Список квестов
+    procedure Equipment;                               // Экипировка
+    procedure Inventory;                               // Инвентарь
+    function ItemsAmount : byte;                       // Колличество вещей
+    procedure GainLevel;                               // Повышение уровня
+    function ExpToNxtLvl : integer;                    // Сколько нужно опыта для следующего уровня
+    procedure UseMenu;                                 // Меню действия с предметом
+    procedure AfterDeath;                              // Действия после смерти героя
+    function FindCoins : byte;                         // Найти ячейку с монетами
+    procedure Search;                                  // Искать
+    function HaveItemVid(vid : byte) : boolean;        // Есть ли хоть один предмет этого вида?
+    procedure HeroRandom;                              // Сделать рандомного
+    procedure StartHeroName;                           // Окно ввода имени
+    procedure HeroName;                                // Окно ввода имени
+    procedure HeroGender;                              // Окно выбора пола
+    procedure HeroAtributes;                           // Расстановка приоритетов
+    procedure CreateClWList;                           // Создать список навыков ближнего боя
+    procedure HeroCloseWeapon;                         // Оружие ближнего боя
+    procedure CreateFrWList;                           // Создать список навыков дальнего боя
+    procedure HeroFarWeapon;                           // Оружие дальнего боя
+    procedure HeroCreateResult;                        // Подтвердить
+    procedure ChooseMode;                              // Выбрать режим игры
+    procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
+    procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
   end;
 
 var
   pc      : Tpc;
   lx, ly  : byte;                                // Координаты курсора осмотра
   autoaim : byte;                                // ID монстра на автоприцеле
-  cell    : byte;
   crstep  : byte;
   InvList : array[1..MaxHandle] of byte;
   c_choose, f_choose : byte;                     // Выбранный тип оружия
@@ -701,8 +698,8 @@ begin
               case whattodo of
                 1 : Fight(M.MonL[M.MonP[a,b]], 0); // Атаковать
                 2 : Talk(M.MonL[M.MonP[a,b]]);     // Говорить
-                3 : if LastGameState = gsEQUIPMENT then GiveItem(M.MonL[M.MonP[a,b]], pc.Eq[MenuSelected]) else
-                      GiveItem(M.MonL[M.MonP[a,b]], pc.Inv[MenuSelected]);   // Отдать
+                3 : if LastGameState = gsEQUIPMENT then GiveItem(MenuSelected, 2, M.MonL[M.MonP[a,b]]) else
+                      GiveItem(MenuSelected, 1, M.MonL[M.MonP[a,b]]);   // Отдать
               end;
               pc.turn := 1;
               Exit;
@@ -1695,6 +1692,60 @@ begin
     Font.Color := cLIGHTGRAY;
     weight :=  'Масса всех предметов: '+FloatToStr(pc.invmass)+' Максимальная масса: '+FloatToStr(pc.maxmass);
     TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
+  end;
+end;
+
+{ Войти в режим прицеливания Mode - 1 стрельба, 2 кинуть}
+procedure Tpc.PrepareShooting(B, A : TItem; Mode : byte);
+var
+  I         : byte;
+  MayShoot  : boolean;
+begin
+  MayShoot := TRUE;
+  ShootingMode := Mode;
+  Bow := B;
+  Arrow := A;
+  // Если стрельба
+  if Mode = 1 then
+  begin
+    MenuSelected := 13;
+    if (Arrow.id = 0) then
+    begin
+      MayShoot := FALSE;
+      AddMsg('Слот амуниции в экипировке пуст!',0);
+   end else
+      if (Bow.id = 0) then
+      begin
+        MayShoot := FALSE;
+        AddMsg('В экипировке не выбрано оружие для стрельбы!',0);
+      end else
+        if (ItemsData[Bow.id].kind <> ItemsData[Arrow.id].kind) then
+        begin
+          MayShoot := FALSE;
+          AddMsg(ItemsData[Bow.id].name2+' и '+ItemsData[Arrow.id].name1+' - не совместимы!',0);
+        end;
+  end;
+  if MayShoot then
+  begin
+    // Прицеливаемся
+    AddMsg('$Целиться в:$',0);
+    i := pc.SearchForAliveField;
+    if autoaim > 0 then
+      if (M.Saw[M.MonL[autoaim].x, M.MonL[autoaim].y] = 2) and (M.MonL[autoaim].id > 0) then
+        i := autoaim;
+    if i > 0 then
+    begin
+      lx := M.MonL[i].x;
+      ly := M.MonL[i].y;
+      pc.AnalysePlace(lx,ly,1);
+      ChangeGameState(gsAIM);
+    end else
+      begin
+        lx := pc.x;
+        ly := pc.y;
+        pc.AnalysePlace(lx,ly,1);
+        ChangeGameState(gsAIM);
+      end;
   end;
 end;
 
