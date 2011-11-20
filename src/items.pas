@@ -582,6 +582,7 @@ begin
           pc.turn := 1;
         end else
           AddMsg('Тебе не хочется больше есть!',0);
+        ChangeGameState(gsPLAY);
       end;
       // Выпить
       19:
@@ -590,6 +591,7 @@ begin
         DrinkLiquid(pc.Inv[SelectedItem].liquidid, pc);
         pc.DeleteItemInv(SelectedItem, 1, 1);
         pc.turn := 1;
+        ChangeGameState(gsPLAY);
       end;
     end;
 end;
