@@ -52,7 +52,7 @@ const
     (name: 'Кольцо'; symbol: '='; chance:4;maxamount:1),
     (name: 'Перчатки'; symbol: ']'; chance:10;maxamount:1),
     (name: 'Обувь'; symbol: '['; chance:20;maxamount:1),
-    (name: 'Аммуниция'; symbol: '`'; chance:50;maxamount:15),
+    (name: 'Амуниция'; symbol: '`'; chance:50;maxamount:15),
     (name: 'Еда'; symbol: '%'; chance:70;maxamount:4),
     (name: 'Монеты'; symbol: '$'; chance:40;maxamount:30),
     (name: 'Свиток'; symbol: '?'; chance:20;maxamount:1),
@@ -296,7 +296,7 @@ procedure ExamineItem(Item : TItem);                          // Внимательно осм
 procedure ItemOnOff(Item : TItem; PutOn : boolean);           // Применить эффект предмета или убрать
 function ItemName(Item : TItem; skl : byte;
                              all : boolean) : string;         // Вернуть полное название предмета
-procedure UseItem(n : byte);                                  // Использовать предмет
+procedure UseItem(SelectedItem : byte);                       // Использовать предмет в инвентаре
 function SameItems(I1, I2 : TItem) : boolean;                 // Сравнить два предмета - одинаковы ли они?
 function ItemColor(I : TItem) : byte;                         // Вернуть цвет предмета
 
@@ -532,53 +532,53 @@ begin
   Result := s;
 end;
 
-{ Использовать предмет }
-procedure UseItem(n : byte);
+{ Использовать предмет в инвентаре}
+procedure UseItem(SelectedItem : byte);
 begin
   // Считать монетки (ворюши должны становиться агрессивными к тебе и орать "Отдай деньги!")
-  if pc.Inv[N].id = idCOIN then
+  if pc.Inv[SelectedItem].id = idCOIN then
   begin
-    if pc.Inv[N].amount = 1 then
+    if pc.Inv[SelectedItem].amount = 1 then
       AddMsg('Что тут пересчитывать - у тебя ровно одна золотая монетка...',0) else
-        AddMsg('Ты пересчитал{/a} '+ItemName(pc.Inv[N],0, TRUE)+'.',0);
-    pc.turn := 1;
+        AddMsg('Ты пересчитал{/a} '+ItemName(pc.Inv[SelectedItem],0, TRUE)+'.',0);
+    ChangeGameState(gsPLAY);
   end else
     // Использовать предмет по назначению
-    case ItemsData[pc.Inv[N].id].vid of
+    case ItemsData[pc.Inv[SelectedItem].id].vid of
       // Надеть
       1..13:
       begin
-        case pc.EquipItem(pc.Inv[N]) of
+        MenuSelected := Vid2Eq(ItemsData[pc.Inv[SelectedItem].id].vid);
+        case pc.EquipItem(pc.Inv[SelectedItem], TRUE) of
           0 :
           begin
-            ItemOnOff(pc.Inv[N], TRUE);
-            if (pc.Inv[N].amount > 1) and (ItemsData[pc.Inv[N].id].vid <> 13) then
-              dec(pc.Inv[N].amount) else
-                pc.Inv[N].id := 0;
+            ItemOnOff(pc.Inv[SelectedItem], TRUE);
+            if (pc.Inv[SelectedItem].amount > 1) and (ItemsData[pc.Inv[SelectedItem].id].vid <> 13) then
+              dec(pc.Inv[SelectedItem].amount) else
+                pc.Inv[SelectedItem].id := 0;
             pc.RefreshInventory;
-            N := Cell;
-            GameState := gsEQUIPMENT;
           end;
           1 :
           begin
-            ItemOnOff(pc.Inv[N], TRUE);
+            ItemOnOff(pc.Inv[SelectedItem], TRUE);
             GameState := gsPLAY;
           end;
         end;
+        ChangeGameState(gsEQUIPMENT);
       end;
       // Съесть
       14:
       begin
         if pc.status[stHUNGRY] >= 0 then
         begin
-          pc.status[stHUNGRY] := pc.status[stHUNGRY] - Round(ItemsData[pc.Inv[N].id].defense * pc.Inv[N].mass * 1.3 * (1 + (pc.ability[abEATINSIDE] * AbilitysData[abEATINSIDE].koef) / 100));
+          pc.status[stHUNGRY] := pc.status[stHUNGRY] - Round(ItemsData[pc.Inv[SelectedItem].id].defense * pc.Inv[SelectedItem].mass * 1.3 * (1 + (pc.ability[abEATINSIDE] * AbilitysData[abEATINSIDE].koef) / 100));
           if pc.status[stHUNGRY] < -500 then
           begin
-            AddMsg('#Ты не смог{/ла} доесть '+ItemName(pc.Inv[N], 1, FALSE)+' потому, что очень насытил{ся/ась}... чересчур насытил{ся/ась}...#',0);
+            AddMsg('#Ты не смог{/ла} доесть '+ItemName(pc.Inv[SelectedItem], 1, FALSE)+' потому, что очень насытил{ся/ась}... чересчур насытил{ся/ась}...#',0);
             pc.status[stHUNGRY] := -500;
           end else
-              AddMsg('#Ты съел{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.#',0);
-          pc.DeleteInvItem(pc.Inv[N], 1);
+              AddMsg('#Ты съел{/a} '+ItemName(pc.Inv[SelectedItem], 1, FALSE)+'.#',0);
+          pc.DeleteItemInv(SelectedItem, 1, 1);
           pc.turn := 1;
         end else
           AddMsg('Тебе не хочется больше есть!',0);
@@ -586,9 +586,9 @@ begin
       // Выпить
       19:
       begin
-        AddMsg('Ты выпил{/a} '+ItemName(pc.Inv[N], 1, FALSE)+'.',0);
-        DrinkLiquid(pc.Inv[N].liquidid, pc);
-        pc.DeleteInvItem(pc.Inv[N], 1);
+        AddMsg('Ты выпил{/a} '+ItemName(pc.Inv[SelectedItem], 1, FALSE)+'.',0);
+        DrinkLiquid(pc.Inv[SelectedItem].liquidid, pc);
+        pc.DeleteItemInv(SelectedItem, 1, 1);
         pc.turn := 1;
       end;
     end;

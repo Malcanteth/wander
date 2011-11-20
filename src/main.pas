@@ -20,10 +20,10 @@ type
     procedure InitGame;
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
-    procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
     function GetCharFromVirtualKey(Key: Word): string;
   public
   end;
@@ -41,6 +41,7 @@ var
   VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
   wtd,                                         // Что сделать при выборе монстра
   LastGameState,                               // Последнее состояние игры
+  WasEqOrInv,                                  // Была открыта экипировка или инвентарь
   PlayMode             : byte;                 // Выбранный режим игры
   GameVersion          : string;               // Версия игры
   Answer               : string[1];            // Ожидается ответ
@@ -54,7 +55,7 @@ implementation
 
 uses
   Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
-  conf, sutils, script, mbox, vars;
+  Conf, SUtils, Script, MBox, Vars, Monsters;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -148,7 +149,7 @@ procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
   i : integer;
-  n : string;        
+  n : string;
   Item : TItem;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
@@ -567,6 +568,7 @@ begin
               69        :
               begin
                   MenuSelected := 1;
+                  WasEqOrInv := 2;
                   ChangeGameState(gsEQUIPMENT);
               end;
               // Инвентарь 'i'
@@ -576,6 +578,7 @@ begin
                 begin
                   MenuSelected := 1;
                   VidFilter := 0;
+                  WasEqOrInv := 1;
                   ChangeGameState(gsINVENTORY);
                 end else
                   AddMsg('Твой инвентарь пуст!',0);
@@ -653,35 +656,7 @@ begin
                 Input(LastMsgL+1, MapY+(LastMsgY-1), '');
               end;
               // Стрелять 's'
-              83       :
-              begin
-                if (pc.eq[13].id > 0) then
-                begin
-                  if (pc.eq[7].id = 0) or (ItemsData[pc.eq[7].id].kind = ItemsData[pc.eq[13].id].kind) then
-                  begin
-                    AddMsg('$Целиться в:$',0);
-                    i := pc.SearchForAliveField;
-                    if autoaim > 0 then
-                      if (M.Saw[M.MonL[autoaim].x, M.MonL[autoaim].y] = 2) and (M.MonL[autoaim].id > 0) then
-                        i := autoaim;
-                    if i > 0 then
-                    begin
-                      lx := M.MonL[i].x;
-                      ly := M.MonL[i].y;
-                      pc.AnalysePlace(lx,ly,1);
-                      ChangeGameState(gsAIM);
-                    end else
-                      begin
-                        lx := pc.x;
-                        ly := pc.y;
-                        pc.AnalysePlace(lx,ly,1);
-                        ChangeGameState(gsAIM);
-                      end;
-                  end else
-                    AddMsg(ItemsData[pc.eq[13].id].name2+' и '+ItemsData[pc.eq[7].id].name1+' - не совместимы!',0);
-                end else
-                  AddMsg('Слот амуниции в экипировке пуст!',0);
-              end;
+              83       :  pc.PrepareShooting(pc.eq[7], pc.eq[13], 1);
               // Поменять тактику 'tab'
               VK_TAB    :
               begin
@@ -764,57 +739,57 @@ begin
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y+1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y+1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y+1]]);
               end;
               40,98,50  :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y+1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Eq[MenuSelected]) else
-                       pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x,pc.y+1]]) else
+                       pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x,pc.y+1]]);
               end;
               34,99,51  :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y+1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y+1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y+1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y+1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y+1]]);
               end;
               37,100,52 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y]]);
               end;
               39,102,54 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y]]);
               end;
               36,103,55 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y-1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x-1,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y-1]]);
               end;
               38,104,56 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y-1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x,pc.y-1]]);
               end;
               33,105,57 :
               case wtd of
                 1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y-1]], 0);
                 2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y-1]]);
-                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Eq[MenuSelected]) else
-                      pc.GiveItem(M.MonL[M.MonP[pc.x+1,pc.y-1]], pc.Inv[MenuSelected]);
+                3 : if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y-1]]);
               end;
               else
                 AddDrawMsg('Указано неправильное направление!',0);
@@ -858,8 +833,17 @@ begin
                 if (lx = pc.x) and (ly = pc.y) then
                   AddMsg('Проще нажми ESC, если уж так хочешь умереть!',0) else
                   begin
+                    // Удалить бросаемый предмет
+                    if Bow.id = 0 then
+                      pc.DeleteItemInv(13, 1, 2) else
+                      begin
+                        case WasEqOrInv of
+                          1 : pc.DeleteItemInv(MenuSelected, 1, 1);
+                          2 : pc.DeleteItemInv(MenuSelected, 1, 2);
+                        end;
+                      end;
                     ChangeGameState(gsPLAY);
-                    AnimFly(pc.x,pc.y,lx,ly, ItemTypeData[ItemsData[pc.Eq[13].id].vid].symbol, ItemsData[pc.Eq[13].id].color);
+                    pc.StartShooting(ShootingMode);
                     pc.turn := 1;
                   end;
               ELSE
@@ -871,12 +855,14 @@ begin
           gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsABILITYS, gsHISTORY, gsSKILLSMENU,
           gsUSEMENU, gsWPNSKILLS:
           begin
+            // Выход в игру или в другое место
             if GameState = gsUSEMENU then
             begin
               if Key = 27 then
                 ChangeGameState(LastGameState);
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
+              
             // Чит в навыках
             if GameState = gsWPNSKILLS then
             begin
@@ -924,7 +910,6 @@ begin
                     begin
                       VidFilter := Eq2Vid(MenuSelected);
                       MenuSelected := 1;
-                      pc.Inventory;
                       ChangeGameState(gsINVENTORY);
                     end;
                 end;
@@ -965,10 +950,7 @@ begin
                     pc.UseMenu;
                     ChangeGameState(gsUSEMENU);
                   end else
-                    begin
-                      UseItem(InvList[MenuSelected]);
-                      ChangeGameState(gsPLAY);
-                    end;
+                    UseItem(InvList[MenuSelected]);
                 end;
               end;
             end ELSE
@@ -1023,34 +1005,49 @@ begin
                 case MenuSelected2 of
                   1: // Использовать
                   begin
-                    ChangeGameState(gsPLAY);
                     //В экипировке
                     if LastGameState = gsEQUIPMENT then
                     begin
-                      case pc.PickUp(pc.eq[MenuSelected], TRUE,pc.eq[MenuSelected].amount) of
+                      case pc.PickUp(pc.eq[MenuSelected], TRUE, pc.eq[MenuSelected].amount) of
                         0 :
                         begin
                           ItemOnOff(pc.eq[MenuSelected], FALSE);
                           AddMsg('Ты положил{/a} '+ItemName(pc.eq[MenuSelected], 1, TRUE)+' обратно в инвентарь.',0);
                           pc.eq[MenuSelected].id := 0;
+                          ChangeGameState(gsEQUIPMENT);
                         end;
-                        1 : AddMsg('*Ты положил{/a} пустоту обратно в свой инвентарь :)*',0);
-                        2 : AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.',0);
-                        3 : AddMsg('*Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.*',0);
+                        1 :
+                        begin
+                          AddMsg('*Ты положил{/a} пустоту обратно в свой инвентарь :)*',0);
+                          ChangeGameState(gsPLAY);
+                        end;
+                        2 :
+                        begin
+                          AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.',0);
+                          ChangeGameState(gsPLAY);
+                        end;
+                        3 :
+                        begin
+                          AddMsg('*Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.*',0);
+                          ChangeGameState(gsPLAY);
+                        end;
                       end;
                     end else
                       UseItem(MenuSelected);
                   end;
                   2: // Рассмотреть
                   begin
-                    ChangeGameState(gsPLAY);
                     if LastGameState = gsEQUIPMENT then
                       ExamineItem(pc.Eq[MenuSelected]) else
                         ExamineItem(pc.Inv[MenuSelected]);
+                    ChangeGameState(gsPLAY);
                     pc.turn := 1;
                   end;
                   3: // Бросить
                   begin
+                    if LastGameState = gsEQUIPMENT then
+                      pc.PrepareShooting(pc.Eq[MenuSelected], pc.Eq[MenuSelected], 2) else
+                        pc.PrepareShooting(pc.Inv[MenuSelected], pc.Inv[MenuSelected], 2);
                   end;
                   4: // Отдать
                   begin
@@ -1087,7 +1084,7 @@ begin
                           Item := pc.Eq[MenuSelected];
                           Item.amount := i;
                           AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-                          pc.DeleteInvItem(pc.Eq[MenuSelected], i);
+                          pc.DeleteItemInv(MenuSelected, i, 2);
                           pc.turn := 1;
                         end else
                           AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
@@ -1119,7 +1116,7 @@ begin
                             Item := pc.Inv[MenuSelected];
                             Item.amount := i;
                             AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-                            pc.DeleteInvItem(pc.Inv[MenuSelected], i);
+                            pc.DeleteItemInv(MenuSelected, i, 1);
                             pc.turn := 1;
                           end else
                             AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
@@ -1298,15 +1295,13 @@ begin
       begin
         autoaim := M.MonP[FlyY,FlyY];
         pc.Fire(M.MonL[M.MonP[FlyX,FlyY]]);
-          break;
+        break;
       end else
         begin
           OnPaint(NIL);
           sleep(FlySpeed);
         end;
-
   end;
-  pc.DecArrows;
   FlyX := 0;
   FlyY := 0;
 end;
