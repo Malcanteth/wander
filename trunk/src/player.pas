@@ -63,6 +63,7 @@ type
     procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
     procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
     function getGold(): word;                          // Узнать количество монет в инвентаре
+    function removeGold(amount: word): boolean;        // Отобрать у игрока amount монет. Возвращает false и не отбирает деньги, если их не хватает.
   end;
 
 var
@@ -1394,6 +1395,22 @@ begin
     Result := 0
   else
     Result:=inv[slot].amount;
+end;
+
+function TPc.removeGold(amount: word) : boolean;
+var slot:byte;
+begin
+  slot := findCoins();
+  if (slot = 0) then
+    Result := false
+  else if (inv[slot].amount>=amount) then
+  begin
+    dec(inv[slot].amount, amount);
+    Result := true;
+    RefreshInventory;
+  end
+  else
+    Result := false;
 end;
 
 { Искать }
