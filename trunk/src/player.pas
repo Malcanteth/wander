@@ -62,6 +62,7 @@ type
     procedure ChooseMode;                              // Выбрать режим игры
     procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
     procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
+    function getGold(): word;                          // Узнать количество монет в инвентаре
   end;
 
 var
@@ -915,7 +916,10 @@ begin
         LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
       end;
     end;
-    //
+    inc(HLine);
+    // Золото
+    Font.Color := cLIGHTGRAY;
+    TextOut(82*CharX, HLine*CharY, 'ЗОЛОТО   :'+inttostr(getGold));
     Font.Color := cBROWN;
     Inc(HLine);
     Inc(HLine);
@@ -1380,6 +1384,16 @@ begin
         Result := i;
         break;
       end;
+end;
+
+function TPc.getGold : Word;
+var slot:byte;
+begin
+  slot := findCoins();
+  if (slot = 0) then
+    Result := 0
+  else
+    Result:=inv[slot].amount;
 end;
 
 { Искать }
