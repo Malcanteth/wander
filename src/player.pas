@@ -917,17 +917,10 @@ begin
         LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
       end;
     end;
-    Inc(HLine);
-    Inc(HLine);
-    Font.Color := cBROWN;
-    TextOut(81*CharX, HLine*CharY, '-------------------');
-    Inc(HLine);
-    Inc(HLine);
+    inc(HLine);
     // гНКНРН
     Font.Color := cLIGHTGRAY;
-    TextOut(82*CharX, HLine*CharY, 'гнкнрн   :');
-    Font.Color := cYELLOW;
-    TextOut(92*CharX, HLine*CharY, IntToStr(getGold));
+    TextOut(82*CharX, HLine*CharY, 'гнкнрн   :'+inttostr(getGold));
     Font.Color := cBROWN;
     Inc(HLine);
     Inc(HLine);
