@@ -921,12 +921,12 @@ begin
 {    // Çîëîòî
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, HLine*CharY, 'ÇÎËÎÒÎ   :'+inttostr(getGold));
+    Inc(HLine); }
+    Inc(HLine);
     Font.Color := cBROWN;
-    Inc(HLine);
-    Inc(HLine);
     TextOut(81*CharX, HLine*CharY, '-------------------');
     Inc(HLine);
-    Inc(HLine); }
+    Inc(HLine);
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, HLine*CharY, 'ÑÈËÀ     :');
     if str > Rstr then

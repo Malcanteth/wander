@@ -49,40 +49,6 @@ begin
   end;
 end;
 
-{
-      if Msgs[y] <> '' then
-      begin
-        t := 1;
-        for x:=1 to Length(Msgs[y]) do
-        begin
-          //Символы начала и конца цвета
-          if Msgs[y][x] = '$' then  // желтый
-          begin
-            if c = 0 then c := 1 else c := 0;
-          end else
-          if Msgs[y][x] = '*' then  // красный
-          begin
-            if c= 0 then c := 2 else c := 0;
-          end else
-          if Msgs[y][x] = '#' then  // зеленый
-          begin
-            if c= 0 then c := 3 else c := 0;
-          end else
-            begin
-              //Цвет букв
-              case c of
-                0 : Font.Color := MyRGB(160,160,160);  //Серый
-                1 : Font.Color := MyRGB(255,255,0);    //Желтый
-                2 : Font.Color := MyRGB(200,0,0);      //Красный
-                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
-              end;
-              Textout((t-1)*CharX, (MapY*CharY)+((y-1)*CharY), Msgs[y][x]);
-              inc(t);
-            end;
-        end;
-      end;
-}
-
 { Показать историю сообщений }
 procedure ShowHistory;
 var
