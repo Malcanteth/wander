@@ -291,7 +291,7 @@ function CreateItem(n : byte; am : integer;
                             OwnerId : byte) : TItem;          // Создать предмет
 function PutItem(px,py : byte; Item : TItem;
                            amount : integer) : boolean;       // Положить предмет
-procedure WriteSomeAboutItem(Item : TItem);                   // Вывести некоторые хар-ки предмета
+procedure WriteSomeAboutItem(Item : TItem; compare: boolean = false); // Вывести некоторые хар-ки предмета
 procedure ExamineItem(Item : TItem);                          // Внимательно осмотреть предмет
 procedure ItemOnOff(Item : TItem; PutOn : boolean);           // Применить эффект предмета или убрать
 function ItemName(Item : TItem; skl : byte;
@@ -365,7 +365,7 @@ begin
     owner := OwnerId;
     // Меняем массу трупа, на массу убитого монстра (-20%)
     if id = idCORPSE then
-      mass := MonstersData[owner].mass - Round(MonstersData[owner].mass * 0.20);
+      mass := Round(MonstersData[owner].mass * 0.8);
     // Меняем массу головы, на массу 15% веса трупа
     if id = idHEAD then
       mass := Round(MonstersData[owner].mass * 0.15);
@@ -434,9 +434,11 @@ begin
 end;
 
 { Вывести некоторые хар-ки предмета }
-procedure WriteSomeAboutItem(Item : TItem);
+procedure WriteSomeAboutItem(Item : TItem; compare: boolean = false);
 var
   s : string;
+  cell: byte;
+  t : shortint;
 begin
   if Item.id > 0 then
     with Screen.Canvas do
@@ -444,13 +446,31 @@ begin
       DrawBorder(15,31,70,4,crLIGHTGRAY);
       // Начать описание предмета
       s := '';
-      {Атака - выводить только если это - оружие (ближнего боя и стрела}
       case ItemsData[Item.id].vid of
-        6,13 : s := s + 'Атака: '+IntToStr(ItemsData[Item.id].attack)+' ';
-      end;
       {Защита - если это броня (шлем, плащ, броня на тело, перчатки, обувь}
-      case ItemsData[Item.id].vid of
-        1,3,4,11,12 : s := s + 'Защита: '+IntToStr(ItemsData[Item.id].defense)+' ';
+        1,3,4,11,12 : begin
+          t := ItemsData[Item.id].defense;
+          s := s + 'Защита: '+IntToStr(t)+' ';
+          if compare then begin
+            s := s + '(';
+            cell := Vid2Eq(ItemsData[Item.id].vid);
+            if (pc.eq[cell].id<>0) then dec(t,ItemsData[pc.eq[cell].id].defense);
+            if t > 0 then s:= s + '+';
+            s := s + inttostr(t)+') ';
+          end;
+        end;
+      {Атака - выводить только если это - оружие (ближнего боя и стрела}
+        6,13 : begin
+          t := ItemsData[Item.id].attack;
+          s := s + 'Атака: '+IntToStr(t)+' ';
+          if compare then begin
+            s := s + '(';          
+            cell := Vid2Eq(ItemsData[Item.id].vid);
+            if (pc.eq[cell].id<>0) then dec(t,ItemsData[pc.eq[cell].id].attack);
+            if t > 0 then s:= s + '+';
+            s := s + inttostr(t)+') ';
+          end;
+        end;
       end;
       // Масса предмета
       s := s + 'Масса: '+FloatToStr(Item.mass);
