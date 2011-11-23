@@ -1220,7 +1220,7 @@ begin
         TextOut(6*CharX, (2+MenuSelected)*CharY,'*');
       end else
         break;
-    WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]]);
+    WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]], true);
     WriteAboutInvMass;
   end;
 end;
