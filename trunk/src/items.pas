@@ -21,19 +21,6 @@ type
     liquidid         : byte;         // ID напитка
   end;
 
-  TItemData = record
-    name1, name2, name3        : string[40];      // Название (1ед.число,2мн.число,3кого)
-    descr                      : string[100];     // Короткое описание
-    vid                        : byte;            // Вид предмета
-    color                      : byte;            // Цвет
-    mass                       : real;
-    attack, defense            : word;
-    chance                     : byte;            // Шанс появления
-    kind                       : byte;            // Вид оружия или брони
-    dmgtype                    : byte;            // Тип урона
-    flags                      : longword;        // Флажки:)
-  end;
-
 const
   { Кол-во типов предметов}
   ItemTypeAmount = 21;
@@ -62,10 +49,24 @@ const
     (name: 'Инструмент'; symbol: '{'; chance:5;maxamount:1),
     (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1)
   );
+  
+type
+  TItemData = record
+    name1, name2, name3        : string[40];      // Название (1ед.число,2мн.число,3кого)
+    descr                      : string[100];     // Короткое описание
+    vid                        : byte;            // Вид предмета
+    color                      : byte;            // Цвет
+    mass                       : real;
+    attack, defense            : word;
+    chance                     : byte;            // Шанс появления
+    kind                       : byte;            // Вид оружия или брони
+    dmgtype                    : byte;            // Тип урона
+    flags                      : longword;        // Флажки:)
+  end;
 
-  { Кол-во предметов }
+const
+ { Кол-во предметов }
   ItemsAmount = 35;
-
   {  Описание предметов }
   ItemsData : array[1..ItemsAmount] of TItemData =
   (
@@ -245,45 +246,9 @@ const
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
     )
-  );
+  );  
 
-  { Уникальные идентификаторы предметов }
-  idCOIN           = 1;
-  idKITCHENKNIFE   = 2;
-  idPITCHFORK      = 3;
-  idKEKS           = 4;
-  idJACKSONSHAT    = 5;
-  idLAPTI          = 6;
-  idCORPSE         = 7;
-  idHELMET         = 8;
-  idMANTIA         = 9;
-  idJACKET         = 10;
-  idCHAINARMOR     = 11;
-  idSTAFF          = 12;
-  idDAGGER         = 13;
-  idDUBINA         = 14;
-  idSHORTSWORD     = 15;
-  idPALICA         = 16;
-  idLONGSWORD      = 17;
-  idSHIELD         = 18;
-  idBOOTS          = 19;
-  idLAVASH         = 20;
-  idGREENAPPLE     = 21;
-  idMEAT           = 22;
-  idHEAD           = 23;
-  idGATESKEY       = 24;
-  idAXE            = 25;
-  idBOW            = 26;
-  idCROSSBOW       = 27;
-  idSLING          = 28;
-  idBLOWPIPE       = 29;
-  idARROW          = 30;
-  idBOLT           = 31;
-  idLITTLEROCK     = 32;
-  idIGLA           = 33;
-  idCAPE           = 34;
-  idBOTTLE         = 35;
-
+{$include ../data/scripts/items.pas}
 
 function HaveItemTypeInDB(wtype : byte) : boolean;            // Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов)
 function GenerateItem(wtype : byte) : TItem;                  // Генерировать случайный предмет определенного вида
