@@ -585,7 +585,7 @@ begin
   end else
     if M.Tile[pc.x,pc.y] = tdUSTAIRS then
     begin
-      dunname := M.name;
+      //dunname := M.name;
       // Убрать указатель на героя
       M.MonP[pc.x,pc.y] := 0;
       // Сохранить уровень
@@ -606,7 +606,7 @@ begin
         AskForQuit := FALSE;
         MainForm.Close;
       end;
-      if SpecialMaps[M.Special].name = '' then M.name := DunName else M.name := SpecialMaps[M.Special].name;
+      if (M.Special<>0)and(SpecialMaps[M.Special].name <> '') then M.name := SpecialMaps[M.Special].name;
       if M.Special > 0 then
         pc.level := M.Special;
       // Поместить героя
