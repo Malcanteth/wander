@@ -25,35 +25,63 @@ begin
   StartDecorating('<-ПОМОЩЬ->', FALSE);
   with Screen.Canvas do
   begin
-    Font.Color := cBLUEGREEN;
-    TextOut(3*CharX,3*CharY, 'Все просто - передвигайте своего героя, используя стрелки управления и используйте команды:');
-    Font.Color := cLIGHTGRAY;
-    TextOut(3*CharX,5*CharY,  'ESC   - Выйти из игры                             S     - Стрелять');
-    TextOut(3*CharX,6*CharY,  'C     - Закрыть дверь                             O     - Открыть');
-    TextOut(3*CharX,7*CharY,  'L     - Смотреть                                  X     - Навыки и способности');
-    TextOut(3*CharX,8*CharY,  'T     - Разговаривать                             M     - История сообщений');
-    TextOut(3*CharX,9*CharY,  'Q     - Список квестов                            TAB   - Изменить тактику боя');
-    TextOut(3*CharX,10*CharY, 'E     - Экипировка                                F     - Есть');
-    TextOut(3*CharX,11*CharY, 'I     - Инвентарь                                 D     - Пить');
-    TextOut(3*CharX,12*CharY, 'A     - Атаковать');
-    TextOut(3*CharX,13*CharY, 'ENTER - Спуститься\Подняться по лестнице');
-    TextOut(3*CharX,14*CharY, 'G     - Поднять вещи (Shift + G - определенное количество)');
+    AddTextLine(3, 2, 'Все просто - передвигайте своего героя, используя стрелки управления и используйте команды:');
 
-    Font.Color := cPURPLE;
-    TextOut(3*CharX,20*CharY, 'F1    - Помощь (эта страничка)');
-    TextOut(3*CharX,21*CharY, 'F2    - Сохранить игру и выйти {Пока не работает}');
-    TextOut(3*CharX,22*CharY, 'F5    - Сделать скриншот');
-    TextOut(3*CharX,23*CharY, 'F6    - Показать\Спрятать главное меню');
+    AddTextLine(3, 5,  '$ESC$   - Выйти из игры в меню                      $S$     - Стрелять');
+    AddTextLine(3, 6,  '$C$     - Закрыть дверь                             $O$     - Открыть');
+    AddTextLine(3, 7,  '$L$     - Смотреть                                  $X$     - Навыки и способности');
+    AddTextLine(3, 8,  '$T$     - Разговаривать                             $M$     - История сообщений');
+    AddTextLine(3, 9,  '$Q$     - Список квестов                            $TAB$   - Изменить тактику боя');
+    AddTextLine(3, 10, '$E$     - Экипировка                                $F$     - Есть');
+    AddTextLine(3, 11, '$I$     - Инвентарь                                 $D$     - Пить');
+    AddTextLine(3, 12, '$A$     - Атаковать');
+    AddTextLine(3, 13, '$ENTER$ - Спуститься\Подняться по лестнице');
+    AddTextLine(3, 14, '$G$     - Поднять вещи ($Shift + G$ - определенное количество)');
 
-    Font.Color := cGRAY;
-    TextOut(3*CharX,30*CharY, 'Команды не чувствительны к регистру и языку.');
-    TextOut(3*CharX,31*CharY, 'Двигаться по диагонали так же можно зажав ALT + стрелки.');
-    Font.Color := cLIGHTGRAY;
-    TextOut(3*CharX,38*CharY, 'Игру разработал Павел Дивненко aka BreakMeThunder');
-    Font.Color := cGRAY;
-    TextOut(3*CharX,39*CharY, 'breakmt@mail.ru');
+    AddTextLine(3, 20, '#F1#    - Помощь (эта страничка)');
+    AddTextLine(3, 21, '#F2#    - Сохранить игру и выйти {Пока не работает}');
+    AddTextLine(3, 22, '#F5#    - Сделать скриншот');
+
+    AddTextLine(3, 30, 'Команды не чувствительны к регистру и языку.');
+    AddTextLine(3, 31, 'Двигаться по диагонали так же можно зажав *ALT + стрелки*.');
+
+    AddTextLine(3, 39, 'Игру разработал Павел Дивненко aka BreakMeThunder *breakmt@mail.ru*');
   end;
 end;
+
+{
+      if Msgs[y] <> '' then
+      begin
+        t := 1;
+        for x:=1 to Length(Msgs[y]) do
+        begin
+          //Символы начала и конца цвета
+          if Msgs[y][x] = '$' then  // желтый
+          begin
+            if c = 0 then c := 1 else c := 0;
+          end else
+          if Msgs[y][x] = '*' then  // красный
+          begin
+            if c= 0 then c := 2 else c := 0;
+          end else
+          if Msgs[y][x] = '#' then  // зеленый
+          begin
+            if c= 0 then c := 3 else c := 0;
+          end else
+            begin
+              //Цвет букв
+              case c of
+                0 : Font.Color := MyRGB(160,160,160);  //Серый
+                1 : Font.Color := MyRGB(255,255,0);    //Желтый
+                2 : Font.Color := MyRGB(200,0,0);      //Красный
+                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
+              end;
+              Textout((t-1)*CharX, (MapY*CharY)+((y-1)*CharY), Msgs[y][x]);
+              inc(t);
+            end;
+        end;
+      end;
+}
 
 { Показать историю сообщений }
 procedure ShowHistory;
