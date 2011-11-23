@@ -9,25 +9,31 @@ type
   TPSPc = class
   private
     procedure getHP(var value: Integer);
-    procedure setHP(value: Integer);    
+    procedure setHP(value: Integer);
     procedure getRHP(var value: Integer);
     procedure setRHP(value: Integer);
     procedure getX(var value: word);
     procedure getY(var value: word);
     function getName(): string;
     procedure getQuest(_self: TPSPc; var Value: byte; const Index:byte);
-//    function getQuest(_Self: TPSPc; Index: byte): byte;
     procedure setQuest(_self: TPSPc; const Value: byte; Index:byte);
-  public
     function getGold(): word;
+    function addItem(id: byte; amount: integer): boolean;
+    function addPotion(id: byte; amount: integer): boolean;
     function removeGold(amount: word): boolean;
+  end;
+
+  TPSMap = class
+  private
+    procedure putItem(x,y,id: byte; amount: integer);
+    procedure putPotion(x,y,id: byte; amount: integer);
   end;
 
 
 implementation
 
 uses uPSCompiler, uPSRuntime, uPSC_std, uPSR_std, SysUtils, wlog, sutils, vars,
-  utils, mbox, msg, player, monsters;
+  utils, mbox, msg, player, monsters, items, liquid;
 
 const ScriptPath = '\Data\Scripts\'; // Путь к папке со скриптами
 
@@ -47,6 +53,11 @@ procedure TPSPc.getX(var value: Word); begin Value := pc.X; end;
 procedure TPSPc.getY(var value: Word); begin Value := pc.Y; end;
 procedure TPSPc.setHP(value: Integer); begin pc.HP:= value; end;
 procedure TPSPc.setRHP(value: Integer); begin pc.RHP:= value; end;
+function TPSPc.addItem(id: byte; amount: integer): boolean; begin Result := pc.PickUp(CreateItem(id, amount, 0), FALSE,amount)=0; end;
+function TPSPc.addPotion(id: byte; amount: integer): boolean; begin Result := pc.PickUp(CreatePotion(id, amount), FALSE,amount)=0; end;
+{ класс TPSMap }
+procedure TPSMap.putItem(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreateItem(id, amount, 0),amount); end;
+procedure TPSMap.putPotion(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreatePotion(id, amount),amount); end;
 
 { Вернуть переменную как строку }
 function WanderGetStr(VR: String): String;
@@ -146,12 +157,20 @@ begin
     begin
       RegisterMethod('function getGold(): word');
       RegisterMethod('function removeGold(amount: word): boolean');
+      RegisterMethod('function addItem(id: byte; amount: integer): boolean');
+      RegisterMethod('function addPotion(id: byte; amount: integer): boolean');      
       RegisterProperty('HP', 'Integer', iptRW);
       RegisterProperty('RHP', 'Integer', iptRW);
       RegisterProperty('X', 'Word', iptR);
       RegisterProperty('Y', 'Word', iptR);
       RegisterProperty('NAME', 'String', iptR);
       RegisterProperty('QUEST', 'Byte Byte', iptRW);
+    end;
+
+    with Sender.AddClassN(Sender.FindClass('TOBJECT'), 'TPSMAP') do
+    begin
+      RegisterMethod('procedure putItem(x,y,id: byte; amount: integer): boolean');
+      RegisterMethod('procedure putPotion(x,y,id: byte; amount: integer): boolean');
     end;
     Result := True;
   except end;
@@ -185,12 +204,19 @@ begin
   begin
     RegisterMethod(@TPSPc.getGold, 'GETGOLD');
     RegisterMethod(@TPSPc.removeGold, 'REMOVEGOLD');
+    RegisterMethod(@TPSPc.addItem, 'ADDITEM');
+    RegisterMethod(@TPSPc.addPotion, 'ADDPOTION');
     RegisterPropertyHelper(@TPSPc.getHP, @TPSPc.setHP, 'HP');
     RegisterPropertyHelper(@TPSPc.getRHP, @TPSPc.setRHP, 'RHP');
     RegisterPropertyHelper(@TPSPc.getQuest, @TPSPc.setQuest, 'QUEST');
     RegisterPropertyHelper(@TPSPc.getX, nil, 'X');
     RegisterPropertyHelper(@TPSPc.getY, nil, 'Y');
     RegisterPropertyHelper(@TPSPc.getName, nil, 'NAME');
+  end;
+  with ClassImporter.Add(TPSMap) do
+  begin
+    RegisterMethod(@TPSMap.putItem, 'PUTITEM');
+    RegisterMethod(@TPSMap.putItem, 'PUTPOTION');    
   end;
 end;
 

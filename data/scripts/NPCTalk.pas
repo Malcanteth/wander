@@ -89,7 +89,54 @@ case GetInt('NPCID') of
     end
     else
       AddMsg(GetStr('TalkStr') + '"Здравствуй, '+pc.Name+'! Меня зовут '+GetStr('NPCName')+'. Если тебя ранят - заходи ко мне, я смогу тебе помочь."',0);
+  end;
+  
+  mdBARTENDER:
+  begin
+    if (Ask(GetStr('TalkStr') + '"Могу предложить бутылёк свежего пивасика всего за 15 золотых, хочешь?" #(Y/n)#')) = 'Y' then
+    begin
+      if pc.removeGold(15) then
+      begin
+        AddMsg('Ты протягиваешь '+MonstersName(GetInt('NPCID'),3)+' деньги.',0); More;
+        AddMsg('Он их пересчитывает и протягивает бутылку холодного пива.',0);
+        if not(pc.addPotion(lqCHEAPBEER, 1)) then
+        begin
+          AddMsg('Оно упало на пол.',0);
+          map.PutPotion(pc.x,pc.y, lqCHEAPBEER, 1);
+        end;
+        More;
+        AddMsg('"Далеко не уходи - вдруг еще захочешь! Можешь посидеть с нашими постояльцами..."',0);
+       end else if (pc.getGold() > 0) then
+        AddMsg('У тебя недостаточно золотых монет для покупки.',0)
+      else
+        AddMsg('К сожалению, у тебя совсем нет денег.',0);
+    end else
+      AddMsg('"Ну что ж... Мое дело предложить!"',0);
+  end;
+  
+  mdMEATMAN:
+  begin
+    if (Ask(GetStr('TalkStr') + '"Хочешь купить кусок отличного свежего мяса всего за 15 золотых?" #(Y/n)#')) = 'Y' then
+    begin
+      if pc.removeGold(15) then
+      begin
+        AddMsg('Ты протягиваешь '+MonstersName(GetInt('NPCID'),3)+' деньги.',0); More;
+        AddMsg('Он их пересчитывает и отдаёт кусок мяса.',0);
+        if not(pc.addItem(idMeat, 1)) then
+        begin
+          AddMsg('Он упал на пол.',0);
+          map.PutItem(pc.x,pc.y, idMeat, 1);
+        end;
+        More;
+        AddMsg('"Взвращайся ещё, когда захочешь кушать!"',0);
+       end else if (pc.getGold() > 0) then
+        AddMsg('У тебя недостаточно золотых монет для покупки.',0)
+      else
+        AddMsg('К сожалению, у тебя совсем нет денег.',0);
+    end else
+      AddMsg('"Если вдруг передумаешь - обязательно заходи ко мне!"',0);
   end;  
+		
 end;
 // Сохраняем сообщение
 if s <> '' then
