@@ -36,3 +36,7 @@ const
   idCAPE           = 34;
   idBOTTLE         = 35;
   
+  lqCURE        = 1;
+  lqHEAL        = 2;
+  lqCHEAPBEER   = 3;
+  lqKEFIR       = 4;  
