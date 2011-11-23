@@ -1717,12 +1717,28 @@ end;
 procedure Tpc.WriteAboutInvMass;
 var
   weight : string;
+  tx, ty : word;
 begin
   with Screen.Canvas do
   begin
     Font.Color := cLIGHTGRAY;
-    weight :=  'Масса всех предметов: '+FloatToStr(pc.invmass)+' Максимальная масса: '+FloatToStr(pc.maxmass);
-    TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
+    weight :=  'Масса всех предметов: '+FloatToStr(invmass)+' Максимальная масса: '+FloatToStr(maxmass);
+    tx := (15 + ((70 - length(weight)) div 2))*CharX;
+    ty := 35*CharY;
+    TextOut(tx, ty, weight);
+    if (ShowBars = 1) then begin
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      inc(ty, CharY);
+      MoveTo(tx + 4, ty + CharY div 2);
+      LineTo(tx + 4 + (length(weight)-1)*CharX,ty + CharY div 2);
+      if (invmass > 0) then
+      begin
+        Pen.Color := cBrown;
+        MoveTo(tx + 4, ty + CharY div 2);
+        LineTo(tx + 4 + BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), ty + CharY div 2);
+      end;
+    end;
   end;
 end;
 
