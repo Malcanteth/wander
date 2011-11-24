@@ -78,6 +78,11 @@ const
   cORANGE                  = 212675;
   cBLUEGREEN               = 6668288;
 
+  { Дополнительные темные цвета }
+  cDARKRED                 = $00000066;
+  cDARKBLUE                = $00660000;
+  cDARKGREEN               = $00003300;
+
   { Состояние игры }
   gsPLAY                   = 1;
   gsCLOSE                  = 2;

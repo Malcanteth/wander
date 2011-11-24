@@ -848,6 +848,7 @@ procedure Tpc.WriteInfo;
 var
   HLine: Byte;
   MB, WW: Integer;
+  V: Word;
 begin
   with Screen.Canvas do
   begin
@@ -889,7 +890,11 @@ begin
       LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
       if (Hp > 0) then
       begin
-        Pen.Color := cLIGHTRED;
+        // Цвет полосы меняется в зависимости от здоровья персонажа
+        V := RHP div 3;
+        if (HP < V) then Pen.Color := cLIGHTRED
+          else if (HP < V * 2) then Pen.Color := cRED
+            else Pen.Color := cDARKRED;
         MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
         LineTo((82*CharX) + BarWidth(HP, RHP, WW) + 4, Round((HLine + 0.5)*CharY));
       end;
@@ -912,7 +917,11 @@ begin
       LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
       if (Mp > 0) then
       begin
-        Pen.Color := cLIGHTBLUE;
+        // Цвет полосы меняется в зависимости от количества маны
+        V := RMP div 3;
+        if (MP < V) then Pen.Color := cLIGHTBLUE
+          else if (MP < V * 2) then Pen.Color := cBLUE
+            else Pen.Color := cDARKBLUE;
         MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
         LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
       end;
@@ -962,14 +971,18 @@ begin
     // Полоса опыта
     if (ShowBars = 1) then begin
       Inc(HLine);
-      Pen.Color := cGRAY;
+      Pen.Color := cGRAY;     
       Pen.Width := 9;
       MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
       LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
       if pc.exp < 0 then pc.exp := 0;
       if (pc.exp > 0) then
       begin
-        Pen.Color := cBLUEGREEN;
+        // Цвет полосы меняется в зависимости от количества опыта
+        V := pc.ExpToNxtLvl div 3;
+        if (pc.exp < V) then Pen.Color := cLIGHTGREEN
+          else if (pc.exp < V * 2) then Pen.Color := cGREEN
+            else Pen.Color := cDARKGREEN;
         MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
         LineTo((82*CharX) + BarWidth(pc.exp, pc.ExpToNxtLvl, WW) + 4, Round((HLine + 0.5)*CharY));
       end;

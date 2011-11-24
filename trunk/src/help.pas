@@ -25,8 +25,8 @@ begin
   StartDecorating('<-ПОМОЩЬ->', FALSE);
   with Screen.Canvas do
   begin
-    AddTextLine(3, 2, 'Все просто - передвигайте своего героя, используя стрелки управления и используйте команды:');
-
+    AddTextLine(3, 2, 'Все просто - передвигайте своего героя стрелками управления и используйте команды:');
+                       
     AddTextLine(3, 5,  '$ESC$   - Выйти из игры в меню                      $S$     - Стрелять');
     AddTextLine(3, 6,  '$C$     - Закрыть дверь                             $O$     - Открыть');
     AddTextLine(3, 7,  '$L$     - Смотреть                                  $X$     - Навыки и способности');
@@ -42,8 +42,10 @@ begin
     AddTextLine(3, 21, '#F2#    - Сохранить игру и выйти {Пока не работает}');
     AddTextLine(3, 22, '#F5#    - Сделать скриншот');
 
-    AddTextLine(3, 30, 'Команды не чувствительны к регистру и языку.');
-    AddTextLine(3, 31, 'Двигаться по диагонали так же можно зажав *ALT + стрелки*.');
+    AddTextLine(3, 26, '#~#     - Вызвать\Спрятать консоль');
+
+    AddTextLine(3, 39, 'Команды не чувствительны к регистру и языку.');
+    AddTextLine(3, 30, 'Двигаться по диагонали так же можно зажав *ALT + стрелки*.');
 
     AddTextLine(3, 39, 'Игру разработал Павел Дивненко aka BreakMeThunder *breakmt@mail.ru*');
   end;
@@ -107,7 +109,7 @@ const
   MenuNames : array[1..GMChooseAmount] of string =
   ('Новая игра', 'Выход');
 var
-  i : byte;
+  i: byte;
 begin
   DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
   with Screen.Canvas do
@@ -120,7 +122,7 @@ begin
       TextOut((TableX+6)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, MenuNames[i]);
     end;
     Font.Color := cYELLOW;
-    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+MenuSelected))*CharY, '*');
+    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+MenuSelected))*CharY, '>');
   end;
 end;
 
