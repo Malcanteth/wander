@@ -7,3 +7,9 @@ del *.obj
 del *.dsm
 del *.rsm
 del *.ddp
+cd ..\
+rmdir /s /q screens
+del wander.exe
+del wander.log
+cd Data\Scripts\
+del *.pcs
