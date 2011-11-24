@@ -4,6 +4,7 @@ interface
 
 procedure Log(const Msg: string); overload;
 procedure ShowLog();
+var LogPos:byte;
 
 implementation
 
@@ -22,6 +23,7 @@ begin
     L.Append('Лог открыт ' + DateToStr(Date) + ' ' + TimeToStr(Time) + '.');
     L.Append(DivStr);
   except end;
+  LogPos := 0;
 end;
 
 procedure Log(const Msg: string); overload;
@@ -42,12 +44,11 @@ begin
     Brush.Color := 0;
     Font.Color := MyRGB(160,160,160);
     x := L.Count;
-    c := MsgAmount-1;
+    c := MsgAmount - 1;
     if c > x then c := x;
+    if LogPos+c >= x then LogPos := x - c; 
     for y := 1 to c do
-      TextOut(0, (MapY + y) * CharY, L[x-y]);
-{    for y := 1 to 5 do
-      TextOut(CharX, (MapY + y) * CharY, '*********');}
+      TextOut(0, (MapY + y) * CharY, L[x-y-LogPos]);
   end;
 end;
 
