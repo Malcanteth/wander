@@ -8,7 +8,7 @@
 program wander;
 
 uses
-  Forms,
+  Forms, sysutils,
   main in 'main.pas' {MainForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
@@ -35,11 +35,19 @@ uses
   pngextra in 'PNGImage\PNGExtra.pas';
 
 {$R *.res}
+{.$DEFINE DEBUG}
+
+var Count: byte;
 
 begin
   Randomize;
+  {$IFDEF DEBUG} Debug := True; {$ELSE} Debug := false; {$ENDIF}
   Application.Initialize;
   Application.Title := 'WANDER';
+  for Count := 1 to ParamCount do
+  begin
+    if ParamStr(Count) = '-dev' then Debug := true;
+  end;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TMainEdForm, MainEdForm);
   Application.Run;
