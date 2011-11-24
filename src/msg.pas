@@ -182,7 +182,10 @@ begin
   MainForm.OnPaint(NIL);
   WaitMore := True;
   while WaitMore = True do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   ClearMsg
 end;
 
@@ -193,7 +196,10 @@ begin
   MainForm.OnPaint(NIL);
   WaitENTER := True;
   while WaitENTER = True do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   ClearMsg
 end;
 
