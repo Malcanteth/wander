@@ -358,17 +358,22 @@ initialization
   H := TStringList.Create;
   Z := TStringList.Create;
   // Заголовочный скрипт
+  if FileExists('Const.pas') then begin
   Z.LoadFromFile(Path + 'Const.pas');
-  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
-  Z.Clear; Z.LoadFromFile(Path + 'Monsters.pas');
-  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
-  Z.Clear; Z.LoadFromFile(Path + 'Items.pas');
-  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
-  Z.Clear; Z.LoadFromFile(Path + 'Tiles.pas');
-  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
-  Z.Clear; Z.LoadFromFile(Path + 'Init.pas');
-  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
-  Z.Clear; Z.LoadFromFile(Path + 'Final.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists('Monsters.pas') then begin
+  Z.LoadFromFile(Path + 'Monsters.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists('Items.pas') then begin
+  Z.LoadFromFile(Path + 'Items.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists('Tiles.pas') then begin
+  Z.LoadFromFile(Path + 'Tiles.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists('Init.pas') then begin
+  Z.LoadFromFile(Path + 'Init.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists('Final.pas') then Z.LoadFromFile(Path + 'Final.pas');
 
 finalization
   // Осв. ресурсы
