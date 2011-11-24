@@ -15,8 +15,8 @@ type
     procedure getX(var value: word);
     procedure getY(var value: word);
     function getName(): string;
-    procedure getQuest(_self: TPSPc; var Value: byte; const Index:byte);
-    procedure setQuest(_self: TPSPc; const Value: byte; Index:byte);
+    procedure getQuest(var Value: byte; Index:byte);
+    procedure setQuest(Value, Index:byte);
     function getGold(): word;
     function addItem(id: byte; amount: integer): boolean;
     function addPotion(id: byte; amount: integer): boolean;
@@ -27,13 +27,15 @@ type
   private
     procedure putItem(x,y,id: byte; amount: integer);
     procedure putPotion(x,y,id: byte; amount: integer);
+    procedure getTile(var Value: byte; IndexX,IndexY: byte);
+    procedure setTile(Value, IndexX, IndexY: byte);
   end;
 
 
 implementation
 
 uses uPSCompiler, uPSRuntime, uPSC_std, uPSR_std, SysUtils, wlog, sutils, vars,
-  utils, mbox, msg, player, monsters, items, liquid;
+  utils, mbox, msg, player, monsters, items, liquid, map;
 
 const ScriptPath = '\Data\Scripts\'; // Путь к папке со скриптами
 
@@ -45,8 +47,8 @@ var
 function TPSPc.getName(): string; begin Result := pc.name; end;
 function TPSPc.getGold(): word; begin Result := pc.getGold(); end;
 function TPSPc.removeGold(amount: word): boolean; begin Result := pc.removeGold(amount); end;
-procedure TPSPc.getQuest(_self: TPSPc; var Value: byte; const Index:byte); begin Value := pc.quest[Index]; end;
-procedure TPSPc.setQuest(_self: TPSPc; const Value: byte; Index:byte); begin pc.quest[Index] := Value; end;
+procedure TPSPc.getQuest(var Value: byte; Index:byte); begin Value := pc.quest[Index]; end;
+procedure TPSPc.setQuest(Value, Index:byte); begin pc.quest[Index] := Value; end;
 procedure TPSPc.getHP(var value: Integer); begin Value := pc.hp; end;
 procedure TPSPc.getRHP(var value: Integer); begin Value := pc.Rhp; end;
 procedure TPSPc.getX(var value: Word); begin Value := pc.X; end;
@@ -58,6 +60,8 @@ function TPSPc.addPotion(id: byte; amount: integer): boolean; begin Result := pc
 { класс TPSMap }
 procedure TPSMap.putItem(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreateItem(id, amount, 0),amount); end;
 procedure TPSMap.putPotion(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreatePotion(id, amount),amount); end;
+procedure TPSMap.getTile(var Value: byte; IndexX,IndexY: byte); begin Value := M.Tile[IndexX,IndexY]; end;
+procedure TPSMap.setTile(Value, IndexX, IndexY: byte); begin M.Tile[IndexX,IndexY] :=Value ; end;
 
 { Вернуть переменную как строку }
 function WanderGetStr(VR: String): String;
@@ -151,14 +155,14 @@ begin
     Sender.AddDelphiFunction('procedure SetBool(VR: String; B: Boolean)');
     Sender.AddDelphiFunction('procedure LetVar(V1, V2: String)');
     Sender.AddDelphiFunction('function MonstersName(id, form: byte): string');
-    
+
     SIRegisterTObject(Sender);
     with Sender.AddClassN(Sender.FindClass('TOBJECT'), 'TPSPC') do
     begin
       RegisterMethod('function getGold(): word');
       RegisterMethod('function removeGold(amount: word): boolean');
       RegisterMethod('function addItem(id: byte; amount: integer): boolean');
-      RegisterMethod('function addPotion(id: byte; amount: integer): boolean');      
+      RegisterMethod('function addPotion(id: byte; amount: integer): boolean');
       RegisterProperty('HP', 'Integer', iptRW);
       RegisterProperty('RHP', 'Integer', iptRW);
       RegisterProperty('X', 'Word', iptR);
@@ -171,6 +175,8 @@ begin
     begin
       RegisterMethod('procedure putItem(x,y,id: byte; amount: integer): boolean');
       RegisterMethod('procedure putPotion(x,y,id: byte; amount: integer): boolean');
+      RegisterProperty('TILE', 'Byte Byte Byte', iptRW);
+      SetDefaultPropery('TILE');
     end;
     Result := True;
   except end;
@@ -216,7 +222,8 @@ begin
   with ClassImporter.Add(TPSMap) do
   begin
     RegisterMethod(@TPSMap.putItem, 'PUTITEM');
-    RegisterMethod(@TPSMap.putItem, 'PUTPOTION');    
+    RegisterMethod(@TPSMap.putItem, 'PUTPOTION');
+    RegisterPropertyHelper(@TPSMap.getTile, @TPSMap.setTile, 'TILE');        
   end;
 end;
 
@@ -313,9 +320,13 @@ initialization
   H := TStringList.Create;
   Z := TStringList.Create;
   // Заголовочный скрипт
-  Z.LoadFromFile(Path + 'Monsters.pas');
+  Z.LoadFromFile(Path + 'Const.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
+  Z.Clear; Z.LoadFromFile(Path + 'Monsters.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]);
   Z.Clear; Z.LoadFromFile(Path + 'Items.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]);
+  Z.Clear; Z.LoadFromFile(Path + 'Tiles.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]);
   Z.Clear; Z.LoadFromFile(Path + 'Init.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]);

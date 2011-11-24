@@ -248,7 +248,7 @@ const
     )
   );  
 
-{$include ../data/scripts/items.pas}
+{$include ../Data/Scripts/Items.pas}
 
 function HaveItemTypeInDB(wtype : byte) : boolean;            // Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов)
 function GenerateItem(wtype : byte) : TItem;                  // Генерировать случайный предмет определенного вида
