@@ -918,10 +918,10 @@ begin
       end;
     end;
     inc(HLine);
-{    // Çמכמעמ
+    // Çמכמעמ
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, HLine*CharY, 'ÇÎËÎÒÎ   :'+inttostr(getGold));
-    Inc(HLine); }
+    Inc(HLine); 
     Inc(HLine);
     Font.Color := cBROWN;
     TextOut(81*CharX, HLine*CharY, '-------------------');
