@@ -3,7 +3,7 @@ unit script;
 interface
 uses classes;
 
-procedure Run(Script: string); // Запускаем скрипт на выполнение
+procedure Run(Script: string; CompileOnly: Boolean = false); // Запускаем скрипт на выполнение
 
 type
   TPSPc = class
@@ -35,13 +35,13 @@ type
 implementation
 
 uses uPSCompiler, uPSRuntime, uPSC_std, uPSR_std, SysUtils, wlog, sutils, vars,
-  utils, mbox, msg, player, monsters, items, liquid, map;
+  utils, mbox, msg, player, monsters, items, liquid, map, main;
 
 const ScriptPath = '\Data\Scripts\'; // Путь к папке со скриптами
 
 var
   Path: string;
-  L, F, H, D, Z: TStringList;
+  H, Z: TStringList;
 
 { класс TPSPc }
 function TPSPc.getName(): string; begin Result := pc.name; end;
@@ -61,7 +61,7 @@ function TPSPc.addPotion(id: byte; amount: integer): boolean; begin Result := pc
 procedure TPSMap.putItem(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreateItem(id, amount, 0),amount); end;
 procedure TPSMap.putPotion(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreatePotion(id, amount),amount); end;
 procedure TPSMap.getTile(var Value: byte; IndexX,IndexY: byte); begin Value := M.Tile[IndexX,IndexY]; end;
-procedure TPSMap.setTile(Value, IndexX, IndexY: byte); begin M.Tile[IndexX,IndexY] :=Value ; end;
+procedure TPSMap.setTile(Value, IndexX, IndexY: byte); begin M.Tile[IndexX,IndexY] :=Value; end;
 
 { Вернуть переменную как строку }
 function WanderGetStr(VR: String): String;
@@ -270,42 +270,83 @@ begin
   end;
 end;
 
-{ Процедура Run, загрузка, компиляция и выполнение скрипта }
-procedure Run(Script: string);
-var
-  S, Data: AnsiString;
-  Compiled, Run: Boolean;
-  I: Integer;
+function PrepareScript(Script: String; var Data, Messages: AnsiString): boolean;
+var S, FileName: AnsiString;
+I: Integer;
+_F: File;
 begin
+  FileName := '';
   S := Script;
-  if (StrRight(S, 4) = '.pas') then
+  Result := false;
+  if Debug then
   begin
-    // Берем скрипт из кеша...
-    I := F.IndexOf(Script);
-    if I > -1 then Script := D[I] else
+    if (StrRight(S, 4) = '.pas') then
     begin
-      // Если нет в кеше...
-      F.Append(Script);
-      S := Path + Script;
-      if Not FileExists(S) then
+      FileName := Path + Script;
+      if Not FileExists(FileName) then
       begin
-        MsgBox('Файл скрипта "' + ExtractFileName(S) + '" не найден!');
+        MsgBox('Файл скрипта "' + ExtractFileName(FileName) + '" не найден!');
         Exit;
       end;
-      L.LoadFromFile(S);
-      Script := L.Text;
-      D.Append(Script);
+      AssignFile (_F, FileName);
+      Reset(_F,1);
+      I := FileSize(_F);
+      SetLength(Script, I);
+      BlockRead(_F, PChar(Script)^, I);
+      CloseFile(_F);
     end;
-  end;
-  // Компилируем скрипт
-  Script := H.Text + Script + Z.Text;
-  Compiled := CompileScript(Script, Data, S);
+    // Компилируем скрипт
+    Script := H.Text + Script + Z.Text;
+    Result := CompileScript(Script, Data, Messages);
+    Messages := '['+ExtractFileName(FileName)+'] '+Messages;
+    if Result and (FileName <> '') then
+    begin
+      FileName[length(FileName)-1]:='c';
+      AssignFile (_F, FileName);
+      Rewrite(_F,1);
+      I := length(Data);
+      BlockWrite(_F, PChar(Data)^, I);
+      CloseFile(_F);
+    end;
+  end
+  else
+    if (StrRight(S, 4) = '.pas') then
+    begin
+      FileName := Path + Script;
+      FileName[length(FileName)-1]:='c';
+      if Not FileExists(FileName) then
+      begin
+        MsgBox('Файл скрипта "' + ExtractFileName(FileName) + '" не найден!');
+        Exit;
+      end;
+      Result := true;
+      FileName[length(FileName)-1]:='c';
+      AssignFile (_F, FileName);
+      Reset(_F,1);
+      I := FileSize(_F);
+      SetLength(Data, I);
+      BlockRead(_F, PChar(Data)^, I);
+      CloseFile(_F);
+    end
+    else
+    begin
+      Script := H.Text + Script + Z.Text;
+      Result := CompileScript(Script, Data, S);
+    end;
+end;
+
+{ Процедура Run, загрузка, компиляция и выполнение скрипта }
+procedure Run(Script: string; CompileOnly: Boolean = false);
+var Compiled, Run: Boolean;
+S, Data: AnsiString;
+begin
+  Compiled := PrepareScript(Script, Data, S);
   // Выполняем скрипт
-  if Compiled then
+  if (Compiled) and (not CompileOnly) then
   begin
     Run := RunCompiledScript(Data,s);
     if s<>'' then MsgBox(s);
-  end else MsgBox(s);
+  end else if s<>'' then MsgBox(s);
 end;
 
 var i: word;
@@ -314,9 +355,6 @@ initialization
   GetDir(0, Path);
   Path := Path + ScriptPath;
   // Списки
-  L := TStringList.Create;
-  F := TStringList.Create;
-  D := TStringList.Create;
   H := TStringList.Create;
   Z := TStringList.Create;
   // Заголовочный скрипт
@@ -334,9 +372,6 @@ initialization
 
 finalization
   // Осв. ресурсы
-  F.Free;
   H.Free;
-  L.Free;
-  D.Free;
   Z.Free;
 end.

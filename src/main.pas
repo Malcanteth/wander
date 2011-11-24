@@ -35,7 +35,7 @@ var
   WaitEnter,                                   // Ждем нажатия Enter
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
-  Inputing             : boolean;              // Режим ввода
+  Inputing, Debug      : boolean;              // Режим ввода
   GameState,                                   // Состояние игры
   MenuSelected2,                               // Выбранный элемент в меню
   VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
@@ -60,6 +60,15 @@ uses
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  if Debug then
+  begin
+    Caption := '[Debug] '+Caption;
+    Run('CreatePC.pas', true);
+    Run('GenDungeon.pas', true);
+    Run('GenName.pas', true);
+    Run('InitStory.pas', true);
+    Run('NPCTalk.pas', true);
+  end;
   // контекст главной формы
   DC := GetDC(MainForm.Handle);
   // Прячем главное меню
