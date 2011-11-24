@@ -249,7 +249,10 @@ begin
   AddDrawMsg(s,0);
   Answer := ' ';
   while Answer = ' ' do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   Result := Answer[1];
   Answer := '';
 end;
@@ -265,7 +268,10 @@ begin
   Inputing := TRUE;
   MainForm.OnPaint(NIL);  
   while WaitENTER = True do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   Inputing := FALSE;
   Result := InputString;
 end;
