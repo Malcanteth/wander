@@ -180,7 +180,7 @@ end;
 { Рамочка для информации о предмете}
 procedure DrawBorder(x,y,w,h,color : byte);
 var
-  i : byte;
+  i, j: byte;
 begin
   with Screen.Canvas do
   begin
@@ -189,16 +189,19 @@ begin
     TextOut((x+w)*CharX,y*CharY,'.');
     TextOut(x*CharX,(y+h)*CharY,'''');
     TextOut((x+w)*CharX,(y+h)*CharY,'''');
-    For i:=x+1 to x+w-1 do
+    for i:=x+1 to x+w-1 do
     begin
       TextOut(i*CharX,y*CharY,'-');
       TextOut(i*CharX,(y+h)*CharY,'-');
     end;
-    For i:=y+1 to y+h-1 do
+    for i:=y+1 to y+h-1 do
     begin
       TextOut(x*CharX,i*CharY,'|');
       TextOut((x+w)*CharX,i*CharY,'|');
     end;
+    for i := y + 1 to y + h - 1 do
+      for j := x + 1 to x + w - 1 do
+        TextOut(j*CharX,i*CharY,' ');
   end;
 end;
 
