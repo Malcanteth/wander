@@ -1450,7 +1450,7 @@ end;
 procedure TPc.StartHeroName;
 begin
   GameState := gsHERONAME;
-  Input(((WindowX-13) div 2), 17, '');
+  Input(((WindowX-13) div 2), 17, '', 13);
 end;
 
 { Окно ввода имени }

@@ -55,7 +55,7 @@ implementation
 
 uses
   Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
-  Conf, SUtils, Script, MBox, Vars, Monsters;
+  Conf, SUtils, Script, MBox, Vars, Monsters, wlog;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -100,12 +100,12 @@ begin
   Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
   // Выводим
   case GameState of
-    gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM:
+    gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE:
     begin
       // Выводим карту
       M.DrawScene;
       // Выводим сообщения
-      ShowMsgs;
+      if GameState = gsConsole then ShowLog else ShowMsgs;
       // Вывести информацию о герое
       pc.WriteInfo;
     end;
@@ -158,7 +158,7 @@ procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
   i : integer;
-  n : string;
+  n,s : string;
   Item : TItem;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
@@ -199,7 +199,7 @@ begin
             dec(InputPos)
           else if (Key = VK_RIGHT) and (InputPos < Length(InputString)) then
             inc(InputPos)
-          else if length(InputString)<13 then
+          else if length(InputString)<InputLength then
           begin
             n := GetCharFromVirtualKey(Key);
             if n<>'' then
@@ -210,7 +210,12 @@ begin
                 Inc(InputPos);
               end;
             end;
-          end;                 
+          end;
+          if (GameState = gsConsole) and (Key = 192) then
+          begin
+            InputString := '';
+            WaitENTER := False;
+          end;          
           OnPaint(Sender);
         end;
       end else
@@ -663,6 +668,22 @@ begin
               begin
                 AddMsg('Что ты хочешь крикнуть?',0);
                 Input(LastMsgL+1, MapY+(LastMsgY-1), '');
+              end;
+              //Консоль '~'
+              192 :
+              if Debug then
+              begin
+                changeGameState(gsConsole);
+                repeat
+                  ShowLog;
+                  s := Input(0, MapY, '');
+                  if s <> '' then
+                  begin
+                    Log(' > '+s);
+                    Run(s);
+                  end;
+                until (s = '');
+                changeGameState(gsPlay);
               end;
               // Стрелять 's'
               83       :  pc.PrepareShooting(pc.eq[7], pc.eq[13], 1);

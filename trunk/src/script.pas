@@ -298,7 +298,8 @@ begin
     // Компилируем скрипт
     Script := H.Text + Script + Z.Text;
     Result := CompileScript(Script, Data, Messages);
-    Messages := '['+ExtractFileName(FileName)+'] '+Messages;
+    s := ExtractFileName(FileName);
+    if s <> '' then Messages := '['+s+'] '+Messages;
     if Result and (FileName <> '') then
     begin
       FileName[length(FileName)-1]:='c';

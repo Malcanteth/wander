@@ -3,10 +3,11 @@ unit wlog;
 interface
 
 procedure Log(const Msg: string); overload;
+procedure ShowLog();
 
 implementation
 
-uses SysUtils, Classes;
+uses Classes, SysUtils, main, graphics, conf, cons, utils;
 
 var
   L: TStringList;
@@ -29,6 +30,25 @@ begin
     L.Append(DateToStr(Date) + ' ' + TimeToStr(Time) + ': ' + Msg);
     L.SaveToFile(Path + '\wander.log');
   except end;
+end;
+
+procedure ShowLog();
+var c,y: byte;
+    x: word;
+begin
+  with Screen.Canvas do
+  begin
+    Font.Name := FontMsg;
+    Brush.Color := 0;
+    Font.Color := MyRGB(160,160,160);
+    x := L.Count;
+    c := MsgAmount-1;
+    if c > x then c := x;
+    for y := 1 to c do
+      TextOut(0, (MapY + y) * CharY, L[x-y]);
+{    for y := 1 to 5 do
+      TextOut(CharX, (MapY + y) * CharY, '*********');}
+  end;
 end;
 
 procedure CloseLog;

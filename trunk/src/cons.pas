@@ -103,6 +103,7 @@ const
   gsAIM                    = 22;
   gsHERORANDOM             = 23;
   gsCHOOSEMODE             = 24;
+  gsCONSOLE                = 25;
 
   { Статусы героя}
   stHUNGRY                 = 1;

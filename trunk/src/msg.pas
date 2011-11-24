@@ -15,7 +15,8 @@ var
   Msgs : array[1..MsgAmount] of string;
   History : array[1..MaxHistory] of THistory;
   InputX, InputY : integer;
-  InputString : string[13];
+  InputString : string;
+  InputLength : byte;
   InputPos : byte;
   LastMsgY, LastMsgL : byte;
 
@@ -28,7 +29,7 @@ procedure More;
 procedure Apply;
 procedure ShowMsgs;
 function Ask(s: string): char;
-function Input(sx, sy: integer; ss: string): string;
+function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string;
 procedure ShowInput;
 procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
 
@@ -264,15 +265,16 @@ begin
 end;
 
 { Функция ввода текста пльзователем }
-function Input(sx,sy : integer; ss : string) : string;
+function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2) : string;
 begin
   InputString := ss;
   InputPos := Length(ss);
   InputX := sx;
   InputY := sy;
+  InputLength := MaxLen;
   WaitENTER := True;
   Inputing := TRUE;
-  MainForm.OnPaint(NIL);  
+  MainForm.OnPaint(NIL);
   while WaitENTER = True do
   begin
     Sleep(10);
