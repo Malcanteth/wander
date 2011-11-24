@@ -556,5 +556,5 @@ initialization
   // Версия игры
   EX := Explode('.', FileVersion(Paramstr(0)));
   GameVersion := EX[0] + '.' + EX[1] + EX[2];
-
+  if (strtoint(Ex[3]) in [1..27]) then GameVersion := GameVersion + chr(96+strtoint(Ex[3]));
 end.
