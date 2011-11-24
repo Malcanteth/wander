@@ -211,11 +211,12 @@ begin
               end;
             end;
           end;
-          if (GameState = gsConsole) and (Key = 192) then
-          begin
-            InputString := '';
-            WaitENTER := False;
-          end;          
+          if (GameState = gsConsole) then
+          case Key of
+            VK_ESCAPE, 192: begin InputString := ''; WaitENTER := False; end;
+            VK_UP: if LogPos > 0 then dec(LogPos);
+            VK_DOWN: if LogPos < 250 then inc(LogPos);
+          end;
           OnPaint(Sender);
         end;
       end else
@@ -680,7 +681,7 @@ begin
                   if s <> '' then
                   begin
                     Log(' > '+s);
-                    Run(s);
+                    Run(s+';');
                   end;
                 until (s = '');
                 changeGameState(gsPlay);
