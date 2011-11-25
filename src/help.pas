@@ -17,7 +17,7 @@ const
 implementation
 
 uses
-  Main, SysUtils, conf;
+  Main, SysUtils, conf, wlog, MapEditor, mbox;
 
 { Показать список команд }
 procedure ShowHelp;
@@ -109,21 +109,51 @@ const
   MenuNames : array[1..GMChooseAmount] of string =
   ('Новая игра', 'Выход');
 var
-  i: byte;
+  i,j: byte;
 begin
+  if (GameState = gsPlay) then begin
+    BlackWhite(Screen);
+    GrayScreen := Screen;
+  end;
   DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
-  with Screen.Canvas do
+  GameMenu := TRUE;
+  with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do
   begin
     for i:=1 to GMChooseAmount do
-    begin
-      Font.Color := cBROWN;
-      TextOut((TableX+2)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, '[ ]');
-      Font.Color := cCYAN;
-      TextOut((TableX+6)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, MenuNames[i]);
-    end;
-    Font.Color := cYELLOW;
-    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+MenuSelected))*CharY, '>');
+      Add(MenuNames[i]);
+    j := Run;
+    repeat
+      if ((j = 0) and (GameState <> gsINTRO))or(j<>0) then break;
+      j:=Run(Selected);
+    until false;
+    Free;
   end;
+  GameMenu := FALSE;  
+  if j = 0 then exit;
+  case j of
+    gmNEWGAME :
+    begin
+      if Mode = 0 then
+        ChangeGameState(gsCHOOSEMODE)
+      else begin
+        PlayMode := Mode;
+        // Если режим приключений то нужно загрузить карты
+        if PlayMode = AdventureMode then
+        if not MainEdForm.LoadSpecialMaps then
+        begin
+          MsgBox('Ошибка загрузки карт!');
+          Halt;
+        end;
+        ChangeGameState(gsHERORANDOM);
+        end;
+      end;
+    gmEXIT    :
+      begin
+        GameMenu := FALSE;
+        if GameState = gsINTRO then AskForQuit := FALSE;
+        MainForm.Close;
+      end;
+    end;
 end;
 
 end.

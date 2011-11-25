@@ -1940,7 +1940,7 @@ begin
   if (UnderHitSpeed > 0) and (Victim.Hp > 0) then
   begin
     Victim.underhit := TRUE;
-    MainForm.OnPaint(NIL);
+    MainForm.Redraw;
     sleep(UnderHitSpeed);
   end;
 end;
