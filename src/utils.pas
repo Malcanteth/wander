@@ -80,7 +80,7 @@ procedure StartGameMenu;                         // Отобразить игровое меню
 implementation
 
 uses
-  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage, wlog;
+  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage, wlog, help;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -629,8 +629,8 @@ end;
 { Отобразить игровое меню }
 procedure StartGameMenu;
 begin
-  GameMenu := TRUE;
-  MenuSelected := 1;
+  Intro;
+  DrawGameMenu;
 end;
 
 { Класс TIntQueue }

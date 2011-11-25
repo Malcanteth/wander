@@ -1466,24 +1466,60 @@ end;
 
 { Сделать рандомного }
 procedure TPc.HeroRandom;
-const
-  s1 = 'Создашь персонаж сам или доверишься воле случая?';
+const s1 = 'Создашь персонаж сам или доверишься воле случая?';
+var j: byte;
 begin
+  MainForm.Cls;
+  GameMenu := true;
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 15*CharY, 'Создам сам');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 16*CharY, 'Рандомный герой');
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+  with TMenu.Create(40,15) do
+  begin
+    Add('Создам сам');
+    Add('Рандомный герой');
+    j := 1;
+    repeat
+      j := Run(j);
+    until (j <> 0);
+    Free;
+  end;
+  GameMenu := false;
+  MenuSelected := j;
+  ClearPlayer;
+  if MenuSelected = 1 then
+    ChangeGameState(gsHEROGENDER) else
+  // Всё рандомно
+  begin
+    // пол
+    gender := Rand(1, 2);
+    // имя
+    case gender of
+      genMALE   : name := GenerateName(FALSE);
+      genFEMALE : name := GenerateName(TRUE);
+    end;
+    // атрибуты
+    atr[1] := Rand(1, 3);
+    atr[2] := Rand(1, 3);
+//    log(inttostr(WhatClass));
+//    log(ClName(1));
+    // Добавить очки умений исходя из класса
+    Prepare;
+    PrepareSkills;
+    if (HowManyBestWPNCL > 1) and not ((HowManyBestWPNCL < 3) and (OneOfTheBestWPNCL(CLOSE_TWO))) then
+    begin
+      CreateClWList;
+      c_choose := Wlist[Random(wlistsize)+1];
+    end;
+    if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW))) then
+    begin
+      CreateFrWList;
+      f_choose := Wlist[Random(wlistsize)+1];
+    end;
+    ChangeGameState(gsHEROCRRESULT);
   end;
 end;
 
@@ -1672,10 +1708,8 @@ end;
 
 { Выбрать режим игры }
 procedure TPc.ChooseMode;
-const
-  s1 = 'В каком режиме игры ты хочешь играть?';
-var Menu : TMenu;
-  j: byte;
+const s1 = 'В каком режиме игры ты хочешь играть?';
+var j: byte;
 begin
   MainForm.Cls;
   GameMenu := true;
@@ -1704,7 +1738,8 @@ begin
       MsgBox('Ошибка загрузки карт!');
       Halt;
     end;
-  ChangeGameState(gsHERORANDOM);
+  //ChangeGameState(gsHERORANDOM);
+  pc.HeroRandom;
   MenuSelected := 1;
 end;
 

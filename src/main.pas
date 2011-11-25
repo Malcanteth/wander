@@ -100,7 +100,7 @@ begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
                    gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
-                   gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER, gsHEROCRRESULT,
+                   gsHERONAME, gsHEROATR, {gsHERORANDOM,} gsHEROGENDER, gsHEROCRRESULT,
                    gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
@@ -125,7 +125,7 @@ begin
 //    gsCHOOSEMODE   : pc.ChooseMode;
     gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
-    gsHERORANDOM   : pc.HeroRandom;
+//    gsHERORANDOM   : pc.HeroRandom;
     gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
     gsHEROCLWPN    : pc.HeroCloseWeapon;
@@ -240,7 +240,7 @@ begin
             end;
           end;}
           // Рандомный герой?
-          gsHERORANDOM:
+{          gsHERORANDOM:
           begin
             pc.ClearPlayer;
             case Key of
@@ -252,40 +252,9 @@ begin
               end;
               // Ok...
               13 :
-              begin
-                if MenuSelected = 1 then
-                  ChangeGameState(gsHEROGENDER) else
-                    // Всё рандомно
-                    begin
-                      // пол
-                      pc.gender := Rand(1, 2);
-                      // имя
-                      case pc.gender of
-                        genMALE   : pc.name := GenerateName(FALSE);
-                        genFEMALE : pc.name := GenerateName(TRUE);
-                      end;
-                      // атрибуты
-                      pc.atr[1] := Rand(1, 3);
-                      pc.atr[2] := Rand(1, 3);
-                      // Добавить очки умений исходя из класса
-                      pc.Prepare;
-                      pc.PrepareSkills;
-                      if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
-                      begin
-                        pc.CreateClWList;
-                        c_choose := Wlist[Random(wlistsize)+1];
-                      end;
-                      if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
-                      begin
-                        pc.CreateFrWList;
-                        f_choose := Wlist[Random(wlistsize)+1];
-                      end;
-                      ChangeGameState(gsHEROCRRESULT);
-                    end;
-                Redraw;
-              end;
+
             end;
-          end;
+          end;}
           // Выбор пола
           gsHEROGENDER:
           begin
@@ -434,7 +403,7 @@ begin
               27     :
               begin
                 MenuSelected := 1;
-                ChangeGameState(gsHERORANDOM);
+                pc.HeroRandom;
               end;
             end;
           end;
@@ -1284,8 +1253,7 @@ end;
 
 procedure TMainForm.FormActivate(Sender: TObject);
 begin
-  Intro;
-  DrawGameMenu;
+  StartGameMenu;
 end;
 
 procedure TMainForm.cls;
