@@ -337,6 +337,7 @@ begin
   if IOResult = 0 then
   begin
     Result := TRUE;
+    //карты
     BlockRead(f, kol, SizeOf(kol));
     for i:=1 to kol do
     begin
@@ -353,16 +354,7 @@ begin
       // Соседние локации
       BlockRead(f, SpecialMaps[i].Loc, SizeOf(SpecialMaps[i].Loc));
     end;
-    CloseFile(f);
-  end;
-  // Монстры
-  AssignFile(f,'data/monsters.dm');
-  {$I-}
-  Reset(f,1);
-  {$I+}
-  if IOResult = 0 then
-  begin
-    if Result = TRUE then Result := TRUE;
+    //монстры
     for i:=1 to kol do
     begin
       // Читаем кол-во монстров
@@ -376,17 +368,7 @@ begin
             BlockRead(f, relation, SizeOf(relation));
           end;
     end;
-    CloseFile(f);
-  end else
-    Result := FALSE;
-  // Предметы
-  AssignFile(f,'data/items.dm');
-  {$I-}
-  Reset(f,1);
-  {$I+}
-  if IOResult = 0 then
-  begin
-    if Result = TRUE then Result := TRUE;
+    //предметы
     for i:=1 to kol do
     begin
       z := 0;
@@ -435,15 +417,7 @@ begin
       // Соседние локации
       BlockWrite(f, SpecialMaps[i].Loc, SizeOf(SpecialMaps[i].Loc));
     end;
-  CloseFile(f);
-  {$I+}
-  if IOResult <> 0 then
-    Result := false else
-      Result := true;
-  // Монстры
-  AssignFile(f,'data/monsters.dm');
-  {$I-}
-  Rewrite(f,1);
+  //монстры
   if kol > 0 then
     for i:=1 to kol do
     begin
@@ -465,15 +439,7 @@ begin
           end;
         end;
     end;
-  CloseFile(f);
-  {$I+}
-  if IOResult <> 0 then
-    Result := false else
-      Result := true;
-  // Предметы
-  AssignFile(f,'data/items.dm');
-  {$I-}
-  Rewrite(f,1);
+  //предметы
   if kol > 0 then
     for i:=1 to kol do
     begin
@@ -486,9 +452,7 @@ begin
     end;
   CloseFile(f);
   {$I+}
-  if IOResult <> 0 then
-    Result := false else
-      Result := true;
+  Result := IOResult = 0;
 end;
 
 { Добавить инфу в текущую карту }
