@@ -798,6 +798,7 @@ end;
 function TMenu.Run(Start: byte = 1): byte;
 var Key : Word;
 begin
+  if Start = 0 then Start := 1;
   if Start > _F.Count then Start:=_F.Count;
   if Start = 0 then Result := 0 else
   begin

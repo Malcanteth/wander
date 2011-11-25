@@ -17,7 +17,7 @@ const
 implementation
 
 uses
-  Main, SysUtils, conf, wlog, MapEditor, mbox;
+  Main, SysUtils, conf, wlog, MapEditor, mbox, player;
 
 { Показать список команд }
 procedure ShowHelp;
@@ -26,7 +26,7 @@ begin
   with Screen.Canvas do
   begin
     AddTextLine(3, 2, 'Все просто - передвигайте своего героя стрелками управления и используйте команды:');
-                       
+
     AddTextLine(3, 5,  '$ESC$   - Выйти из игры в меню                      $S$     - Стрелять');
     AddTextLine(3, 6,  '$C$     - Закрыть дверь                             $O$     - Открыть');
     AddTextLine(3, 7,  '$L$     - Смотреть                                  $X$     - Навыки и способности');
@@ -121,11 +121,10 @@ begin
   begin
     for i:=1 to GMChooseAmount do
       Add(MenuNames[i]);
-    j := Run;
+    j := 1;
     repeat
-      if ((j = 0) and (GameState <> gsINTRO))or(j<>0) then break;
       j:=Run(Selected);
-    until false;
+    until ((j = 0) and (GameState <> gsINTRO))or(j<>0);
     Free;
   end;
   GameMenu := FALSE;  
@@ -134,8 +133,9 @@ begin
     gmNEWGAME :
     begin
       if Mode = 0 then
-        ChangeGameState(gsCHOOSEMODE)
-      else begin
+        pc.ChooseMode
+      else
+      begin
         PlayMode := Mode;
         // Если режим приключений то нужно загрузить карты
         if PlayMode = AdventureMode then

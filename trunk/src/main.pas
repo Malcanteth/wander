@@ -99,7 +99,7 @@ procedure TMainForm.FormPaint(Sender: TObject);
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsCHOOSEMODE,
+                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
                    gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER, gsHEROCRRESULT,
                    gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
@@ -122,7 +122,7 @@ begin
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
-    gsCHOOSEMODE   : pc.ChooseMode;
+//    gsCHOOSEMODE   : pc.ChooseMode;
     gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
     gsHERORANDOM   : pc.HeroRandom;
@@ -158,7 +158,7 @@ begin
       KeyQueue.Push(Key)
     else
           // Игровое меню
-          if GameMenu then
+          {if GameMenu then
           begin
             case Key of
               // Esc
@@ -205,14 +205,14 @@ begin
               end;
             end;
             Redraw;
-          end else
+          end else}
       // Все остальное
       begin
         ClearMsg;
         pc.turn := 0;
         case GameState of
           // Выбор режима игры
-          gsCHOOSEMODE:
+ {         gsCHOOSEMODE:
           begin
             pc.ChooseMode;
             case Key of
@@ -238,7 +238,7 @@ begin
                 Redraw;
               end;
             end;
-          end;
+          end;}
           // Рандомный герой?
           gsHERORANDOM:
           begin

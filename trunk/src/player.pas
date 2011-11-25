@@ -80,7 +80,7 @@ var
 implementation
 
 uses
-  Map, MapEditor, conf, sutils, vars, script;
+  Map, MapEditor, conf, sutils, vars, script, mbox, wlog;
 
 { Очистить }
 procedure Tpc.ClearPlayer;
@@ -1674,23 +1674,38 @@ end;
 procedure TPc.ChooseMode;
 const
   s1 = 'В каком режиме игры ты хочешь играть?';
+var Menu : TMenu;
+  j: byte;
 begin
+  MainForm.Cls;
+  GameMenu := true;
   StartDecorating('<-ВЫБОР РЕЖИМА ИГРЫ->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 15*CharY, 'Приключение');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 16*CharY, 'Подземелье');
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
   end;
+  with TMenu.Create(40,15) do
+  begin
+    Add('Приключение');
+    Add('Подземелье');
+    j := 1;
+    repeat
+      j := Run(j);
+    until (j <> 0);
+    Free;
+  end;
+  GameMenu := false;
+  PlayMode := j;
+  // Если режим приключений то нужно загрузить карты
+  if PlayMode = AdventureMode then
+    if not MainEdForm.LoadSpecialMaps then
+    begin
+      MsgBox('Ошибка загрузки карт!');
+      Halt;
+    end;
+  ChangeGameState(gsHERORANDOM);
+  MenuSelected := 1;
 end;
 
 { Показать массу всего инвентаря и макс. переносимую ГГ }
