@@ -28,6 +28,23 @@ type
     function IndexOf(AnInt: integer): integer;
   end;
 
+  TMenu = class
+  private
+    _F: TStringList;
+    X,Y,Pos: byte;
+    Sel: char;
+    ForeColor, BgColor, SelColor: LongWord;
+    function getSelected: byte;
+  public
+    constructor Create(ax,ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
+                       aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
+    property Selected: byte read getSelected;
+    procedure Add(s: String);
+    procedure Draw;
+    function Run(Start: byte = 1): byte;
+    destructor Destroy;
+  end;
+
 function MyRGB(R,G,B : byte) : LongWord;         // Цвет
 function RealColor(c : byte) : longword;
 function Darker(Color:TColor; Percent:Byte):TColor;
@@ -63,7 +80,7 @@ procedure StartGameMenu;                         // Отобразить игровое меню
 implementation
 
 uses
-  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
+  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage, wlog;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -248,19 +265,19 @@ begin
   with Screen.Canvas do
   begin
     Font.Color := RealColor(color);
-    TextOut(x*CharX,y*CharY,'.');
-    TextOut((x+w)*CharX,y*CharY,'.');
-    TextOut(x*CharX,(y+h)*CharY,'''');
-    TextOut((x+w)*CharX,(y+h)*CharY,'''');
+    TextOut(x*CharX,y*CharY,Frame[5]);
+    TextOut((x+w)*CharX,y*CharY,Frame[6]);
+    TextOut(x*CharX,(y+h)*CharY,Frame[7]);
+    TextOut((x+w)*CharX,(y+h)*CharY,Frame[8]);
     for i:=x+1 to x+w-1 do
     begin
-      TextOut(i*CharX,y*CharY,'-');
-      TextOut(i*CharX,(y+h)*CharY,'-');
+      TextOut(i*CharX,y*CharY,Frame[1]);
+      TextOut(i*CharX,(y+h)*CharY,Frame[3]);
     end;
     for i:=y+1 to y+h-1 do
     begin
-      TextOut(x*CharX,i*CharY,'|');
-      TextOut((x+w)*CharX,i*CharY,'|');
+      TextOut(x*CharX,i*CharY,Frame[2]);
+      TextOut((x+w)*CharX,i*CharY,Frame[4]);
     end;
     for i := y + 1 to y + h - 1 do
       for j := x + 1 to x + w - 1 do
@@ -400,7 +417,7 @@ begin
     P.Free;
   end;
   AddMsg('#Сделан скриншот# ($'+fname+'$).',0);
-  MainForm.OnPaint(NIL);
+  MainForm.Redraw;
 end;
 
 { Вид вещи соответствующий выбранной ячейки экипировки }
@@ -456,6 +473,7 @@ const
   s4 = '   ###   #    # #   # #  # #### #  #  ';
   s5 = '        #           # ###           # ';
 begin
+  MainForm.cls;
   with Screen.Canvas do
   begin
     // WANDER
@@ -726,6 +744,78 @@ end;
 
 var
   EX: TExplodeResult;
+
+{ TMenu }
+
+procedure TMenu.Add(s: String);
+begin
+  _F.Add(s);
+  Log('Added '+s);
+end;
+
+constructor TMenu.Create(ax, ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
+                       aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
+begin
+  _F := TStringList.Create;
+  x := ax;
+  y := ay;
+  Sel := aSel;
+  ForeColor := aForeColor;
+  BgColor := aBgColor;
+  SelColor := aSelColor;
+end;
+
+destructor TMenu.Destroy;
+begin
+  _F.Free;
+end;
+
+procedure TMenu.Draw;
+var i: byte;
+begin
+  if not(_F.Count = 0) then
+    with Screen.Canvas do
+    begin
+      Brush.Color := cBlack;
+      for i:= 0 to _F.Count-1 do
+      begin
+        Font.Color := BgColor;
+        TextOut(x*CharX,(y+i)*charY,'[ ] ');
+        Font.Color := ForeColor;
+        TextOut((x+4)*CharX,(y+i)*charY,_F[i]);
+      end;
+      Font.Color := SelColor;
+      TextOut((x+1)*CharX,(y+pos-1)*charY,'>');
+    end;
+  MainForm.Redraw;
+end;
+
+function TMenu.getSelected: byte;
+begin
+  Result := Pos;
+end;
+
+function TMenu.Run(Start: byte = 1): byte;
+var Key : Word;
+begin
+  if Start > _F.Count then Start:=_F.Count;
+  if Start = 0 then Result := 0 else
+  begin
+    Pos := Start;
+    repeat
+      Draw;
+      Key := getKey;
+      case Key of
+        13: begin Result := Pos; break; end;
+        27: begin Result := 0; break; end;
+        VK_UP: if Pos > 1 then dec(Pos);
+        VK_DOWN: if Pos < _F.Count then inc(Pos);
+        VK_HOME: Pos := 1;
+        VK_END: Pos := _F.Count;
+      end;
+    until false;
+  end;
+end;
 
 initialization
   // Версия игры

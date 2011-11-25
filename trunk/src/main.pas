@@ -21,6 +21,9 @@ type
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
+    procedure FormActivate(Sender: TObject);
+    procedure Cls;
+    procedure Redraw;
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -85,21 +88,27 @@ begin
     Height := ClientHeight;
   end;
   GameTimer.Enabled := False;
-  ChangeGameState(gsINTRO);
   MenuSelected := 1;
-  GameMenu := TRUE;
+  // Вывести меню
   KeyQueue := TIntQueue.Create;
+  ChangeGameState(gsINTRO);
 end;
 
 { Отрисовка }
 procedure TMainForm.FormPaint(Sender: TObject);
 begin
   // Заполняем картинку черным цветом
-  Screen.Canvas.Brush.Color := 0;
-  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
+                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsCHOOSEMODE,
+                   gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER, gsHEROCRRESULT,
+                   gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
+  begin
+    if not((GameState = gsPLAY)and GameMenu) then Cls;
+  end;
   // Выводим
   case GameState of
     gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE:
+    if not((GameState = gsPLAY)and GameMenu) then
     begin
       // Выводим карту
       M.DrawScene;
@@ -123,28 +132,8 @@ begin
     gsHEROFRWPN    : pc.HeroFarWeapon;
     gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
-    gsINTRO        : Intro;
     gsSKILLSMENU   : SkillsAndAbilitys;
     gsWPNSKILLS    : WpnSkills;
-  end;
-  // Ввод
-  if Inputing then
-  begin
-    GameTimer.Interval := 200;
-    GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
-    ShowInput;                  // Показываем поле для ввода имени персонажа
-  end;
-  // Игровое Меню
-  if GameMenu then
-  begin
-    // Сделать заднюю картинку серой
-    if GameState <> gsINTRO then
-    begin
-      BlackWhite(Screen);
-      GrayScreen := Screen;
-    end;
-    // Вывести меню
-    DrawGameMenu;
   end;
   // Отображаем растягиваемый буфер
   SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
@@ -215,7 +204,7 @@ begin
                 end;
               end;
             end;
-            OnPaint(SENDER);
+            Redraw;
           end else
       // Все остальное
       begin
@@ -231,7 +220,7 @@ begin
               38,104,56,40,98,50 :
               begin
                 if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -246,7 +235,7 @@ begin
                   end;
                 ChangeGameState(gsHERORANDOM);
                 MenuSelected := 1;
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -259,7 +248,7 @@ begin
               38,104,56,40,98,50 :
               begin
                 if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -293,7 +282,7 @@ begin
                       end;
                       ChangeGameState(gsHEROCRRESULT);
                     end;
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -305,13 +294,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -320,7 +309,7 @@ begin
                 MenuSelected := 1;
                 MenuSelected2 := 1;
                 pc.startheroname;
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -332,13 +321,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected > 1 then dec(MenuSelected) else MenuSelected := wlistsize;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected < wlistsize then inc(MenuSelected) else MenuSelected := 1;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -349,7 +338,7 @@ begin
                 if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
                   ChangeGameState(gsHEROFRWPN) else
                     ChangeGameState(gsHEROCRRESULT);
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -367,7 +356,7 @@ begin
                         MenuSelected := i;
                         break;
                       end;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
@@ -379,7 +368,7 @@ begin
                       MenuSelected := 1;
                 end else
                   MenuSelected := 1;
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -388,7 +377,7 @@ begin
                 MenuSelected := 1;
                 MenuSelected2 := 1;
                 ChangeGameState(gsHEROCRRESULT);
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -400,13 +389,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -428,7 +417,7 @@ begin
                           ChangeGameState(gsHEROFRWPN) else
                             ChangeGameState(gsHEROCRRESULT);
                   end;
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end;
@@ -480,8 +469,9 @@ begin
               // Меню 'Esc'
               27        :
               begin
-                MenuSelected := 1;
-                GameMenu := TRUE;
+                {MenuSelected := 1;
+                GameMenu := TRUE;}
+                DrawGameMenu;
               end;
               // Закрыть дверь 'c'
               67        : pc.SearchForDoors;
@@ -845,7 +835,7 @@ begin
                 220 :
                 begin
                   ShowProc := not ShowProc;
-                  OnPaint(SENDER);
+                  Redraw;
                 end;
               end;
 
@@ -965,13 +955,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected2 = 1 then MenuSelected2 := HOWMANYVARIANTS else dec(MenuSelected2);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected2 = HOWMANYVARIANTS then MenuSelected2 := 1 else inc(MenuSelected2);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Сделать выбранное действие с предметом
               13 :
@@ -1110,13 +1100,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected = 1 then MenuSelected := 4 else dec(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected = 4 then MenuSelected := 1 else inc(MenuSelected);
-                OnPaint(SENDER);
+                Redraw;
               end;
               // Ok...
               13 :
@@ -1128,7 +1118,7 @@ begin
                   ChangeGameState(gsABILITYS);
                 end;
                 MenuSelected := 1;
-                OnPaint(Sender);
+                Redraw;
               end;
             end;
           end; {ELSE}
@@ -1176,7 +1166,7 @@ begin
         if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
         begin
           ChangeGameState(gsPLAY);
-          OnPaint(SENDER);
+          Redraw;
         end;
       end;
 end;
@@ -1185,7 +1175,7 @@ end;
 procedure TMainForm.FormResize(Sender: TObject);
 begin
   if GameState > 0 then
-    OnPaint(Sender);
+    Redraw;
 end;
 
 { Это нужно, что бы TAB обработать }
@@ -1223,7 +1213,7 @@ begin
   pc.FOV;
   Addmsg(' ',0);
   Addmsg('Нажми (#F1#), если нужна помощь.',0);
-  OnPaint(NIL);
+  Redraw;
 end;
 
 { Анимация летящего объекта }
@@ -1272,7 +1262,7 @@ begin
         break;
       end else
         begin
-          OnPaint(NIL);
+          Redraw;
           sleep(FlySpeed);
         end;
   end;
@@ -1290,6 +1280,26 @@ begin
   KeyQueue.Free;
   ReleaseDC(MainForm.Handle, DC);
   DeleteDC(DC);
+end;
+
+procedure TMainForm.FormActivate(Sender: TObject);
+begin
+  Intro;
+  DrawGameMenu;
+end;
+
+procedure TMainForm.cls;
+begin
+  with Screen.Canvas do
+  begin
+    Brush.Color := 0;
+    FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  end;
+end;
+
+procedure TMainForm.Redraw;
+begin
+  OnPaint(nil);
 end;
 
 initialization

@@ -450,7 +450,7 @@ begin
       pc.Search;
     end;
   end;
-  MainForm.OnPaint(NIL);
+  MainForm.Redraw;
 end;
 
 { Описать место }
@@ -1459,7 +1459,7 @@ begin
       end else
         pc.name := InputString;
       GameState := gsHEROATR;
-      MainForm.OnPaint(NIL);
+      MainForm.Redraw;
     end;
   end;
 end;
