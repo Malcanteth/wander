@@ -884,20 +884,9 @@ begin
     // Полоса здоровья
     if (ShowBars = 1) then begin
       Inc(HLine);
-      Pen.Color := cGRAY;
-      Pen.Width := 9;
-      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      DrawBar(82, HLine, 16*CharX, cGray, cGray);
       if (Hp > 0) then
-      begin
-        // Цвет полосы меняется в зависимости от здоровья персонажа
-        V := RHP div 3;
-        if (HP < V) then Pen.Color := cLIGHTRED
-          else if (HP < V * 2) then Pen.Color := cRED
-            else Pen.Color := cDARKRED;
-        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-        LineTo((82*CharX) + BarWidth(HP, RHP, WW) + 4, Round((HLine + 0.5)*CharY));
-      end;
+        DrawBar(82, HLine, BarWidth(HP, RHP, WW), cDARKRED, cRED);
     end;
     //
     Inc(HLine);
@@ -911,26 +900,15 @@ begin
     // Полоса маны
     if (ShowBars = 1) then begin
       Inc(HLine);
-      Pen.Color := cGRAY;
-      Pen.Width := 9;
-      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      DrawBar(82, HLine, 16*CharX, cGray, cGray);
       if (Mp > 0) then
-      begin
-        // Цвет полосы меняется в зависимости от количества маны
-        V := RMP div 3;
-        if (MP < V) then Pen.Color := cLIGHTBLUE
-          else if (MP < V * 2) then Pen.Color := cBLUE
-            else Pen.Color := cDARKBLUE;
-        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-        LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
-      end;
+        DrawBar(82, HLine, BarWidth(MP, RMP, WW), cDARKBLUE, cBLUE);
     end;
     inc(HLine);
     // Золото
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, HLine*CharY, 'ЗОЛОТО   :'+inttostr(getGold));
-    Inc(HLine); 
+    Inc(HLine);
     Inc(HLine);
     Font.Color := cBROWN;
     TextOut(81*CharX, HLine*CharY, '-------------------');
@@ -971,21 +949,10 @@ begin
     // Полоса опыта
     if (ShowBars = 1) then begin
       Inc(HLine);
-      Pen.Color := cGRAY;     
-      Pen.Width := 9;
-      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
-      if pc.exp < 0 then pc.exp := 0;
-      if (pc.exp > 0) then
-      begin
-        // Цвет полосы меняется в зависимости от количества опыта
-        V := pc.ExpToNxtLvl div 3;
-        if (pc.exp < V) then Pen.Color := cLIGHTGREEN
-          else if (pc.exp < V * 2) then Pen.Color := cGREEN
-            else Pen.Color := cDARKGREEN;
-        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
-        LineTo((82*CharX) + BarWidth(pc.exp, pc.ExpToNxtLvl, WW) + 4, Round((HLine + 0.5)*CharY));
-      end;
+      DrawBar(82, HLine, 16*CharX, cGray, cGray);
+      if exp < 0 then exp := 0;
+      if (exp > 0) then
+        DrawBar(82, HLine, BarWidth(exp, ExpToNxtLvl, WW), cDARKGREEN, cGREEN);
     end;
     //
     Inc(HLine);
@@ -1739,18 +1706,13 @@ begin
     tx := (15 + ((70 - length(weight)) div 2))*CharX;
     ty := 35*CharY;
     TextOut(tx, ty, weight);
+
     if (ShowBars = 1) then begin
-      Pen.Color := cGRAY;
-      Pen.Width := 9;
-      inc(ty, CharY);
-      MoveTo(tx + 4, ty + CharY div 2);
-      LineTo(tx + 4 + (length(weight)-1)*CharX,ty + CharY div 2);
-      if (invmass > 0) then
-      begin
-        Pen.Color := cBrown;
-        MoveTo(tx + 4, ty + CharY div 2);
-        LineTo(tx + 4 + BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), ty + CharY div 2);
-      end;
+      tx := tx div CharX;
+      ty := ty div CharY + 1;
+      DrawBar(tx, ty, (length(weight)-1)*CharX, cGray, cGray);
+      if (Hp > 0) then
+        DrawBar(tx, ty, BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), cBrown, cBrown);
     end;
   end;
 end;

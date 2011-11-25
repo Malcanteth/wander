@@ -11,6 +11,7 @@ function Darker(Color:TColor; Percent:Byte):TColor;
 function GetRValue(rgb: LONGWORD): Byte;         // Достать красный цвет
 function GetGValue(rgb: LONGWORD): Byte;         // Достать зеленый цвет
 function GetBValue(rgb: LONGWORD): Byte;         // Достать синий цвет
+procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка полоски здоровья/маны/опыта/ещё чего-то
 function InFov(x1,y1,x2,y2,los : byte) : boolean;// Принадлежит ли радиусу видимости?
 procedure DeleteSwap;                            // Удалить файлы сохранения
 function IsFlag(flags : LongWord;
@@ -145,6 +146,45 @@ begin
     Result := true else
       Result := false;
 end;
+
+procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка шкалы здоровья/маны/опыта/ещё чего-то
+var i,j: word;
+  StartRGB, EndRGB: array[0..2] of Byte; // разложенный цвет
+  ax, ay, Colors, Delta: Word; // число цветов, которые использовать для рисования
+begin
+  with Screen.Canvas do
+  begin
+    Pen.Width := 9;
+    ax :=  x*CharX+(CharX div 2);
+    ay := y*CharY+(CharY div 2);
+    if (c1 = c2)or(l=0) then
+    begin
+      Pen.Color := c1;
+      MoveTo(ax, ay);
+      LineTo(ax+l, ay);
+    end
+    else
+    begin
+      StartRGB[0] := GetRValue(c1);
+      StartRGB[1] := GetGValue(c1);
+      StartRGB[2] := GetBValue(c1);
+      EndRGB[0] := GetRValue(c2);
+      EndRGB[1] := GetGValue(c2);
+      EndRGB[2] := GetBValue(c2);
+      Colors := l div 2; // число градаций на ширину
+      Delta := l div Colors; // число пикселей для одной градации
+      For i := 0 to Colors do
+      begin
+        Pen.Color := RGB((StartRGB[0] + MulDiv(i, EndRGB[0] - StartRGB[0], Colors-1)),
+                         (StartRGB[1] + MulDiv(i, EndRGB[1] - StartRGB[1], Colors-1)),
+                         (StartRGB[2] + MulDiv(i, EndRGB[2] - StartRGB[2], Colors-1)));
+        MoveTo(ax+i*delta, ay);
+        LineTo(ax+i*delta, ay);
+      end;
+    end;
+  end;
+end;
+
 
 { Рамочка, название }
 procedure StartDecorating(header : string; withoutexit : boolean);
