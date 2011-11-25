@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
-  Menus;
+  Menus, Contnrs, utils;
 
 type
   TMainForm = class(TForm)
@@ -24,15 +24,13 @@ type
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
-    function GetCharFromVirtualKey(Key: Word): string;
   public
   end;
 
 var
   MainForm             : TMainForm;
+  KeyQueue             : TIntQueue;            //Буфер нажатых клавиш
   Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
-  WaitMore,                                    // --Далее--
-  WaitEnter,                                   // Ждем нажатия Enter
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
   Inputing, Debug      : boolean;              // Режим ввода
@@ -54,7 +52,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
+  Cons, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
   Conf, SUtils, Script, MBox, Vars, Monsters, wlog;
 
 { Инициализация }
@@ -90,6 +88,7 @@ begin
   ChangeGameState(gsINTRO);
   MenuSelected := 1;
   GameMenu := TRUE;
+  KeyQueue := TIntQueue.Create;
 end;
 
 { Отрисовка }
@@ -166,65 +165,9 @@ begin
   begin
   // Скриншот
   if Key = 116 then TakeScreenShot else
-    // Пробел или Enter для продолжения
-    if WaitMore then
-    begin
-      if (Key = 32) or (Key = 13) then WaitMore := False;
-    end else
-      // Enter для продолжения
-      if WaitENTER then
-      begin
-        if Key = 13 then
-        begin
-          WaitENTER := False;          // Ввод имени закончен. Мигание курсора 
-          GameTimer.Enabled := False;  // больше не нужно, отключаем таймер
-        end else
-        // Ввод
-        if Inputing then
-        begin
-          if (Key = VK_BACK) and (InputPos > 0) then
-          begin
-            Delete(InputString,InputPos,1);
-            dec(InputPos);
-          end
-          else if (Key = VK_DELETE) and (InputPos < Length(InputString)) then
-          begin
-            Delete(InputString,InputPos+1,1);
-          end
-          else if Key = VK_HOME then
-            InputPos := 0
-          else if Key = VK_END then
-            InputPos := length(InputString)
-          else if (Key = VK_LEFT) and (InputPos > 0) then
-            dec(InputPos)
-          else if (Key = VK_RIGHT) and (InputPos < Length(InputString)) then
-            inc(InputPos)
-          else if length(InputString)<InputLength then
-          begin
-            n := GetCharFromVirtualKey(Key);
-            if n<>'' then
-            begin
-              if ord(n[1]) > 31 then
-              begin
-                Insert(n, InputString, InputPos+1);
-                Inc(InputPos);
-              end;
-            end;
-          end;
-          if (GameState = gsConsole) then
-          case Key of
-            VK_ESCAPE, 192: begin InputString := ''; WaitENTER := False; end;
-            VK_UP: if LogPos > 0 then dec(LogPos);
-            VK_DOWN: if LogPos < 250 then inc(LogPos);
-          end;
-          OnPaint(Sender);
-        end;
-      end else
-        // Вопрос
-        if Answer = ' ' then
-        begin
-          if key = 32 then Answer := '' else Answer := UpCase (Chr(Key));
-        end else
+    if (Inputing) then
+      KeyQueue.Push(Key)
+    else
           // Игровое меню
           if GameMenu then
           begin
@@ -1337,25 +1280,6 @@ begin
   FlyY := 0;
 end;
 
-{ Word 2 Char }
-function TMainForm.GetCharFromVirtualKey(Key: Word): string;
-var
-  keyboardState: TKeyboardState;
-  asciiResult: Integer;
-begin
-  GetKeyboardState(keyboardState) ;
-  SetLength(Result, 2) ;
-  asciiResult := ToAscii(key, MapVirtualKey(key, 0), keyboardState, @Result[1], 0) ;
-  case asciiResult of
-    0: Result := '';
-    1: SetLength(Result, 1) ;
-    2:;
-  else
-    Result := '';
-end;
-
-end;
-
 procedure TMainForm.GameTimerTimer(Sender: TObject);
 begin
   MainForm.Paint;
@@ -1363,6 +1287,7 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  KeyQueue.Free;
   ReleaseDC(MainForm.Handle, DC);
   DeleteDC(DC);
 end;

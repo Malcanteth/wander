@@ -3,7 +3,30 @@ unit utils;
 interface
 
 uses
-  SysUtils, Main, Cons, Windows, Graphics, JPEG, Classes;
+  SysUtils, Cons, Windows, Graphics, JPEG, Classes;
+
+type
+  PInt = ^TInt;
+
+  TInt = record
+    N: integer;
+    next: PInt;
+  end;
+
+  TIntQueue = class
+    Front, Tail: PInt;
+  public
+    Count: integer;
+    constructor Create;
+    destructor Destroy; override;
+    procedure Clear;
+    function IsEmpty: boolean;
+    procedure Push(AnInt: integer);
+    function Pop: integer;
+    function GetFront(var AnInt: integer): boolean;
+    function InList(AnInt: integer): boolean;
+    function IndexOf(AnInt: integer): integer;
+  end;
 
 function MyRGB(R,G,B : byte) : LongWord;         // ÷вет
 function RealColor(c : byte) : longword;
@@ -40,7 +63,7 @@ procedure StartGameMenu;                         // ќтобразить игровое меню
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
+  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
 
 { ÷вет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -590,6 +613,115 @@ procedure StartGameMenu;
 begin
   GameMenu := TRUE;
   MenuSelected := 1;
+end;
+
+{  ласс TIntQueue }
+
+procedure InitPInt (var AnIntPtr: PInt; AVal: integer);
+begin
+  new(AnIntPtr);
+  with AnIntPtr^ do begin
+    N := AVal;
+    next := nil;
+  end;
+end;
+
+//PInt.prev is older item toward front of queue. PInt.next is new item toward rear of queue.
+constructor TIntQueue.Create;
+begin
+  inherited Create;
+  Front := nil;
+  Tail := nil;
+  Count := 0;
+end;
+
+destructor TIntQueue.Destroy;
+begin
+  Clear;
+  inherited Destroy;
+end;
+
+procedure TIntQueue.Clear;
+var Cur, Nxt: PInt;
+begin
+  Cur := Front;
+  while Cur <> nil do begin
+    Nxt := Cur^.next;
+    dispose(Cur);
+    Cur := Nxt;
+  end;
+  Front := nil;
+  Count := 0;
+end;
+
+function TIntQueue.IsEmpty: boolean;
+begin
+  Result := (Front = nil);
+end;
+
+procedure TIntQueue.Push(AnInt: integer);
+// only adds to the tail
+var
+  NewNode: PInt;
+begin
+  InitPInt(NewNode, AnInt);
+  if Front = nil then
+    Front := NewNode
+  else
+    Tail^.next := NewNode;
+  Tail := NewNode;
+  inc(Count);
+end;
+
+function TIntQueue.Pop: Integer;
+// only can remove from the front
+var oFront: PInt;
+begin
+  if Front <> nil then begin
+    oFront := Front;
+    Result := oFront^.N;
+    Front := Front^.next;
+    dispose(oFront);
+    dec(Count);
+  end;
+end;
+
+function TIntQueue.GetFront(var AnInt: integer): boolean;
+begin
+  Result := false;
+  AnInt := 0;
+  if Front <> nil then begin
+    AnInt := Front^.N;
+    Result := true;
+  end;
+end;
+
+function TIntQueue.InList(AnInt: integer): boolean;
+var Cur: PInt;
+begin
+  Result := false;
+  Cur := Front;
+  while (Cur <> nil) and (not Result) do begin
+    if Cur^.N = AnInt then Result := true
+    else Cur := Cur^.next;
+  end;
+end;
+
+function TIntQueue.IndexOf(AnInt: integer): integer;
+// returns the position of an integer in the Queue from the front, with 1 being the first and 0 being non existent
+var
+Found: boolean;
+Cur: PInt;
+begin
+  Result := 0;
+  Cur := Front;
+  Found := false;
+  while (Cur <> nil) and (not Found) do begin
+    inc(Result);
+    if Cur^.N = AnInt then Found := true
+    else Cur := Cur^.next;
+  end;
+  if not Found then Result := 0;
 end;
 
 var
