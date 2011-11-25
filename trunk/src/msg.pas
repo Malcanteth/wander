@@ -121,8 +121,6 @@ begin
   for b:=1 to Length(s) do
     if (s[b] = '*') or (s[b] = '$') or (s[b] = '#') then
       Delete(s,b,1);  
-  // Добавляем в лог
-  if (S <> '') and (S <> ' ') then Log(S);
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
