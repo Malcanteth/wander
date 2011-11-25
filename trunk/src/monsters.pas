@@ -311,7 +311,7 @@ procedure MonstersTurn;                    // У каждого монстра есть право на хо
 implementation
 
 uses
-  Map, Player, MapEditor, Script, Vars, SUtils, MBox, Liquid;
+  Map, Player, MapEditor, Script, Vars, SUtils, MBox, Liquid, wlog;
 
 { Создать монстра }
 procedure CreateMonster(n,px,py : byte);
@@ -1571,6 +1571,7 @@ begin
   if id = 1 then
     g := pc.gender else
       g := MonstersData[id].gender;
+//  log(inttostr(g));
   case situation of
     1 :
       case g of
