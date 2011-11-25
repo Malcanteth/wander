@@ -3,13 +3,18 @@ unit msg;
 interface
 
 uses
-  Main, Cons, Utils, SUtils;
+  Main, Cons, Utils, SUtils, Controls, classes;
 
 type
   THistory = record
     Msg : string;
     Amount : integer;
   end;
+
+type TKey = record
+  Key : word;
+  Shift: TShiftState;
+end;
 
 var
   Msgs : array[1..MsgAmount] of string;
@@ -32,10 +37,20 @@ function Ask(s: string): char;
 function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string;
 procedure ShowInput;
 procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
+function CreateKey(aKey: Word; aShift: TShiftState): TKey;
 
 implementation
 
 uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
+
+function CreateKey(aKey: Word; aShift: TShiftState): TKey;
+begin
+  with Result do
+  begin
+    Key := aKey;
+    Shift := aShift;
+  end;
+end;
 
 // Добавить сообщение
 procedure AddMsg(s: string; id : integer);
@@ -174,17 +189,29 @@ begin
     Msgs[i] := '';
 end;
 
-{ Дальше }
-procedure More;
+function getKey: word;
+var Key: word;
 begin
-  Msgs[MsgAmount] := '$(Дальше)$';
-  MainForm.OnPaint(NIL);
-  WaitMore := True;
-  while WaitMore = True do
+  if KeyQueue.isEmpty then Key := 0 else Key := KeyQueue.Pop;
+  while Key = 0 do
   begin
     Sleep(10);
     MainForm.ProcessMsg;
+    if KeyQueue.isEmpty then Key := 0 else Key := KeyQueue.Pop;
   end;
+  Result := Key;
+//  Log(inttostr(Key)); //удобно смотреть коды клавиш в консоли)))
+end;
+
+{ Дальше }
+procedure More;
+var Key : Word;
+begin
+  Msgs[MsgAmount] := '$(Дальше)$';
+  MainForm.OnPaint(NIL);
+  Inputing := true;
+  while not (GetKey in [13,32]) do;
+  Inputing := false;
   ClearMsg
 end;
 
@@ -193,12 +220,9 @@ procedure Apply;
 begin
   Msgs[MsgAmount] := '$(Нажми ENTER для продолжения)$';
   MainForm.OnPaint(NIL);
-  WaitENTER := True;
-  while WaitENTER = True do
-  begin
-    Sleep(10);
-    MainForm.ProcessMsg;
-  end;
+  Inputing := true;
+  while not GetKey = 13 do;
+  Inputing := false;
   ClearMsg
 end;
 
@@ -252,33 +276,85 @@ end;
 function Ask(s : string) : char;
 begin
   AddDrawMsg(s,0);
-  Answer := ' ';
-  while Answer = ' ' do
-  begin
-    Sleep(10);
-    MainForm.ProcessMsg;
+  Inputing := true;
+  Result := UpCase (Chr(GetKey));
+  Inputing := false;  
+end;
+
+function GetCharFromVirtualKey(Key: Word): string;
+var
+  keyboardState: TKeyboardState;
+  asciiResult: Integer;
+begin
+  GetKeyboardState(keyboardState) ;
+  SetLength(Result, 2) ;
+  asciiResult := ToAscii(key, MapVirtualKey(key, 0), keyboardState, @Result[1], 0) ;
+  case asciiResult of
+    0: Result := '';
+    1: SetLength(Result, 1) ;
+    2:;
+  else
+    Result := '';
   end;
-  Result := Answer[1];
-  Answer := '';
 end;
 
 { Функция ввода текста пльзователем }
 function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2) : string;
+var Key : Word;
+  n : string;
 begin
   InputString := ss;
   InputPos := Length(ss);
   InputX := sx;
   InputY := sy;
   InputLength := MaxLen;
-  WaitENTER := True;
   Inputing := TRUE;
+  MainForm.GameTimer.Enabled := true;
   MainForm.OnPaint(NIL);
-  while WaitENTER = True do
-  begin
-    Sleep(10);
-    MainForm.ProcessMsg;
-  end;
-  Inputing := FALSE;
+  repeat
+    Key := getKey;
+    if Key = 13 then
+      break
+    else
+    if (Key = VK_BACK) and (InputPos > 0) then
+    begin
+      Delete(InputString,InputPos,1);
+      dec(InputPos);
+    end
+    else if (Key = VK_DELETE) and (InputPos < Length(InputString)) then
+    begin
+      Delete(InputString,InputPos+1,1);
+    end
+    else if Key = VK_HOME then
+      InputPos := 0
+    else if Key = VK_END then
+      InputPos := length(InputString)
+    else if (Key = VK_LEFT) and (InputPos > 0) then
+      dec(InputPos)
+    else if (Key = VK_RIGHT) and (InputPos < Length(InputString)) then
+      inc(InputPos)
+    else if length(InputString)<InputLength then
+    begin
+      n := GetCharFromVirtualKey(Key);
+      if n<>'' then
+      begin
+        if ord(n[1]) > 31 then
+        begin
+          Insert(n, InputString, InputPos+1);
+          Inc(InputPos);
+        end;
+      end;
+    end;
+    if (GameState = gsConsole) then
+    case Key of
+      VK_ESCAPE, 192: begin InputString := ''; break; end;
+      VK_UP: if LogPos > 0 then dec(LogPos);
+      VK_DOWN: if LogPos < 250 then inc(LogPos);
+    end;
+    MainForm.OnPaint(NIL);
+  until false;
+  MainForm.GameTimer.Enabled := false;
+  Inputing := false;
   Result := InputString;
 end;
 
