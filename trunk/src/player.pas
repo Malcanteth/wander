@@ -976,7 +976,7 @@ begin
         // Отображаем название подземелья и его глубину
         TextOut(82*CharX, HLine*CharY, M.name);
         Inc(HLine);
-        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth))
+        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  :'+IntToStr(pc.depth))
       end else
           TextOut(82*CharX, HLine*CharY, 'Странное место...');
     end;
