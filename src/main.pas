@@ -102,7 +102,7 @@ begin
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
                    gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
                    {gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
-                   gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
+                   {gsHEROCLWPN,} gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -130,7 +130,7 @@ begin
 //    gsHERORANDOM   : pc.HeroRandom;
 //    gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
-    gsHEROCLWPN    : pc.HeroCloseWeapon;
+//    gsHEROCLWPN    : pc.HeroCloseWeapon;
     gsHEROFRWPN    : pc.HeroFarWeapon;
     gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
@@ -303,7 +303,7 @@ begin
             end;
           end;}
           // Выбор оружия бл. боя
-          gsHEROCLWPN:
+{          gsHEROCLWPN:
           begin
             case Key of
               // Вверх
@@ -330,7 +330,7 @@ begin
                 Redraw;
               end;
             end;
-          end;
+          end;}
           // Выбор оружия дальнего боя
           gsHEROFRWPN:
           begin
