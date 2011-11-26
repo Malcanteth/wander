@@ -97,7 +97,7 @@ begin
   exp := 0;
   explevel := 1;
   fillchar(status,sizeof(status),0);
-  warning := FALSE
+  warning := FALSE;
 end;
 
 { Подготовка в самом начале игры }
@@ -1452,7 +1452,7 @@ begin
         end;
       end else
         pc.name := InputString;
-      GameState := gsHEROATR;
+      pc.HeroAtributes;
       MainForm.Redraw;
     end;
   end;
@@ -1463,6 +1463,7 @@ procedure TPc.HeroRandom;
 const s1 = 'Создашь персонаж сам или доверишься воле случая?';
 var j: byte;
 begin
+  ClearPlayer;
   MainForm.Cls;
   GameMenu := true;
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
@@ -1482,7 +1483,6 @@ begin
     Free;
   end;
   GameMenu := false;
-  ClearPlayer;
   if j = 1 then
     HeroGender else
   // Всё рандомно
@@ -1550,36 +1550,48 @@ end;
 
 { Расстановка приоритетов }
 procedure TPc.HeroAtributes;
-var
-  s1, s2 : string;
+var s1, s2 : string;
+    i,j: byte;
 begin
   s1 := Format('Выбери атрибут, в котором %s больше всего преуспел{/a}:', [pc.name]); //'Выбери атрибут, в котором '+pc.name+' больше всего преуспел{/a}:';
   s2 := Format('А теперь выбери атрибут, которому %s тоже уделял{/a} внимание:', [pc.name]); //'А теперь выбери атрибут, которому '+pc.name+' тоже уделял{/a} внимание:';
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  with Screen.Canvas do
+  i := 1;
+  while i <=2 do
   begin
-    Font.Color := cWHITE;
-    case MenuSelected2 of
-      1 :
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,gender));
-      2 :
-      TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,gender));
+    MainForm.Cls;
+    StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+    with Screen.Canvas do
+    begin
+      Font.Color := cWHITE;
+      case i of
+        1 : TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,gender));
+        2 : TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,gender));
+      end;
     end;
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 15*CharY, 'Сила');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 16*CharY, 'Ловкость');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 17*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 17*CharY, 'Интеллект');
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+    GameMenu := True;
+    with TMenu.Create(40,15) do
+    begin
+      Add('Сила');
+      Add('Ловкость');
+      Add('Интеллект');
+      j := 1;
+      repeat
+        j := Run(j);
+      until (j <> 0);
+      Free;
+    end;
+    GameMenu := False;    
+    pc.atr[i] := j;
+    inc(i);
   end;
+  // Добавить очки умений исходя из класса
+  pc.Prepare;
+  pc.PrepareSkills;
+  if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
+    ChangeGameState(gsHEROCLWPN)
+  else if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
+    ChangeGameState(gsHEROFRWPN) else
+  ChangeGameState(gsHEROCRRESULT);
 end;
 
 { Создать список навыков ближнего боя }

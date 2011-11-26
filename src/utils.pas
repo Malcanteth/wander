@@ -59,7 +59,6 @@ function IsFlag(flags : LongWord;
 procedure StartDecorating(header : string;
                     withoutexit : boolean);      // Рамочка, название
 procedure DrawBorder(x,y,w,h,color : byte);      // Рамка для инф. о предмете
-function ExistFile(n : string) : boolean;        // Существет ли такой файл?
 function ReturnColor(Rn,n : integer;
                           ow : byte) : integer;  // Вернуть цвет в зависимости от процентов
 function ReturnInvAmount : byte;                 // Вернуть колличество предметов в инвентаре
@@ -228,8 +227,7 @@ end;
 
 { Рамочка, название }
 procedure StartDecorating(header : string; withoutexit : boolean);
-const
-  space  = '-=[ НАЖМИ ПРОБЕЛ ДЛЯ ВЫХОДА ]=-';
+const space  = '-=[ НАЖМИ ПРОБЕЛ ДЛЯ ВЫХОДА ]=-';
 var
   i : byte;
 begin
@@ -259,11 +257,13 @@ end;
 
 { Рамочка для информации о предмете}
 procedure DrawBorder(x,y,w,h,color : byte);
-var
-  i, j: byte;
+var i, j: byte;
+    OldStyle : TBrushStyle;
 begin
   with Screen.Canvas do
   begin
+    OldStyle := Brush.Style;
+    Brush.Style := bsBDiagonal;
     Font.Color := RealColor(color);
     TextOut(x*CharX,y*CharY,Frame[5]);
     TextOut((x+w)*CharX,y*CharY,Frame[6]);
@@ -282,24 +282,8 @@ begin
     for i := y + 1 to y + h - 1 do
       for j := x + 1 to x + w - 1 do
         TextOut(j*CharX,i*CharY,' ');
+    Brush.Style := OldStyle;
   end;
-end;
-
-{ Существет ли такой файл? }
-function ExistFile(n : string) : boolean;
-var
-  f : file;
-begin
-  assign(f,n);
-  {$I-}
-  reset(f);
-  {$I+}
-  if IOResult=0 then
-  begin
-    close(f);
-    Result := true;
-  end else
-    Result := false;
 end;
 
 {  Вернуть цвет в зависимости от процентов }
