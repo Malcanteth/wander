@@ -1156,19 +1156,21 @@ begin
   M.MonP[x,y] := 0;
   // Труп
   if idinlist = 1 then
-    PutItem(x,y,CreateItem(idCORPSE, 1, id),1) else
-      begin
-        if id = mdBLINDBEAST then
-          PutItem(x,y,CreateItem(idHEAD, 1, id),1) else
-          begin
-            // Тело
-            if Random(5)+1 = 1 then
-              PutItem(x,y,CreateItem(idCORPSE, 1, id),1);
-            // Голова  
-            if Random(15)+1 = 1 then
-              PutItem(x,y,CreateItem(idHEAD, 1, id),1);
-          end;
-      end;
+    PutItem(x,y,CreateItem(idCORPSE, 1, id),1)
+  else
+  begin
+    if id = mdBLINDBEAST then
+      PutItem(x,y,CreateItem(idHEAD, 1, id),1)
+    else
+    begin
+      // Тело
+      if Random(5)+1 = 1 then
+        PutItem(x,y,CreateItem(idCORPSE, 1, id),1);
+      // Голова
+      if Random(15)+1 = 1 then
+        PutItem(x,y,CreateItem(idHEAD, 1, id),1);
+    end;
+  end;
   // Выкинуть вещи
   for i:=1 to EqAmount do
     if Eq[i].id > 0 then
@@ -1176,11 +1178,12 @@ begin
   for i:=1 to MaxHandle do
     if Inv[i].id > 0 then
       PutItem(x,y, Inv[i], Inv[i].amount);
-  // Если это герой, то
-  if idinlist = 1 then pc.AfterDeath;
-  // Всё.
-  id := 0;
-  idinlist := 0;
+  // Если это герой, то не удаляем его
+  if idinlist = 1 then pc.AfterDeath else
+  begin
+    id := 0;
+    idinlist := 0;
+  end;
 end;
 
 { Отдать вещь From Where 1 - ивентарь 2 - экипировка }

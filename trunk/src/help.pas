@@ -112,7 +112,6 @@ var
   i,j: byte;
 begin
   if (GameState = gsPlay) then BlackWhite(Screen);
-  end;
   DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
   GameMenu := TRUE;
   with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do

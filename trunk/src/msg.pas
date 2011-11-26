@@ -210,8 +210,8 @@ procedure Apply;
 begin
   Msgs[MsgAmount] := '$(Нажми ENTER для продолжения)$';
   MainForm.Redraw;
-  while not GetKey = 13 do;
-  ClearMsg
+  while not (GetKey = 13) do;
+  ClearMsg ;
 end;
 
 { Показать сообщения }

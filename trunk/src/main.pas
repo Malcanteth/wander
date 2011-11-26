@@ -101,7 +101,7 @@ begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
                    gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
-                   {gsHERONAME,} gsHEROATR, {gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
+                   {gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
                    gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
@@ -113,10 +113,11 @@ begin
     begin
       // Выводим карту
       M.DrawScene;
+      // Вывести информацию о герое
+      pc.WriteInfo;      
+      if pc.Hp <= 0 then BlackWhite(Screen);
       // Выводим сообщения
       if GameState = gsConsole then ShowLog else ShowMsgs;
-      // Вывести информацию о герое
-      pc.WriteInfo;
     end;
     gsQUESTLIST    : pc.QuestList;
     gsEQUIPMENT    : pc.Equipment;
@@ -125,7 +126,7 @@ begin
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
 //    gsCHOOSEMODE   : pc.ChooseMode;
 //    gsHERONAME     : pc.HeroName;
-    gsHEROATR      : pc.HeroAtributes;
+//    gsHEROATR      : pc.HeroAtributes;
 //    gsHERORANDOM   : pc.HeroRandom;
 //    gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
@@ -370,7 +371,7 @@ begin
             end;
           end;
           // Выбор атрибутов
-          gsHEROATR:
+{          gsHEROATR:
           begin
             case Key of
               // Вверх
@@ -408,7 +409,7 @@ begin
                 Redraw;
               end;
             end;
-          end;
+          end;}
           // Подтвердить
           gsHEROCRRESULT:
           begin
