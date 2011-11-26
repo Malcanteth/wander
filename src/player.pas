@@ -50,7 +50,6 @@ type
     procedure Search;                                  // Искать
     function HaveItemVid(vid : byte) : boolean;        // Есть ли хоть один предмет этого вида?
     procedure HeroRandom;                              // Сделать рандомного
-    procedure StartHeroName;                           // Окно ввода имени
     procedure HeroName;                                // Окно ввода имени
     procedure HeroGender;                              // Окно выбора пола
     procedure HeroAtributes;                           // Расстановка приоритетов
@@ -1427,19 +1426,13 @@ begin
 end;
 
 { Окно ввода имени }
-procedure TPc.StartHeroName;
-begin
-  GameState := gsHERONAME;
-  Input(((WindowX-13) div 2), 17, '', 13);
-end;
-
-{ Окно ввода имени }
 procedure TPc.HeroName;
 const s2 = '^^^^^^^^^^^^^';
 var
   n : string[13];
   s1: string;
 begin
+  MainForm.Cls;
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   s1 := GetMsg('Введи имя геро{я/ини}:',gender);
   with Screen.Canvas do
@@ -1448,6 +1441,7 @@ begin
     TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
     Font.Color := cBROWN;
     TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
+    Input(((WindowX-13) div 2), 17, '', 13);
     if (Inputing = FALSE) then
     begin
       if InputString = '' then
@@ -1488,10 +1482,9 @@ begin
     Free;
   end;
   GameMenu := false;
-  MenuSelected := j;
   ClearPlayer;
-  if MenuSelected = 1 then
-    ChangeGameState(gsHEROGENDER) else
+  if j = 1 then
+    HeroGender else
   // Всё рандомно
   begin
     // пол
@@ -1525,29 +1518,34 @@ end;
 
 { Окно выбора пола }
 procedure TPc.HeroGender;
-const
-  s1 = 'Какого пола будет твой персонаж?';
+const s1 = 'Какого пола будет твой персонаж?';
+var j: byte;
 begin
+  MainForm.Cls;
+  GameMenu := true;
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 15*CharY, 'Мужского');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 16*CharY, 'Женского');
-    Font.Color := cBROWN;
-    TextOut(40*CharX, 17*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(44*CharX, 17*CharY, 'Без разницы');
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
   end;
+  with TMenu.Create(40,15) do
+  begin
+    Add('Мужского');
+    Add('Женского');
+    Add('Без разницы');
+    j := 1;
+    repeat
+      j := Run(j);
+    until (j <> 0);
+    Free;
+  end;
+  GameMenu := false;
+  if j < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
+  MenuSelected := 1;
+  MenuSelected2 := 1;
+  pc.heroname;
+  Mainform.Redraw;
 end;
 
 { Расстановка приоритетов }

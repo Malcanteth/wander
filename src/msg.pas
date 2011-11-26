@@ -295,8 +295,8 @@ begin
   InputX := sx;
   InputY := sy;
   InputLength := MaxLen;
+  BitBlt(GrayScreen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, Screen.Canvas.Handle, 0, 0, SRCCopy);
   MainForm.GameTimer.Enabled := true;
-  MainForm.Redraw;;
   repeat
     Key := getKey;
     case Key of
@@ -337,22 +337,11 @@ end;
 
 { Вывести то, что ввел пользователь }
 procedure ShowInput;
-var OldStyle : TBrushStyle;
 begin
   //Сообщения
   with Screen.Canvas do
   begin
-    Brush.Color := 0;
-    Font.Color := MyRGB(160,160,160);
-    Textout(InputX*CharX, InputY*CharY, InputString);
-    if GetTickCount mod 1000 < 500 then
-    begin
-      OldStyle := Brush.Style;
-      Brush.Style := bsClear;
-      Font.Color := cLIGHTGREEN;
-      Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
-      Brush.Style := OldStyle;
-    end;
+
   end;
 end;
 

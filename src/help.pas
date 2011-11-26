@@ -111,9 +111,7 @@ const
 var
   i,j: byte;
 begin
-  if (GameState = gsPlay) then begin
-    BlackWhite(Screen);
-    GrayScreen := Screen;
+  if (GameState = gsPlay) then BlackWhite(Screen);
   end;
   DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
   GameMenu := TRUE;
