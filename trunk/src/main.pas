@@ -96,11 +96,12 @@ end;
 
 { Отрисовка }
 procedure TMainForm.FormPaint(Sender: TObject);
+var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
                    gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
-                   gsHERONAME, gsHEROATR, {gsHERORANDOM,} gsHEROGENDER, gsHEROCRRESULT,
+                   {gsHERONAME,} gsHEROATR, {gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
                    gsHEROCLWPN, gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
@@ -123,10 +124,10 @@ begin
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
 //    gsCHOOSEMODE   : pc.ChooseMode;
-    gsHERONAME     : pc.HeroName;
+//    gsHERONAME     : pc.HeroName;
     gsHEROATR      : pc.HeroAtributes;
 //    gsHERORANDOM   : pc.HeroRandom;
-    gsHEROGENDER   : pc.HeroGender;
+//    gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
     gsHEROCLWPN    : pc.HeroCloseWeapon;
     gsHEROFRWPN    : pc.HeroFarWeapon;
@@ -135,7 +136,25 @@ begin
     gsSKILLSMENU   : SkillsAndAbilitys;
     gsWPNSKILLS    : WpnSkills;
   end;
-  // Отображаем растягиваемый буфер
+//Отображаем курсор
+  if GameTimer.Enabled then
+  begin
+    BitBlt(Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, GrayScreen.Canvas.Handle, 0, 0, SRCCopy);
+    With Screen.Canvas do
+    begin
+      Brush.Color := 0;
+      Font.Color := MyRGB(160,160,160);
+      Textout(InputX*CharX, InputY*CharY, InputString);
+      if GetTickCount mod 1000 < 500 then
+      begin
+        OldStyle := Brush.Style;
+        Brush.Style := bsClear;
+        Font.Color := cLIGHTGREEN;
+        Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
+        Brush.Style := OldStyle;
+      end;
+    end;
+  end;
   SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
   StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
   Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
@@ -256,7 +275,7 @@ begin
             end;
           end;}
           // Выбор пола
-          gsHEROGENDER:
+{          gsHEROGENDER:
           begin
             case Key of
               // Вверх
@@ -281,7 +300,7 @@ begin
                 Redraw;
               end;
             end;
-          end;
+          end;}
           // Выбор оружия бл. боя
           gsHEROCLWPN:
           begin
@@ -1241,7 +1260,7 @@ end;
 
 procedure TMainForm.GameTimerTimer(Sender: TObject);
 begin
-  MainForm.Paint;
+  MainForm.Redraw;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
