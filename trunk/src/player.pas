@@ -1442,19 +1442,15 @@ begin
     Font.Color := cBROWN;
     TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
     Input(((WindowX-13) div 2), 17, '', 13);
-    if (Inputing = FALSE) then
-    begin
-      if InputString = '' then
-      begin
-        case pc.gender of
-          genMALE   : pc.name := GenerateName(FALSE);
-          genFEMALE : pc.name := GenerateName(TRUE);
-        end;
-      end else
-        pc.name := InputString;
-      pc.HeroAtributes;
-      MainForm.Redraw;
-    end;
+    if InputString = '' then
+      case pc.gender of
+        genMALE   : pc.name := GenerateName(FALSE);
+        genFEMALE : pc.name := GenerateName(TRUE);
+      end
+    else
+      pc.name := InputString;
+    pc.HeroAtributes;
+    MainForm.Redraw;
   end;
 end;
 
@@ -1588,7 +1584,7 @@ begin
   pc.Prepare;
   pc.PrepareSkills;
   if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
-    ChangeGameState(gsHEROCLWPN)
+    HeroCloseWeapon
   else if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
     ChangeGameState(gsHEROFRWPN) else
   ChangeGameState(gsHEROCRRESULT);
@@ -1615,35 +1611,48 @@ end;
 procedure TPc.HeroCloseWeapon;
 var
   s1  : string;
-  i   : byte;
+  j   : byte;
+  c   : LongInt;
 begin
   CreateClWList;
-  s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
+  MainForm.Cls;
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
+  GameMenu := true;
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
-    for i:=1 to CLOSEFIGHTAMOUNT-1 do
-      if wlist[i] > 0 then
-        if pc.closefight[wlist[i]] > 0 then
+  end;
+
+  with TMenu.Create(40,15) do
+  begin
+    for j:=1 to CLOSEFIGHTAMOUNT-1 do
+      if wlist[j] > 0 then
+        if pc.closefight[wlist[j]] > 0 then
         begin
-          Font.Color := cBROWN;
-          TextOut(40*CharX, (14+i)*CharY, '[ ]');
-          if OneOfTheBestWPNCL(wlist[i]) then
-            Font.Color := cWHITE else
-              Font.Color := cGRAY;
-          case wlist[i] of
-            2 : TextOut(44*CharX, (14+i)*CharY, 'Меч');
-            3 : TextOut(44*CharX, (14+i)*CharY, 'Дубина');
-            4 : TextOut(44*CharX, (14+i)*CharY, 'Посох');
-            5 : TextOut(44*CharX, (14+i)*CharY, 'Топор');
-            6 : TextOut(44*CharX, (14+i)*CharY, 'Рукопашный бой');
+          if OneOfTheBestWPNCL(wlist[j]) then c := cWHITE else c := cGRAY;
+          case wlist[j] of
+            2: Add('Меч',c);
+            3: Add('Дубина',c);
+            4: Add('Посох',c);
+            5: Add('Топор',c);
+            6: Add('Рукопашный бой',c);
           end;
         end;
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+    j := 0;
+    repeat
+      j := Run(j);
+    until (j <> 0);
+    Free;
   end;
+  GameMenu := false;
+  c_choose := Wlist[j];
+  MenuSelected := 1;
+  MenuSelected2 := 1;
+  if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
+    ChangeGameState(gsHEROFRWPN) else
+  ChangeGameState(gsHEROCRRESULT);
 end;
 
 { Создать список навыков дальнего боя }

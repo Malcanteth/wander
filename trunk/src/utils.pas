@@ -39,7 +39,8 @@ type
     constructor Create(ax,ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
                        aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
     property Selected: byte read getSelected;
-    procedure Add(s: String);
+    procedure Add(s: String); overload;
+    procedure Add(s: String; c: LongInt); overload;
     procedure Draw;
     function Run(Start: byte = 1): byte;
     destructor Destroy;
@@ -733,7 +734,13 @@ var
 
 procedure TMenu.Add(s: String);
 begin
-  _F.Add(s);
+  _F.AddObject(s, Pointer(ForeColor));
+  Log('Added '+s);
+end;
+
+procedure TMenu.Add(s: String; c: LongInt);
+begin
+  _F.AddObject(s, Pointer(c));
   Log('Added '+s);
 end;
 
@@ -765,7 +772,7 @@ begin
       begin
         Font.Color := BgColor;
         TextOut(x*CharX,(y+i)*charY,'[ ] ');
-        Font.Color := ForeColor;
+        Font.Color := LongInt(_F.Objects[i]);
         TextOut((x+4)*CharX,(y+i)*charY,_F[i]);
       end;
       Font.Color := SelColor;
