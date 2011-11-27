@@ -28,6 +28,8 @@ type
     procedure SetBgColor(c: LongInt);
     procedure DrawHPBar(x,y: byte; color: LongInt; hp, rhp: word); //маленькая шкала над существом
     procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //градиентная шкала
+    procedure ShowCursor;
+    procedure HideCursor;
   public
     procedure DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX); overload;
     procedure DrawString(x,y: byte; c: LongInt; bs: TBrushStyle; s: string; l: byte = WindowX); overload;
@@ -1122,9 +1124,9 @@ begin
     Pen.Width := 9;
     ax :=  x*CharX+(CharX div 2);
     ay := y*CharY+(CharY div 2);
-    if (c1 = c2)or(l<2) then
+    if (c1 = c2)or(l<4) then
     begin
-      Pen.Color := c1;
+      Pen.Color := c2;
       MoveTo(ax, ay);
       LineTo(ax+l, ay);
     end
@@ -1148,6 +1150,16 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TMainForm.HideCursor;
+begin
+  GameTimer.Enabled := false;
+end;
+
+procedure TMainForm.ShowCursor;
+begin
+  GameTimer.Enabled := true;
 end;
 
 initialization

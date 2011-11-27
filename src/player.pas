@@ -865,7 +865,7 @@ begin
   // Полоса здоровья
   if (ShowBars = 1) then begin
     Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16, cGray, cGray);
+    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
     if (Hp > 0) then
       MainForm.DrawBar(82, HLine, BarWidth(HP, RHP, WW*CharX), cDARKRED, cRED);
   end;
@@ -878,7 +878,7 @@ begin
   // Полоса маны
   if (ShowBars = 1) then begin
     Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16, cGray, cGray);
+    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
     if (Mp > 0) then
       MainForm.DrawBar(82, HLine, BarWidth(MP, RMP, WW*CharX), cDARKBLUE, cBLUE);
   end;
@@ -913,7 +913,7 @@ begin
   // Полоса опыта
   if (ShowBars = 1) then begin
     Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16, cGray, cGray);
+    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
     if exp < 0 then exp := 0;
     if (exp > 0) then
       MainForm.DrawBar(82, HLine, BarWidth(exp, ExpToNxtLvl, WW*CharX), cDARKGREEN, cGREEN);
@@ -1346,9 +1346,9 @@ begin
   MainForm.DrawString(tx, ty, cLIGHTGRAY, weight);
 
   if (ShowBars = 1) then begin
-    MainForm.DrawBar(tx, ty+1, (length(weight)-1), cGray, cGray);
-    if (Hp > 0) then
-      MainForm.DrawBar(tx, ty, BarWidth(round(invmass), round(maxmass), (length(weight)-1)), cBrown, cBrown);
+    MainForm.DrawBar(tx, ty+1, (length(weight)-1)*CharX, cGray, cGray);
+    if (invmass > 0) then
+      MainForm.DrawBar(tx, ty+1, BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), cBrown, cBrown);
   end;
 end;
 
