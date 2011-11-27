@@ -1586,7 +1586,7 @@ begin
   if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
     HeroCloseWeapon
   else if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
-    ChangeGameState(gsHEROFRWPN) else
+    HeroFarWeapon else
   ChangeGameState(gsHEROCRRESULT);
 end;
 
@@ -1651,7 +1651,7 @@ begin
   MenuSelected := 1;
   MenuSelected2 := 1;
   if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
-    ChangeGameState(gsHEROFRWPN) else
+    HeroFarWeapon else
   ChangeGameState(gsHEROCRRESULT);
 end;
 
@@ -1676,34 +1676,44 @@ end;
 procedure TPc.HeroFarWeapon;
 var
   S1     : string;
-  I      : byte;
+  j      : byte;
+  c      : LongInt;
 begin
   CreateFrWList;
+  MainForm.Cls;
   S1 := Format('Какое оружие дальнего боя %s осваивал{/a} во время тренировок?', [PC.Name]);
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  GameMenu := true;
   with Screen.Canvas do
   begin
     Font.Color := cWHITE;
     TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
-    for i:=1 to FARFIGHTAMOUNT do
-      if wlist[i] > 0 then
-        if pc.farfight[wlist[i]] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(40*CharX, (14+i)*CharY, '[ ]');
-          if OneOfTheBestWPNFR(wlist[i]) then
-            Font.Color := cWHITE else
-              Font.Color := cGRAY;
-          case wlist[i] of
-            2 : TextOut(44*CharX, (14+i)*CharY, 'Лук');
-            3 : TextOut(44*CharX, (14+i)*CharY, 'Праща');
-            4 : TextOut(44*CharX, (14+i)*CharY, 'Духовая трубка');
-            5 : TextOut(44*CharX, (14+i)*CharY, 'Арбалет');
-          end;
-      end;
-    Font.Color := cYELLOW;
-    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
   end;
+  with TMenu.Create(40,15) do
+  begin
+    for j:=1 to FARFIGHTAMOUNT do
+      if wlist[j] > 0 then
+        if pc.farfight[wlist[j]] > 0 then
+        begin
+          if OneOfTheBestWPNFR(wlist[j]) then c := cWHITE else c := cGRAY;
+          case wlist[j] of
+            2 : Add('Лук',c);
+            3 : Add('Праща',c);
+            4 : Add('Духовая трубка',c);
+            5 : Add('Арбалет',c);
+          end;
+       end;
+    j := 0;
+    repeat
+      j := Run(j);
+    until (j <> 0);
+    Free;
+  end;
+  GameMenu := false;
+  f_choose := Wlist[j];
+  MenuSelected := 1;
+  MenuSelected2 := 1;
+  ChangeGameState(gsHEROCRRESULT);
 end;
 
 { Подтвердить }

@@ -102,7 +102,7 @@ begin
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
                    gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
                    {gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
-                   {gsHEROCLWPN,} gsHEROFRWPN, gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
+                   {gsHEROCLWPN, gsHEROFRWPN,} gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -131,7 +131,7 @@ begin
 //    gsHEROGENDER   : pc.HeroGender;
     gsHEROCRRESULT : pc.HeroCreateResult;
 //    gsHEROCLWPN    : pc.HeroCloseWeapon;
-    gsHEROFRWPN    : pc.HeroFarWeapon;
+//    gsHEROFRWPN    : pc.HeroFarWeapon;
     gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
     gsSKILLSMENU   : SkillsAndAbilitys;
@@ -332,7 +332,7 @@ begin
             end;
           end;}
           // Выбор оружия дальнего боя
-          gsHEROFRWPN:
+{          gsHEROFRWPN:
           begin
             case Key of
               // Вверх
@@ -371,7 +371,7 @@ begin
             end;
           end;
           // Выбор атрибутов
-{          gsHEROATR:
+          gsHEROATR:
           begin
             case Key of
               // Вверх
@@ -599,7 +599,7 @@ begin
                 changeGameState(gsConsole);
                 repeat
                   ShowLog;
-                  s := Input(0, MapY, '');
+                  s := Input(2, MapY, '');
                   if s <> '' then
                   begin
                     Log(' > '+s);
