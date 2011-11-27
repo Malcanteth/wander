@@ -30,7 +30,6 @@ procedure Apply;
 procedure ShowMsgs;
 function Ask(s: string): char;
 function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string;
-procedure ShowInput;
 function getKey: word;
 procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
 
@@ -328,21 +327,10 @@ begin
         end;
       end;
     end;
-    ShowInput;
     MainForm.Redraw;
   until false;
   MainForm.GameTimer.Enabled := false;
   Result := InputString;
-end;
-
-{ Вывести то, что ввел пользователь }
-procedure ShowInput;
-begin
-  //Сообщения
-  with Screen.Canvas do
-  begin
-
-  end;
 end;
 
 // Цветная строка

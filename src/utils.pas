@@ -197,7 +197,7 @@ begin
     Pen.Width := 9;
     ax :=  x*CharX+(CharX div 2);
     ay := y*CharY+(CharY div 2);
-    if (c1 = c2)or(l=0) then
+    if (c1 = c2)or(l<2) then
     begin
       Pen.Color := c1;
       MoveTo(ax, ay);
