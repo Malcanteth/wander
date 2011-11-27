@@ -220,46 +220,44 @@ end;
 procedure ShowMsgs;
 var
   x,y,c,t : byte;
+  col: LongInt;
 begin
   //Сообщения
-  with Screen.Canvas do
-  begin
-    Font.Name := FontMsg;
-    Brush.Color := 0;
-    c := 0;
-    for y:=1 to MsgAmount do
-      if Msgs[y] <> '' then
+  MainForm.SetFont(FontMsg);
+  MainForm.SetBgColor(0);
+  c := 0;
+  for y:=1 to MsgAmount do
+    if Msgs[y] <> '' then
+    begin
+      t := 1;
+      for x:=1 to Length(Msgs[y]) do
       begin
-        t := 1;
-        for x:=1 to Length(Msgs[y]) do
+        //Символы начала и конца цвета
+        if Msgs[y][x] = '$' then  // желтый
         begin
-          //Символы начала и конца цвета
-          if Msgs[y][x] = '$' then  // желтый
+          if c = 0 then c := 1 else c := 0;
+        end else
+        if Msgs[y][x] = '*' then  // красный
+        begin
+          if c= 0 then c := 2 else c := 0;
+        end else
+        if Msgs[y][x] = '#' then  // зеленый
+        begin
+          if c= 0 then c := 3 else c := 0;
+        end else
           begin
-            if c = 0 then c := 1 else c := 0;
-          end else
-          if Msgs[y][x] = '*' then  // красный
-          begin
-            if c= 0 then c := 2 else c := 0;
-          end else
-          if Msgs[y][x] = '#' then  // зеленый
-          begin
-            if c= 0 then c := 3 else c := 0;
-          end else
-            begin
-              //Цвет букв
-              case c of
-                0 : Font.Color := MyRGB(160,160,160);  //Серый
-                1 : Font.Color := MyRGB(255,255,0);    //Желтый
-                2 : Font.Color := MyRGB(200,0,0);      //Красный
-                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
-              end;
-              Textout((t-1)*CharX, (MapY*CharY)+((y-1)*CharY), Msgs[y][x]);
-              inc(t);
+            //Цвет букв
+            case c of
+              0 : col := MyRGB(160,160,160);  //Серый
+              1 : col := MyRGB(255,255,0);    //Желтый
+              2 : col := MyRGB(200,0,0);      //Красный
+              3 : col := MyRGB(0,200,0);      //Зеленый
             end;
-        end;
+            MainForm.DrawString((t-1), (MapY)+((y-1)), col, Msgs[y][x]);
+            inc(t);
+          end;
       end;
-  end;
+    end;
 end;
 
 { Задать вопрос }
@@ -297,7 +295,7 @@ begin
   InputX := sx;
   InputY := sy;
   InputLength := MaxLen;
-  BitBlt(GrayScreen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, Screen.Canvas.Handle, 0, 0, SRCCopy);
+  BitBlt(GrayScreen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, _Screen.Canvas.Handle, 0, 0, SRCCopy);
   MainForm.GameTimer.Enabled := true;
   Result := '';
   repeat
@@ -353,10 +351,10 @@ end;
 procedure AddTextLine(X, Y: Word; Msg: string);
 var
   C, I, T: Integer;
+  col: LongInt;
 begin
   T := X;
   C := 0;
-  with Screen.Canvas do
   for I := 1 to Length(Msg) do
   begin
     // Маркер в тексте (не показывается)
@@ -367,12 +365,12 @@ begin
     end;
     // Текущий цвет
     case C of
-      0 : Font.Color := cLIGHTGRAY;
-      1 : Font.Color := cORANGE;
-      2 : Font.Color := cGREEN;
-      3 : Font.Color := cGRAY;
+      0 : col := cLIGHTGRAY;
+      1 : col := cORANGE;
+      2 : col := cGREEN;
+      3 : col := cGRAY;
     end;
-    Textout(T*CharX, Y*CharY, Msg[I]);
+    MainForm.DrawString(T, Y, col, Msg[I]);
     Inc(T);
   end;
 end;

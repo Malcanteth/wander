@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
-  Menus, Contnrs, utils;
+  Menus, Contnrs, utils, cons;
 
 type
   TMainForm = class(TForm)
@@ -24,6 +24,13 @@ type
     procedure FormActivate(Sender: TObject);
     procedure Cls;
     procedure Redraw;
+    procedure SetFont(newFont: string);
+    procedure SetBgColor(c: LongInt);
+    procedure DrawHPBar(x,y: byte; color: LongInt; hp, rhp: word); //маленькая шкала над существом
+    procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //градиентная шкала
+  public
+    procedure DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX); overload;
+    procedure DrawString(x,y: byte; c: LongInt; bs: TBrushStyle; s: string; l: byte = WindowX); overload;
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -33,7 +40,7 @@ type
 var
   MainForm             : TMainForm;
   KeyQueue             : TIntQueue;            //Буфер нажатых клавиш
-  Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
+  _Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
   Inputing, Debug      : boolean;              // Режим ввода
@@ -55,7 +62,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Cons, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
+  Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
   Conf, SUtils, Script, MBox, Vars, Monsters, wlog;
 
 { Инициализация }
@@ -77,7 +84,7 @@ begin
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
-  with Screen do
+  with _Screen do
   begin
     Width := ClientWidth;
     Height := ClientHeight;
@@ -87,6 +94,7 @@ begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
+  SetFont(FontMsg);
   GameTimer.Enabled := False;
   MenuSelected := 1;
   // Вывести меню
@@ -114,7 +122,7 @@ begin
       M.DrawScene;
       // Вывести информацию о герое
       pc.WriteInfo;      
-      if pc.Hp <= 0 then BlackWhite(Screen);
+      if pc.Hp <= 0 then BlackWhite(_Screen);
       // Выводим сообщения
       if GameState = gsConsole then ShowLog else ShowMsgs;
     end;
@@ -131,8 +139,8 @@ begin
 //Отображаем курсор
   if GameTimer.Enabled then
   begin
-    BitBlt(Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, GrayScreen.Canvas.Handle, 0, 0, SRCCopy);
-    With Screen.Canvas do
+    BitBlt(_Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, GrayScreen.Canvas.Handle, 0, 0, SRCCopy);
+    With _Screen.Canvas do
     begin
       Brush.Color := 0;
       Font.Color := MyRGB(160,160,160);
@@ -147,9 +155,9 @@ begin
       end;
     end;
   end;
-  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  SetStretchBltMode(_Screen.Canvas.Handle, STRETCH_DELETESCANS);
   StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-  Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
+  _Screen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, SRCCopy);
 end;
 
 { Нажатие на клавиши }
@@ -1025,7 +1033,7 @@ end;
 
 procedure TMainForm.cls;
 begin
-  with Screen.Canvas do
+  with _Screen.Canvas do
   begin
     Brush.Color := 0;
     FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
@@ -1037,18 +1045,21 @@ begin
   OnPaint(nil);
 end;
 
-initialization
-  Randomize;
-  // Создаем картинку (буфер)
-  Screen := TBitMap.Create;
-  GrayScreen := TBitMap.Create;
-  // Разумные границы
-  if (FontSize < 8 ) then FontSize := 8;
-  if (FontSize > 20) then FontSize := 20;
-  // Свойства шрифта
-  with Screen.Canvas do
+procedure TMainForm.DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX);
+begin
+  with _Screen.Canvas do
   begin
-    Font.Name := FontMsg;
+    Font.Color := c;
+    TextOut(x * CharX, y * CharY, s);
+//    log(inttostr(x*CharX)+','+inttostr(y*CharY)+','+s+'/'+inttostr(Font.Size));
+  end;
+end;
+
+procedure TMainForm.SetFont(newFont: string);
+begin
+  with _Screen.Canvas do
+  begin
+    Font.Name := newFont;
     Font.Size := FontSize;
     case FontStyle of
       1:   Font.Style := [fsBold];
@@ -1059,9 +1070,98 @@ initialization
     CharX := TextWidth('W');
     CharY := TextHeight('W');
   end;
+end;
+
+procedure TMainForm.SetBgColor(c: Integer);
+begin
+  _Screen.Canvas.Brush.Color := c;
+end;
+
+procedure TMainForm.DrawHPBar(x, y: byte; color: Integer; hp, rhp: word);
+begin
+  with _Screen.Canvas do
+  begin
+    Pen.Color := cGRAY;
+    Pen.Width := 3;
+    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
+    LineTo((x)*CharX-1, (y-1)*CharY - 2);
+    Pen.Color := cLIGHTRED;
+    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
+    if M.MonP[x,y] = 1 then
+    begin
+      if pc.Hp > 0 then
+        LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
+    end
+    else
+      if M.MonL[M.MonP[x,y]].Hp > 0 then
+        LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2))
+             / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
+  end;
+end;
+
+procedure TMainForm.DrawString(x, y: byte; c: Integer; bs: TBrushStyle;
+  s: string; l: byte = WindowX);
+var OldStyle: TBrushStyle;
+begin
+  with _Screen.Canvas do
+  begin
+    OldStyle := Brush.Style;
+    Brush.Style := bs;
+    DrawString(x,y,c,s,l);
+    Brush.Style := OldStyle;
+  end;
+end;
+
+procedure TMainForm.DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка шкалы здоровья/маны/опыта/ещё чего-то
+var i,j: word;
+  StartRGB, EndRGB: array[0..2] of Byte; // разложенный цвет
+  ax, ay, Colors, Delta: Word; // число цветов, которые использовать для рисования
+begin
+  with _Screen.Canvas do
+  begin
+    Pen.Width := 9;
+    ax :=  x*CharX+(CharX div 2);
+    ay := y*CharY+(CharY div 2);
+    if (c1 = c2)or(l<2) then
+    begin
+      Pen.Color := c1;
+      MoveTo(ax, ay);
+      LineTo(ax+l, ay);
+    end
+    else
+    begin
+      StartRGB[0] := GetRValue(c1);
+      StartRGB[1] := GetGValue(c1);
+      StartRGB[2] := GetBValue(c1);
+      EndRGB[0] := GetRValue(c2);
+      EndRGB[1] := GetGValue(c2);
+      EndRGB[2] := GetBValue(c2);
+      Colors := l div 2; // число градаций на ширину
+      Delta := l div Colors; // число пикселей для одной градации
+      For i := 0 to Colors do
+      begin
+        Pen.Color := RGB((StartRGB[0] + MulDiv(i, EndRGB[0] - StartRGB[0], Colors-1)),
+                         (StartRGB[1] + MulDiv(i, EndRGB[1] - StartRGB[1], Colors-1)),
+                         (StartRGB[2] + MulDiv(i, EndRGB[2] - StartRGB[2], Colors-1)));
+        MoveTo(ax+i*delta, ay);
+        LineTo(ax+i*delta, ay);
+      end;
+    end;
+  end;
+end;
+
+initialization
+  Randomize;
+  // Создаем картинку (буфер)
+  _Screen := TBitMap.Create;
+  GrayScreen := TBitMap.Create;
+  // Разумные границы
+  if (FontSize < 8 ) then FontSize := 8;
+  if (FontSize > 20) then FontSize := 20;
 
 finalization
   // Освобождаем картинку (буфер)
-  Screen.Free;
+  _Screen.Free;
+  GrayScreen.Free;
 
 end.

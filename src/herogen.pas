@@ -25,11 +25,7 @@ begin
     MainForm.Cls;
     GameMenu := true;
     StartDecorating('<-ВЫБОР РЕЖИМА ИГРЫ->', TRUE);
-    with Screen.Canvas do
-    begin
-      Font.Color := cWHITE;
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    end;
+    MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, s1);
     with TMenu.Create(40,15) do
     begin
       Add('Приключение');
@@ -64,11 +60,7 @@ begin
     MainForm.Cls;
     GameMenu := true;
     StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-    with Screen.Canvas do
-    begin
-      Font.Color := cWHITE;
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    end;
+    MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, s1);
     with TMenu.Create(40,15) do
     begin
       Add('Создам сам');
@@ -122,11 +114,7 @@ begin
     MainForm.Cls;
     GameMenu := true;
     StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-    with Screen.Canvas do
-    begin
-      Font.Color := cWHITE;
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-    end;
+    MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, s1);
     with TMenu.Create(40,15) do
     begin
       Add('Мужского');
@@ -156,23 +144,18 @@ begin
     MainForm.Cls;
     StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
     s1 := GetMsg('Введи имя геро{я/ини}{:',pc.gender);
-    with Screen.Canvas do
-    begin
-      Font.Color := cWHITE;
-      TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
-      Font.Color := cBROWN;
-      TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
-      s1 := Input(((WindowX-13) div 2), 17, '', b, 13);
-      if not(b) then exit;
-      if s1 = '' then
-        case pc.gender of
-          genMALE   : pc.name := GenerateName(FALSE);
-          genFEMALE : pc.name := GenerateName(TRUE);
-        end
-      else
-        pc.name := s1;
-      if HeroAtributes then break;
-    end;
+    MainForm.DrawString(((WindowX-length(s1)) div 2) , 15, cWHITE, s1);
+    MainForm.DrawString(((WindowX-length(s2)) div 2) , 18, cBROWN, s2);
+    s1 := Input(((WindowX-13) div 2), 17, '', b, 13);
+    if not(b) then exit;
+    if s1 = '' then
+      case pc.gender of
+        genMALE   : pc.name := GenerateName(FALSE);
+        genFEMALE : pc.name := GenerateName(TRUE);
+      end
+    else
+      pc.name := s1;
+    if HeroAtributes then break;
   until false;
   Result := true;
 end;
@@ -192,13 +175,9 @@ begin
     begin
       MainForm.Cls;
       StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-      with Screen.Canvas do
-      begin
-        Font.Color := cWHITE;
-        case i of
-          1 : TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,pc.gender));
-          2 : TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,pc.gender));
-        end;
+      case i of
+        1 : MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, GetMsg(S1,pc.gender));
+        2 : MainForm.DrawString(((WindowX-length(s2)) div 2) , 13, cWHITE, GetMsg(S2,pc.gender));
       end;
       GameMenu := True;
       with TMenu.Create(40,15) do
@@ -255,11 +234,7 @@ begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
   GameMenu := true;
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,pc.gender));
-  end;
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, GetMsg(s1,pc.gender));
   with TMenu.Create(40,15) do
   begin
     for j:=1 to CLOSEFIGHTAMOUNT-1 do
@@ -297,11 +272,7 @@ begin
   S1 := Format('Какое оружие дальнего боя %s осваивал{/a} во время тренировок?', [PC.Name]);
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   GameMenu := true;
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,pc.gender));
-  end;
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , 13, cWHITE, GetMsg(s1,pc.gender));
   with TMenu.Create(40,15) do
   begin
     for j:=1 to FARFIGHTAMOUNT do
@@ -338,13 +309,8 @@ begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
   Script.Run('CreatePC.pas');
   S := Format(V.GetStr('CreatePCStr'), [pc.CLName(1), PC.Name]);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, GetMsg(S,pc.gender));
-    Font.Color := cYELLOW;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
-  end;
+  MainForm.DrawString(((WindowX-length(s)) div 2) , 13, cWHITE, GetMsg(S,pc.gender));
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , 15, cYELLOW, s1);
   MainForm.Redraw;
   repeat
     Key := getKey;

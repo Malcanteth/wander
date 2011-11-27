@@ -38,22 +38,16 @@ procedure ShowLog();
 var c,y: byte;
     x: word;
 begin
-  with Screen.Canvas do
-  begin
-    Font.Name := FontMsg;
-    Brush.Color := 0;
-    Font.Color := MyRGB(160,160,160);
-    x := L.Count;
-    c := MsgAmount - 1;
-    for y := 1 to c do
-      TextOut(0, (MapY + y) * CharY, StringOfChar(' ',WindowX));
-    if c > x then c := x;
-    if LogPos+c >= x then LogPos := x - c;
-    TextOut(0, MapY * CharY, '> '+StringOfChar(' ',WindowX-2));
-
-    for y := 1 to c do
-      TextOut(0, (MapY + y) * CharY, L[x-y-LogPos]);
-  end;
+  x := L.Count;
+  c := MsgAmount - 1;
+  MainForm.SetFont(FontMsg);
+  for y := 1 to c do
+    MainForm.DrawString(0, (MapY + y) , MyRGB(160,160,160), StringOfChar(' ',WindowX));
+  if c > x then c := x;
+  if LogPos+c >= x then LogPos := x - c;
+  MainForm.DrawString(0, MapY , MyRGB(160,160,160), '> '+StringOfChar(' ',WindowX-2));
+  for y := 1 to c do
+    MainForm.DrawString(0, (MapY + y) , MyRGB(160,160,160), L[x-y-LogPos]);
 end;
 
 procedure CloseLog;

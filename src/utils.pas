@@ -52,7 +52,6 @@ function Darker(Color:TColor; Percent:Byte):TColor;
 function GetRValue(rgb: LONGWORD): Byte;         // Достать красный цвет
 function GetGValue(rgb: LONGWORD): Byte;         // Достать зеленый цвет
 function GetBValue(rgb: LONGWORD): Byte;         // Достать синий цвет
-procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка полоски здоровья/маны/опыта/ещё чего-то
 function InFov(x1,y1,x2,y2,los : byte) : boolean;// Принадлежит ли радиусу видимости?
 procedure DeleteSwap;                            // Удалить файлы сохранения
 function IsFlag(flags : LongWord;
@@ -188,91 +187,32 @@ begin
       Result := false;
 end;
 
-procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка шкалы здоровья/маны/опыта/ещё чего-то
-var i,j: word;
-  StartRGB, EndRGB: array[0..2] of Byte; // разложенный цвет
-  ax, ay, Colors, Delta: Word; // число цветов, которые использовать для рисования
-begin
-  with Screen.Canvas do
-  begin
-    Pen.Width := 9;
-    ax :=  x*CharX+(CharX div 2);
-    ay := y*CharY+(CharY div 2);
-    if (c1 = c2)or(l<2) then
-    begin
-      Pen.Color := c1;
-      MoveTo(ax, ay);
-      LineTo(ax+l, ay);
-    end
-    else
-    begin
-      StartRGB[0] := GetRValue(c1);
-      StartRGB[1] := GetGValue(c1);
-      StartRGB[2] := GetBValue(c1);
-      EndRGB[0] := GetRValue(c2);
-      EndRGB[1] := GetGValue(c2);
-      EndRGB[2] := GetBValue(c2);
-      Colors := l div 2; // число градаций на ширину
-      Delta := l div Colors; // число пикселей для одной градации
-      For i := 0 to Colors do
-      begin
-        Pen.Color := RGB((StartRGB[0] + MulDiv(i, EndRGB[0] - StartRGB[0], Colors-1)),
-                         (StartRGB[1] + MulDiv(i, EndRGB[1] - StartRGB[1], Colors-1)),
-                         (StartRGB[2] + MulDiv(i, EndRGB[2] - StartRGB[2], Colors-1)));
-        MoveTo(ax+i*delta, ay);
-        LineTo(ax+i*delta, ay);
-      end;
-    end;
-  end;
-end;
-
-
 { Рамочка, название }
 procedure StartDecorating(header : string; withoutexit : boolean);
 const space  = '-=[ НАЖМИ ПРОБЕЛ ДЛЯ ВЫХОДА ]=-';
 var
   i : byte;
 begin
-  with Screen.Canvas do
+  For i:=1 to ((WindowX) div 2)+1 do
   begin
-    For i:=1 to Round(WindowX/2) do
-    begin
-      Font.Color := Darker(cGRAY,100-i);
-      TextOut((i-1)*CharX,0,'=');
-      TextOut((i-1)*CharX,CharY*(WindowY-1),'=');
-    end;
-    For i:=Round(WindowX/2) to WindowX do
-    begin
-      Font.Color := Darker(cGRAY,i);
-      TextOut((i-1)*CharX,0,'=');
-      TextOut((i-1)*CharX,CharY*(WindowY-1),'=');
-    end;
-    Font.Color := cYELLOW;
-    TextOut(((WindowX-length(header)) div 2) * CharX, 0, header);
-    if withoutexit = FALSE then
-    begin
-      Font.Color := cBROWN;
-      TextOut(((WindowX-length(space)) div 2) * CharX, CharY*(WindowY-1), space);
-    end;
+    MainForm.DrawString((i-1),0,Darker(cGRAY,100-i),'=');
+    MainForm.DrawString((i-1),(WindowY-1),Darker(cGRAY,100-i),'=');
+    MainForm.DrawString(WindowX - (i-1),0,Darker(cGRAY,100-i), '=');
+    MainForm.DrawString(WindowX - (i-1),(WindowY-1),Darker(cGRAY,100-i),'=');
   end;
+  MainForm.DrawString(((WindowX-length(header)) div 2),  0, cYELLOW, header);
+  if withoutexit = FALSE then
+    MainForm.DrawString(((WindowX-length(space)) div 2) , (WindowY-1), cBROWN, space);
 end;
 
 { Рамочка для информации о предмете}
 procedure DrawBorder(x,y,w,h,color : byte);
 var i, j: byte;
-    OldStyle : TBrushStyle;
 begin
-  with Screen.Canvas do
-  begin
-    OldStyle := Brush.Style;
-    Brush.Style := bsBDiagonal;
-    Font.Color := RealColor(color);
-    TextOut(x*CharX,y*CharY,Frame[5]+StringOfChar(Frame[1],w-2)+Frame[6]);
-    for i:=y+1 to y+h-1 do
-      TextOut(x*CharX,i*CharY,Frame[2]+StringOfChar(' ',w-2)+Frame[4]);
-    TextOut(x*CharX,(y+h)*CharY,Frame[7]+StringOfChar(Frame[3],w-2)+Frame[8]);      
-    Brush.Style := OldStyle;
-  end;
+  MainForm.DrawString(x,y,RealColor(color),bsBDiagonal,Frame[5]+StringOfChar(Frame[1],w-2)+Frame[6]);
+  for i:=y+1 to y+h-1 do
+    MainForm.DrawString(x,i,RealColor(color),Frame[2]+StringOfChar(' ',w-2)+Frame[4]);
+  MainForm.DrawString(x,(y+h),RealColor(color),Frame[7]+StringOfChar(Frame[3],w-2)+Frame[8]);
 end;
 
 {  Вернуть цвет в зависимости от процентов }
@@ -384,7 +324,7 @@ begin
   // PNG
   P := TPNGObject.Create;
   try
-    P.Assign(Screen);
+    P.Assign(_Screen);
     P.SaveToFile(Path + 'screens/' + fname + '.png');
   finally
     P.Free;
@@ -447,25 +387,15 @@ const
   s5 = '        #           # ###           # ';
 begin
   MainForm.cls;
-  with Screen.Canvas do
-  begin
-    // WANDER
-    Font.Color := cLIGHTGRAY;
-    TextOut(((WindowX-length(s0)) div 2) * CharX, up*CharY, s0);
-    Font.Color := cLIGHTBLUE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, (up+1)*CharY, s1);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (up+2)*CharY, s2);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (up+3)*CharY, s3);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s4)) div 2) * CharX, (up+4)*CharY, s4);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
-    // Версия
-    Font.Color := cBLUEGREEN;
-    TextOut(34*CharY, (up+1)*CharY, GameVersion);
-  end;
+  // WANDER
+  MainForm.DrawString(((WindowX-length(s0)) div 2) , up, cLIGHTGRAY, s0);
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , (up+1), cLIGHTBLUE, s1);
+  MainForm.DrawString(((WindowX-length(s2)) div 2) , (up+2), cBLUE, s2);
+  MainForm.DrawString(((WindowX-length(s3)) div 2) , (up+3), cBLUE, s3);
+  MainForm.DrawString(((WindowX-length(s4)) div 2) , (up+4), cBROWN, s4);
+  MainForm.DrawString(((WindowX-length(s5)) div 2) , (up+5), cBROWN, s5);
+  // Версия
+  MainForm.DrawString(((WindowX+length(s1))div 2), (up+1), cBLUEGREEN, GameVersion);
 end;
 
 { Случайное целое число из диапазона }
@@ -566,7 +496,7 @@ begin
 
       MemStream := TMemoryStream.Create; 
       try 
-        BMPImage.SaveToStream(MemStream); 
+        BMPImage.SaveToStream(MemStream);
         //you need to reset the position of the MemoryStream to 0 
         MemStream.Position := 0; 
 
@@ -610,7 +540,7 @@ var
   i,j: byte;
 begin
   repeat
-    if (GameState = gsPlay) then BlackWhite(Screen) else Intro;
+    if (GameState = gsPlay) then BlackWhite(_Screen) else Intro;
     DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
     GameMenu := TRUE;
     with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do
@@ -791,18 +721,14 @@ procedure TMenu.Draw;
 var i: byte;
 begin
   if not(_F.Count = 0) then
-    with Screen.Canvas do
     begin
-      Brush.Color := cBlack;
+      MainForm.SetBgColor(cBlack);
       for i:= 0 to _F.Count-1 do
       begin
-        Font.Color := BgColor;
-        TextOut(x*CharX,(y+i)*charY,'[ ] ');
-        Font.Color := LongInt(_F.Objects[i]);
-        TextOut((x+4)*CharX,(y+i)*charY,_F[i]);
+        MainForm.DrawString(x,(y+i),BgColor,'[ ] ');
+        MainForm.DrawString((x+4),(y+i),LongInt(_F.Objects[i]),_F[i]);
       end;
-      Font.Color := SelColor;
-      TextOut((x+1)*CharX,(y+pos-1)*charY,'>');
+      MainForm.DrawString((x+1),(y+pos-1),SelColor,'>');
     end;
   MainForm.Redraw;
 end;
