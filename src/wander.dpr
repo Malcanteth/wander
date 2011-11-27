@@ -8,7 +8,8 @@
 program wander;
 
 uses
-  Forms, sysutils,
+  Forms,
+  sysutils,
   main in 'main.pas' {MainForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
@@ -32,7 +33,8 @@ uses
   pngimage in 'PNGImage\PNGImage.pas',
   zlibpas in 'PNGImage\ZLibPas.pas',
   pnglang in 'PNGImage\PNGLang.pas',
-  pngextra in 'PNGImage\PNGExtra.pas';
+  pngextra in 'PNGImage\PNGExtra.pas',
+  herogen in 'herogen.pas';
 
 {$R *.res}
 {.$DEFINE DEBUG}

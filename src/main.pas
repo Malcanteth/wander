@@ -100,9 +100,8 @@ var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU,// gsCHOOSEMODE,
-                   {gsHERONAME, gsHEROATR, gsHERORANDOM, gsHEROGENDER,} gsHEROCRRESULT,
-                   {gsHEROCLWPN, gsHEROFRWPN,} gsABILITYS, gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
+                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsABILITYS,
+                   gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -124,14 +123,6 @@ begin
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
-//    gsCHOOSEMODE   : pc.ChooseMode;
-//    gsHERONAME     : pc.HeroName;
-//    gsHEROATR      : pc.HeroAtributes;
-//    gsHERORANDOM   : pc.HeroRandom;
-//    gsHEROGENDER   : pc.HeroGender;
-    gsHEROCRRESULT : pc.HeroCreateResult;
-//    gsHEROCLWPN    : pc.HeroCloseWeapon;
-//    gsHEROFRWPN    : pc.HeroFarWeapon;
     gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
     gsSKILLSMENU   : SkillsAndAbilitys;
@@ -168,6 +159,7 @@ var
   i : integer;
   n,s : string;
   Item : TItem;
+  b: boolean;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
   if Key <> 16 then
@@ -177,256 +169,11 @@ begin
     if (Inputing) then
       KeyQueue.Push(Key)
     else
-          // Игровое меню
-          {if GameMenu then
-          begin
-            case Key of
-              // Esc
-              27 :
-                if GameState <> gsINTRO then GameMenu := FALSE;
-              // Вверх
-              38,104,56 :    
-              begin
-                if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
-              end;
-              // Ok...
-              13 :
-              begin
-                GameMenu := FALSE;
-                case MenuSelected of
-                  gmNEWGAME :
-                  begin
-                    if Mode = 0 then
-                      ChangeGameState(gsCHOOSEMODE) else
-                        begin
-                          PlayMode := Mode;
-                          // Если режим приключений то нужно загрузить карты
-                          if PlayMode = AdventureMode then
-                            if not MainEdForm.LoadSpecialMaps then
-                            begin
-                              MsgBox('Ошибка загрузки карт!');
-                              Halt;
-                            end;
-                          ChangeGameState(gsHERORANDOM);
-                        end;
-                  end;
-                  gmEXIT    :
-                  begin
-                    GameMenu := FALSE;
-                    if GameState = gsINTRO then AskForQuit := FALSE;
-                    MainForm.Close;
-                  end;
-                end;
-              end;
-            end;
-            Redraw;
-          end else}
       // Все остальное
       begin
         ClearMsg;
         pc.turn := 0;
         case GameState of
-          // Выбор режима игры
- {         gsCHOOSEMODE:
-          begin
-            pc.ChooseMode;
-            case Key of
-              // Вверх/Вниз
-              38,104,56,40,98,50 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                PlayMode := MenuSelected;
-                // Если режим приключений то нужно загрузить карты
-                if PlayMode = AdventureMode then
-                  if not MainEdForm.LoadSpecialMaps then
-                  begin
-                    MsgBox('Ошибка загрузки карт!');
-                    Halt;
-                  end;
-                ChangeGameState(gsHERORANDOM);
-                MenuSelected := 1;
-                Redraw;
-              end;
-            end;
-          end;}
-          // Рандомный герой?
-{          gsHERORANDOM:
-          begin
-            pc.ClearPlayer;
-            case Key of
-              // Вверх/Вниз
-              38,104,56,40,98,50 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
-                Redraw;
-              end;
-              // Ok...
-              13 :
-
-            end;
-          end;}
-          // Выбор пола
-{          gsHEROGENDER:
-          begin
-            case Key of
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
-                Redraw;
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                if MenuSelected < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
-                MenuSelected := 1;
-                MenuSelected2 := 1;
-                pc.startheroname;
-                Redraw;
-              end;
-            end;
-          end;}
-          // Выбор оружия бл. боя
-{          gsHEROCLWPN:
-          begin
-            case Key of
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected > 1 then dec(MenuSelected) else MenuSelected := wlistsize;
-                Redraw;
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected < wlistsize then inc(MenuSelected) else MenuSelected := 1;
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                c_choose := Wlist[MenuSelected];
-                MenuSelected := 1;
-                MenuSelected2 := 1;
-                if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
-                  ChangeGameState(gsHEROFRWPN) else
-                    ChangeGameState(gsHEROCRRESULT);
-                Redraw;
-              end;
-            end;
-          end;}
-          // Выбор оружия дальнего боя
-{          gsHEROFRWPN:
-          begin
-            case Key of
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected > 1 then dec(MenuSelected) else
-                  for i:= 4 downto 1 do
-                    if WList[i] > 0 then
-                      begin
-                        MenuSelected := i;
-                        break;
-                      end;
-                Redraw;
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected < 4 then
-                begin
-                  if WList[MenuSelected+1] > 0 then
-                    inc(MenuSelected) else
-                      MenuSelected := 1;
-                end else
-                  MenuSelected := 1;
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                f_choose := Wlist[MenuSelected];
-                MenuSelected := 1;
-                MenuSelected2 := 1;
-                ChangeGameState(gsHEROCRRESULT);
-                Redraw;
-              end;
-            end;
-          end;
-          // Выбор атрибутов
-          gsHEROATR:
-          begin
-            case Key of
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
-                Redraw;
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                pc.atr[MenuSelected2] := MenuSelected;
-                if MenuSelected2 = 1 then
-                begin
-                  MenuSelected := 1;
-                  inc(MenuSelected2);
-                end else
-                  begin
-                    MenuSelected := 1;
-                    // Добавить очки умений исходя из класса
-                    pc.Prepare;
-                    pc.PrepareSkills;
-                    if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
-                      ChangeGameState(gsHEROCLWPN) else
-                        if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
-                          ChangeGameState(gsHEROFRWPN) else
-                            ChangeGameState(gsHEROCRRESULT);
-                  end;
-                Redraw;
-              end;
-            end;
-          end;}
-          // Подтвердить
-          gsHEROCRRESULT:
-          begin
-            case Key of
-              13, 32 :
-              begin
-                pc.FavWPNSkill;
-                M.MonL[pc.idinlist] := pc;
-                InitGame;
-              end;
-              27     :
-              begin
-                MenuSelected := 1;
-                pc.HeroRandom;
-              end;
-            end;
-          end;
           // Во время игры
           gsPLAY:
           begin
@@ -460,7 +207,7 @@ begin
               begin
                 {MenuSelected := 1;
                 GameMenu := TRUE;}
-                DrawGameMenu;
+                StartGameMenu;
               end;
               // Закрыть дверь 'c'
               67        : pc.SearchForDoors;
@@ -599,7 +346,7 @@ begin
                 changeGameState(gsConsole);
                 repeat
                   ShowLog;
-                  s := Input(2, MapY, '');
+                  s := Input(2, MapY, '',b);
                   if s <> '' then
                   begin
                     Log(' > '+s);
@@ -1152,11 +899,11 @@ begin
         AddMsg('Ты решил{/a} пожить еще чуть-чуть.',0);
     end else
       begin
-        if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
-        begin
+//        if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
+//        begin
           ChangeGameState(gsPLAY);
           Redraw;
-        end;
+//        end;
       end;
 end;
 
@@ -1273,7 +1020,7 @@ end;
 
 procedure TMainForm.FormActivate(Sender: TObject);
 begin
-  StartGameMenu;
+  StartGameMenu; //Главное игровое меню
 end;
 
 procedure TMainForm.cls;

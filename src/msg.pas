@@ -3,7 +3,7 @@ unit msg;
 interface
 
 uses
-  Main, Cons, Utils, SUtils, Controls, classes;
+  Main, Cons, Utils, SUtils, Controls, classes, Mbox;
 
 type
   THistory = record
@@ -16,9 +16,8 @@ var
   History : array[1..MaxHistory] of THistory;
   InputX, InputY : integer;
   InputString : string;
-  InputLength : byte;
-  InputPos : byte;
   LastMsgY, LastMsgL : byte;
+  InputPos: byte;
 
 
 procedure AddMsg(s : string; id : integer);
@@ -29,13 +28,17 @@ procedure More;
 procedure Apply;
 procedure ShowMsgs;
 function Ask(s: string): char;
-function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string;
+function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string; overload;
+function Input(sx,sy : integer; ss : string; out Cancelled: boolean; MaxLen: byte = MsgLength-2): string; overload;
 function getKey: word;
 procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
 
 implementation
 
 uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
+
+var InputCancel: boolean = false;
+    InputLength : byte;
 
 // Добавить сообщение
 procedure AddMsg(s: string; id : integer);
@@ -296,11 +299,12 @@ begin
   InputLength := MaxLen;
   BitBlt(GrayScreen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, Screen.Canvas.Handle, 0, 0, SRCCopy);
   MainForm.GameTimer.Enabled := true;
+  Result := '';
   repeat
     Key := getKey;
     case Key of
       13: break; //Enter
-      VK_ESCAPE: if (GameState = gsConsole) then begin InputString := ''; break; end;
+      VK_ESCAPE: if (InputCancel) then begin InputString := ''; MainForm.GameTimer.Enabled := false; exit; end;
       192: if (GameState = gsConsole) then begin InputString := ''; break; end; // '~'
       VK_BACK: if (InputPos > 0) then
                begin
@@ -330,7 +334,19 @@ begin
     MainForm.Redraw;
   until false;
   MainForm.GameTimer.Enabled := false;
+  InputCancel := false;
   Result := InputString;
+end;
+
+{ Функция ввода текста пльзователем }
+function Input(sx,sy : integer; ss : string; out Cancelled: boolean; MaxLen: byte = MsgLength-2): string; overload;
+var Key : Word;
+  n : string;
+begin
+  InputCancel := true;
+  Result := Input(sx, sy, ss, MaxLen);
+  Cancelled := not InputCancel;
+  InputCancel := false;
 end;
 
 // Цветная строка

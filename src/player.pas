@@ -25,7 +25,6 @@ type
     procedure FOV;                                     // Поле видимости
     procedure AfterTurn;                               // Действия после хода героя
     procedure AnalysePlace(px,py: byte; All : byte);   // Описать место
-
     procedure PlaceHere(px,py : byte);                 // Поставить героя в это место
     procedure UseStairs;                               // Спуститься или подняться по лестнице
     procedure PlaceAtTile(t : byte);                   // Переместить героя на тайл
@@ -49,16 +48,8 @@ type
     function FindCoins : byte;                         // Найти ячейку с монетами
     procedure Search;                                  // Искать
     function HaveItemVid(vid : byte) : boolean;        // Есть ли хоть один предмет этого вида?
-    procedure HeroRandom;                              // Сделать рандомного
-    procedure HeroName;                                // Окно ввода имени
-    procedure HeroGender;                              // Окно выбора пола
-    procedure HeroAtributes;                           // Расстановка приоритетов
     procedure CreateClWList;                           // Создать список навыков ближнего боя
-    procedure HeroCloseWeapon;                         // Оружие ближнего боя
     procedure CreateFrWList;                           // Создать список навыков дальнего боя
-    procedure HeroFarWeapon;                           // Оружие дальнего боя
-    procedure HeroCreateResult;                        // Подтвердить
-    procedure ChooseMode;                              // Выбрать режим игры
     procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
     procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
     function getGold(): word;                          // Узнать количество монет в инвентаре
@@ -1425,171 +1416,6 @@ begin
   Result := f;
 end;
 
-{ Окно ввода имени }
-procedure TPc.HeroName;
-const s2 = '^^^^^^^^^^^^^';
-var
-  n : string[13];
-  s1: string;
-begin
-  MainForm.Cls;
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  s1 := GetMsg('Введи имя геро{я/ини}:',gender);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
-    Input(((WindowX-13) div 2), 17, '', 13);
-    if InputString = '' then
-      case pc.gender of
-        genMALE   : pc.name := GenerateName(FALSE);
-        genFEMALE : pc.name := GenerateName(TRUE);
-      end
-    else
-      pc.name := InputString;
-    pc.HeroAtributes;
-    MainForm.Redraw;
-  end;
-end;
-
-{ Сделать рандомного }
-procedure TPc.HeroRandom;
-const s1 = 'Создашь персонаж сам или доверишься воле случая?';
-var j: byte;
-begin
-  ClearPlayer;
-  MainForm.Cls;
-  GameMenu := true;
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-  end;
-  with TMenu.Create(40,15) do
-  begin
-    Add('Создам сам');
-    Add('Рандомный герой');
-    j := 1;
-    repeat
-      j := Run(j);
-    until (j <> 0);
-    Free;
-  end;
-  GameMenu := false;
-  if j = 1 then
-    HeroGender else
-  // Всё рандомно
-  begin
-    // пол
-    gender := Rand(1, 2);
-    // имя
-    case gender of
-      genMALE   : name := GenerateName(FALSE);
-      genFEMALE : name := GenerateName(TRUE);
-    end;
-    // атрибуты
-    atr[1] := Rand(1, 3);
-    atr[2] := Rand(1, 3);
-//    log(inttostr(WhatClass));
-//    log(ClName(1));
-    // Добавить очки умений исходя из класса
-    Prepare;
-    PrepareSkills;
-    if (HowManyBestWPNCL > 1) and not ((HowManyBestWPNCL < 3) and (OneOfTheBestWPNCL(CLOSE_TWO))) then
-    begin
-      CreateClWList;
-      c_choose := Wlist[Random(wlistsize)+1];
-    end;
-    if (HowManyBestWPNFR > 1) and not ((HowManyBestWPNFR < 3) and (OneOfTheBestWPNFR(FAR_THROW))) then
-    begin
-      CreateFrWList;
-      f_choose := Wlist[Random(wlistsize)+1];
-    end;
-    ChangeGameState(gsHEROCRRESULT);
-  end;
-end;
-
-{ Окно выбора пола }
-procedure TPc.HeroGender;
-const s1 = 'Какого пола будет твой персонаж?';
-var j: byte;
-begin
-  MainForm.Cls;
-  GameMenu := true;
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-  end;
-  with TMenu.Create(40,15) do
-  begin
-    Add('Мужского');
-    Add('Женского');
-    Add('Без разницы');
-    j := 1;
-    repeat
-      j := Run(j);
-    until (j <> 0);
-    Free;
-  end;
-  GameMenu := false;
-  if j < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
-  MenuSelected := 1;
-  MenuSelected2 := 1;
-  pc.heroname;
-  Mainform.Redraw;
-end;
-
-{ Расстановка приоритетов }
-procedure TPc.HeroAtributes;
-var s1, s2 : string;
-    i,j: byte;
-begin
-  s1 := Format('Выбери атрибут, в котором %s больше всего преуспел{/a}:', [pc.name]); //'Выбери атрибут, в котором '+pc.name+' больше всего преуспел{/a}:';
-  s2 := Format('А теперь выбери атрибут, которому %s тоже уделял{/a} внимание:', [pc.name]); //'А теперь выбери атрибут, которому '+pc.name+' тоже уделял{/a} внимание:';
-  i := 1;
-  while i <=2 do
-  begin
-    MainForm.Cls;
-    StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-    with Screen.Canvas do
-    begin
-      Font.Color := cWHITE;
-      case i of
-        1 : TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,gender));
-        2 : TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,gender));
-      end;
-    end;
-    GameMenu := True;
-    with TMenu.Create(40,15) do
-    begin
-      Add('Сила');
-      Add('Ловкость');
-      Add('Интеллект');
-      j := 1;
-      repeat
-        j := Run(j);
-      until (j <> 0);
-      Free;
-    end;
-    GameMenu := False;    
-    pc.atr[i] := j;
-    inc(i);
-  end;
-  // Добавить очки умений исходя из класса
-  pc.Prepare;
-  pc.PrepareSkills;
-  if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
-    HeroCloseWeapon
-  else if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
-    HeroFarWeapon else
-  ChangeGameState(gsHEROCRRESULT);
-end;
-
 { Создать список навыков ближнего боя }
 procedure TPc.CreateClWList;
 var
@@ -1607,54 +1433,6 @@ begin
   wlistsize := k;
 end;
 
-{ Окно выбора типа оружия ближнего боя }
-procedure TPc.HeroCloseWeapon;
-var
-  s1  : string;
-  j   : byte;
-  c   : LongInt;
-begin
-  CreateClWList;
-  MainForm.Cls;
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
-  GameMenu := true;
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
-  end;
-
-  with TMenu.Create(40,15) do
-  begin
-    for j:=1 to CLOSEFIGHTAMOUNT-1 do
-      if wlist[j] > 0 then
-        if pc.closefight[wlist[j]] > 0 then
-        begin
-          if OneOfTheBestWPNCL(wlist[j]) then c := cWHITE else c := cGRAY;
-          case wlist[j] of
-            2: Add('Меч',c);
-            3: Add('Дубина',c);
-            4: Add('Посох',c);
-            5: Add('Топор',c);
-            6: Add('Рукопашный бой',c);
-          end;
-        end;
-    j := 0;
-    repeat
-      j := Run(j);
-    until (j <> 0);
-    Free;
-  end;
-  GameMenu := false;
-  c_choose := Wlist[j];
-  MenuSelected := 1;
-  MenuSelected2 := 1;
-  if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
-    HeroFarWeapon else
-  ChangeGameState(gsHEROCRRESULT);
-end;
-
 { Создать список навыков дальнего боя }
 procedure TPc.CreateFrWList;
 var
@@ -1670,106 +1448,6 @@ begin
       wlist[k] := i;
     end;
   wlistsize := k;
-end;
-
-{ Окно выбора пола }
-procedure TPc.HeroFarWeapon;
-var
-  S1     : string;
-  j      : byte;
-  c      : LongInt;
-begin
-  CreateFrWList;
-  MainForm.Cls;
-  S1 := Format('Какое оружие дальнего боя %s осваивал{/a} во время тренировок?', [PC.Name]);
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  GameMenu := true;
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
-  end;
-  with TMenu.Create(40,15) do
-  begin
-    for j:=1 to FARFIGHTAMOUNT do
-      if wlist[j] > 0 then
-        if pc.farfight[wlist[j]] > 0 then
-        begin
-          if OneOfTheBestWPNFR(wlist[j]) then c := cWHITE else c := cGRAY;
-          case wlist[j] of
-            2 : Add('Лук',c);
-            3 : Add('Праща',c);
-            4 : Add('Духовая трубка',c);
-            5 : Add('Арбалет',c);
-          end;
-       end;
-    j := 0;
-    repeat
-      j := Run(j);
-    until (j <> 0);
-    Free;
-  end;
-  GameMenu := false;
-  f_choose := Wlist[j];
-  MenuSelected := 1;
-  MenuSelected2 := 1;
-  ChangeGameState(gsHEROCRRESULT);
-end;
-
-{ Подтвердить }
-procedure Tpc.HeroCreateResult;
-const
-  s1 = 'ENTER - продожить, ESC - создать заново';
-var
-  R, H, S : string;
-begin
-  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  Script.Run('CreatePC.pas');
-  S := Format(V.GetStr('CreatePCStr'), [CLName(1), PC.Name]);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, GetMsg(S,gender));
-    Font.Color := cYELLOW;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
-  end;
-end;
-
-{ Выбрать режим игры }
-procedure TPc.ChooseMode;
-const s1 = 'В каком режиме игры ты хочешь играть?';
-var j: byte;
-begin
-  MainForm.Cls;
-  GameMenu := true;
-  StartDecorating('<-ВЫБОР РЕЖИМА ИГРЫ->', TRUE);
-  with Screen.Canvas do
-  begin
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
-  end;
-  with TMenu.Create(40,15) do
-  begin
-    Add('Приключение');
-    Add('Подземелье');
-    j := 1;
-    repeat
-      j := Run(j);
-    until (j <> 0);
-    Free;
-  end;
-  GameMenu := false;
-  PlayMode := j;
-  // Если режим приключений то нужно загрузить карты
-  if PlayMode = AdventureMode then
-    if not MainEdForm.LoadSpecialMaps then
-    begin
-      MsgBox('Ошибка загрузки карт!');
-      Halt;
-    end;
-  //ChangeGameState(gsHERORANDOM);
-  pc.HeroRandom;
-  MenuSelected := 1;
 end;
 
 { Показать массу всего инвентаря и макс. переносимую ГГ }
