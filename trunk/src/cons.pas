@@ -93,21 +93,21 @@ const
   gsINVENTORY              = 7;
   gsHELP                   = 8;
   gsUSEMENU                = 9;
-  gsHERONAME               = 10;
-  gsHEROGENDER             = 11;
+//  gsHERONAME               = 10;
+//  gsHEROGENDER             = 11;
   gsOPEN                   = 12;
   gsABILITYS               = 13;
   gsHISTORY                = 14;
   gsINTRO                  = 15;
-  gsHEROATR                = 16;
-  gsHEROCRRESULT           = 17;
+//  gsHEROATR                = 16;
+//  gsHEROCRRESULT           = 17;
   gsSKILLSMENU             = 18;
-  gsHEROCLWPN              = 19;
-  gsHEROFRWPN              = 20;
+//  gsHEROCLWPN              = 19;
+//  gsHEROFRWPN              = 20;
   gsWPNSKILLS              = 21;
   gsAIM                    = 22;
-  gsHERORANDOM             = 23;
-  gsCHOOSEMODE             = 24;
+//  gsHERORANDOM             = 23;
+//  gsCHOOSEMODE             = 24;
   gsCONSOLE                = 25;
 
   { Статусы героя}

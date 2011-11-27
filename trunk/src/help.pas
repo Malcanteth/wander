@@ -7,7 +7,6 @@ uses
 
 procedure ShowHelp;                 // Показать список команд
 procedure ShowHistory;              // Показать историю сообщений
-procedure DrawGameMenu;             // Игровое меню
 
 const
   GMChooseAmount = 2;
@@ -17,7 +16,7 @@ const
 implementation
 
 uses
-  Main, SysUtils, conf, wlog, MapEditor, mbox, player;
+  Main, SysUtils, conf, wlog, mbox, player, herogen;
 
 { Показать список команд }
 procedure ShowHelp;
@@ -99,58 +98,6 @@ begin
         end;
       end;
   end;
-end;
-
-{ Игровое меню }
-procedure DrawGameMenu;
-const
-  TableX = 39;
-  TableW = 20;
-  MenuNames : array[1..GMChooseAmount] of string =
-  ('Новая игра', 'Выход');
-var
-  i,j: byte;
-begin
-  if (GameState = gsPlay) then BlackWhite(Screen);
-  DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
-  GameMenu := TRUE;
-  with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do
-  begin
-    for i:=1 to GMChooseAmount do
-      Add(MenuNames[i]);
-    j := 1;
-    repeat
-      j:=Run(Selected);
-    until ((j = 0) and (GameState <> gsINTRO))or(j<>0);
-    Free;
-  end;
-  GameMenu := FALSE;  
-  if j = 0 then exit;
-  case j of
-    gmNEWGAME :
-    begin
-      if Mode = 0 then
-        pc.ChooseMode
-      else
-      begin
-        PlayMode := Mode;
-        // Если режим приключений то нужно загрузить карты
-        if PlayMode = AdventureMode then
-        if not MainEdForm.LoadSpecialMaps then
-        begin
-          MsgBox('Ошибка загрузки карт!');
-          Halt;
-        end;
-        ChangeGameState(gsHERORANDOM);
-        end;
-      end;
-    gmEXIT    :
-      begin
-        GameMenu := FALSE;
-        if GameState = gsINTRO then AskForQuit := FALSE;
-        MainForm.Close;
-      end;
-    end;
 end;
 
 end.

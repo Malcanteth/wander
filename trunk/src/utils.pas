@@ -80,7 +80,8 @@ procedure StartGameMenu;                         // Отобразить игровое меню
 implementation
 
 uses
-  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage, wlog, help;
+  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage,
+  wlog, help, herogen, MapEditor, mbox;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -266,23 +267,10 @@ begin
     OldStyle := Brush.Style;
     Brush.Style := bsBDiagonal;
     Font.Color := RealColor(color);
-    TextOut(x*CharX,y*CharY,Frame[5]);
-    TextOut((x+w)*CharX,y*CharY,Frame[6]);
-    TextOut(x*CharX,(y+h)*CharY,Frame[7]);
-    TextOut((x+w)*CharX,(y+h)*CharY,Frame[8]);
-    for i:=x+1 to x+w-1 do
-    begin
-      TextOut(i*CharX,y*CharY,Frame[1]);
-      TextOut(i*CharX,(y+h)*CharY,Frame[3]);
-    end;
+    TextOut(x*CharX,y*CharY,Frame[5]+StringOfChar(Frame[1],w-2)+Frame[6]);
     for i:=y+1 to y+h-1 do
-    begin
-      TextOut(x*CharX,i*CharY,Frame[2]);
-      TextOut((x+w)*CharX,i*CharY,Frame[4]);
-    end;
-    for i := y + 1 to y + h - 1 do
-      for j := x + 1 to x + w - 1 do
-        TextOut(j*CharX,i*CharY,' ');
+      TextOut(x*CharX,i*CharY,Frame[2]+StringOfChar(' ',w-2)+Frame[4]);
+    TextOut(x*CharX,(y+h)*CharY,Frame[7]+StringOfChar(Frame[3],w-2)+Frame[8]);      
     Brush.Style := OldStyle;
   end;
 end;
@@ -613,9 +601,47 @@ end;
 
 { Отобразить игровое меню }
 procedure StartGameMenu;
+const
+  TableX = 39;
+  TableW = 20;
+  MenuNames : array[1..GMChooseAmount] of string =
+  ('Новая игра', 'Выход');
+var
+  i,j: byte;
 begin
-  Intro;
-  DrawGameMenu;
+  repeat
+    if (GameState = gsPlay) then BlackWhite(Screen) else Intro;
+    DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
+    GameMenu := TRUE;
+    with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do
+    begin
+      for i:=1 to GMChooseAmount do
+        Add(MenuNames[i]);
+      j := 1;
+      repeat
+        j:=Run(Selected);
+      until ((j = 0) and (GameState <> gsINTRO))or(j<>0);
+      Free;
+    end;
+    GameMenu := FALSE;
+    if j = 0 then exit;
+    case j of
+      gmNEWGAME :
+        if ChooseMode then
+        begin
+          M.MonL[pc.idinlist] := pc;
+          MainForm.InitGame;
+          break;
+        end else GameState := gsIntro;
+      gmEXIT    :
+        begin
+          GameMenu := FALSE;
+          if GameState = gsINTRO then AskForQuit := FALSE;
+          MainForm.Close;
+          break;
+        end;
+      end;
+  until false;
 end;
 
 { Класс TIntQueue }
