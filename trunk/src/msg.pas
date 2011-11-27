@@ -296,7 +296,7 @@ begin
   InputY := sy;
   InputLength := MaxLen;
   BitBlt(GrayScreen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, _Screen.Canvas.Handle, 0, 0, SRCCopy);
-  MainForm.GameTimer.Enabled := true;
+  MainForm.ShowCursor;
   Result := '';
   repeat
     Key := getKey;
@@ -331,7 +331,7 @@ begin
     end;
     MainForm.Redraw;
   until false;
-  MainForm.GameTimer.Enabled := false;
+  MainForm.HideCursor;
   InputCancel := false;
   Result := InputString;
 end;
