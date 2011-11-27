@@ -128,27 +128,15 @@ uses
 procedure SkillsAndAbilitys;
 begin
   StartDecorating('<-НАВЫКИ И СПОСОБНОСТИ->', FALSE);
-  with Screen.Canvas do
-  begin
-    Font.Color := cBROWN;
-    TextOut(38*CharX, 15*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(42*CharX, 15*CharY, 'Использовать навык');
-    Font.Color := cBROWN;
-    TextOut(38*CharX, 16*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(42*CharX, 16*CharY, 'Список пассивных навыков');
-    Font.Color := cBROWN;
-    TextOut(38*CharX, 17*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(42*CharX, 17*CharY, 'Оружейные навыки');
-    Font.Color := cBROWN;
-    TextOut(38*CharX, 18*CharY, '[ ]');
-    Font.Color := cCYAN;
-    TextOut(42*CharX, 18*CharY, 'Особенные способности');
-    Font.Color := cYELLOW;
-    TextOut(39*CharX, (14+MenuSelected)*CharY, '>');
-  end;
+  MainForm.DrawString(38, 15, cBROWN, '[ ]');
+  MainForm.DrawString(42, 15, cCYAN, 'Использовать навык');
+  MainForm.DrawString(38, 16, cBROWN, '[ ]');
+  MainForm.DrawString(42, 16, cCYAN, 'Список пассивных навыков');
+  MainForm.DrawString(38, 17, cBROWN, '[ ]');
+  MainForm.DrawString(42, 17, cCYAN, 'Оружейные навыки');
+  MainForm.DrawString(38, 18, cBROWN, '[ ]');
+  MainForm.DrawString(42, 18, cCYAN, 'Особенные способности');
+  MainForm.DrawString(39, (14+MenuSelected), cYELLOW, '>');
 end;
 
 { Оружейные навыки }
@@ -160,24 +148,18 @@ const
   top = 6;
 var
   i,c,f,m : byte;
-procedure DrawStyleLine(y:integer);
-var
-  i : byte;
-begin
-  with Screen.Canvas do
+
+  procedure DrawStyleLine(y:integer);
+  var
+    i : byte;
   begin
-    For i:=1 to Round(WindowX/2) do
+    For i:=1 to (WindowX div 2) do
     begin
-      Font.Color := Darker(cGRAY, 100-i);
-      TextOut((i-1)*CharX,y,'-');
-    end;
-    For i:=Round(WindowX/2) to WindowX do
-    begin
-      Font.Color := Darker(cGRAY, i);
-      TextOut((i-1)*CharX,y,'-');
+      MainForm.DrawString(i-1,y,Darker(cGRAY, 100-i),'-');
+      MainForm.DrawString((WindowX div 2)+i-2,y,Darker(cGRAY, 100-i),'-');
     end;
   end;
-end;
+
 begin
   StartDecorating('<-ОРУЖЕЙНЫЕ НАВЫКИ->', FALSE);
   c := 0; f := 0;
@@ -191,72 +173,58 @@ begin
     if pc.magicfight[i] > 0 then
       m := 1;
   // Вывести навыки
-  with Screen.Canvas do
+  // Ближний бой
+  DrawStyleLine(top);
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , top, cWHITE, s1);
+  if c > 0 then
   begin
-    // Ближний бой
-    DrawStyleLine(top*CharY);
-    Font.Color := cWHITE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, top*CharY, s1);
-    if c > 0 then
-    begin
-      for i:=1 to CLOSEFIGHTAMOUNT do
-        if pc.closefight[i] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(15*CharX, (top+i)*CharY, CLOSEWPNNAME[i]+':');
-          Font.Color := ColorRateSkill(pc.CloseFight[i]);
-          if ShowProc then
-            TextOut(33*CharX, (top+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])) +' = ' +FloatToStr(pc.CloseFight[i])+'%') else
-              TextOut(33*CharX, (top+i)*CharY, RateToStr(RateSkill(pc.CloseFight[i])));
-        end;
-    end else
+    for i:=1 to CLOSEFIGHTAMOUNT do
+      if pc.closefight[i] > 0 then
       begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, (top+1)*CharY, 'У тебя нет никаких навыков в этой области.');
+        MainForm.DrawString(15, (top+i), cBROWN, CLOSEWPNNAME[i]+':');
+        if ShowProc then
+          MainForm.DrawString(33, (top+i), ColorRateSkill(pc.CloseFight[i]), RateToStr(RateSkill(pc.CloseFight[i])) +' = ' +FloatToStr(pc.CloseFight[i])+'%')
+        else
+          MainForm.DrawString(33, (top+i), ColorRateSkill(pc.CloseFight[i]), RateToStr(RateSkill(pc.CloseFight[i])));
       end;
-    // Дальний бой
-    DrawStyleLine((top+10)*CharY);
-    Font.Color := cCYAN;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (top+10)*CharY, s2);
-    if f > 0 then
+  end else
     begin
-      for i:=1 to FARFIGHTAMOUNT do
-        if pc.farfight[i] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(15*CharX, ((top+10)+i)*CharY, FARWPNNAME[i]+':');
-          Font.Color := ColorRateSkill(pc.FarFight[i]);
-          if ShowProc then
-            TextOut(33*CharX, ((top+10)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%') else
-              TextOut(33*CharX, ((top+10)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i])));
-        end;
-    end else
+      MainForm.DrawString(15, (top+1), cBLUEGREEN, 'У тебя нет никаких навыков в этой области.');
+    end;
+  // Дальний бой
+  DrawStyleLine((top+10));
+  MainForm.DrawString(((WindowX-length(s2)) div 2) , (top+10), cCYAN, s2);
+  if f > 0 then
+  begin
+    for i:=1 to FARFIGHTAMOUNT do
+      if pc.farfight[i] > 0 then
       begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, ((top+10)+1)*CharY, 'У тебя нет никаких навыков в этой области.');
+        MainForm.DrawString(15, ((top+10)+i), cBROWN, FARWPNNAME[i]+':');
+        if ShowProc then
+          MainForm.DrawString(33, ((top+10)+i), ColorRateSkill(pc.FarFight[i]), RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%')
+        else
+          MainForm.DrawString(33, ((top+10)+i), ColorRateSkill(pc.FarFight[i]), RateToStr(RateSkill(pc.FarFight[i])));
       end;
-    // Магические навыки
-    DrawStyleLine((top+20)*CharY);
-    Font.Color := cPURPLE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (top+20)*CharY, s3);
-    if m > 0 then
+  end else
     begin
-      for i:=1 to MAGICSCHOOLAMOUNT do
-        if pc.farfight[i] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(15*CharX, ((top+20)+i)*CharY, FARWPNNAME[i]+':');
-          Font.Color := ColorRateSkill(pc.FarFight[i]);
-          if ShowProc then
-            TextOut(33*CharX, ((top+20)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%') else
-              TextOut(33*CharX, ((top+20)+i)*CharY, RateToStr(RateSkill(pc.FarFight[i])));
-        end;
-    end else
-      begin
-        Font.Color := cBLUEGREEN;
-        TextOut(15*CharX, ((top+20)+1)*CharY, 'У тебя нет никаких навыков в этой области.');
+      MainForm.DrawString(15, ((top+10)+1), cBLUEGREEN, 'У тебя нет никаких навыков в этой области.');
+    end;
+  // Магические навыки
+  DrawStyleLine((top+20));
+  MainForm.DrawString(((WindowX-length(s3)) div 2) , (top+20), cPURPLE, s3);
+  if m > 0 then
+  begin
+    for i:=1 to MAGICSCHOOLAMOUNT do
+      if pc.farfight[i] > 0 then
+     begin
+        MainForm.DrawString(15, ((top+20)+i), cBROWN, FARWPNNAME[i]+':');
+        if ShowProc then
+          MainForm.DrawString(33, ((top+20)+i), ColorRateSkill(pc.FarFight[i]), RateToStr(RateSkill(pc.FarFight[i]))+' = '+FloatToStr(pc.FarFight[i])+'%')
+        else
+          MainForm.DrawString(33, ((top+20)+i), ColorRateSkill(pc.FarFight[i]), RateToStr(RateSkill(pc.FarFight[i])));
       end;
-  end;
+  end else
+    MainForm.DrawString(15, ((top+20)+1), cBLUEGREEN, 'У тебя нет никаких навыков в этой области.');
 end;
 
 { Описание прокачки умения }
@@ -328,38 +296,25 @@ begin
       FullAbilitys[a] := i;
       inc(a);
     end;      
-  with Screen.Canvas do
+  // Если способности есть
+  if FullAbilitys[1] > 0 then
   begin
-    // Если способности есть
-    if FullAbilitys[1] > 0 then
-    begin
-      for i:=1 to AbilitysAmount do
-        if FullAbilitys[i] > 0 then
-        begin
-          Font.Color := cBROWN;
-          TextOut(5*CharX, (2+i)*CharY, '[ ]');
-          Font.Color := cORANGE;
-          TextOut(9*CharX, (2+i)*CharY, AbilitysData[FullAbilitys[i]].name);
-          Font.Color := cGRAY;
-          TextOut((9+Length(AbilitysData[FullAbilitys[i]].name)+1)*CharX, (2+i)*CharY, '(');
-          Font.Color := cLIGHTGRAY;
-          TextOut((9+Length(AbilitysData[FullAbilitys[i]].name)+2)*CharX, (2+i)*CharY, IntToStr(pc.ability[FullAbilitys[i]])+' уровень');
-          Font.Color := cGRAY;
-          TextOut((9+Length(AbilitysData[FullAbilitys[i]].name)+11)*CharX, (2+i)*CharY, ')');
-        end;
-      Font.Color := cRED;
-      TextOut(6*CharX, (2+MenuSelected)*CharY, '*');
-      // Описание
-      DrawBorder(5,37,90,2,crLIGHTGRAY);
-      Font.Color := cWHITE;
-      TextOut((((85-length(AbilitysData[FullAbilitys[MenuSelected]].descr)) div 2) + 8) * CharX, 38*CharY, AbilitysData[FullAbilitys[MenuSelected]].descr);
-    end else
-      // Способностей пока нет
+    for i:=1 to AbilitysAmount do
+      if FullAbilitys[i] > 0 then
       begin
-        Font.Color := cLIGHTGRAY;
-        TextOut(5*CharX, 5*CharY, 'Пока у тебя нет никаких особенных способностей.');
+        MainForm.DrawString(5, (2+i), cBROWN, '[ ]');
+        MainForm.DrawString(9, (2+i), cORANGE, AbilitysData[FullAbilitys[i]].name);
+        MainForm.DrawString((9+Length(AbilitysData[FullAbilitys[i]].name)+1), (2+i), cGRAY, '(');
+        MainForm.DrawString((9+Length(AbilitysData[FullAbilitys[i]].name)+2), (2+i), cLIGHTGRAY, IntToStr(pc.ability[FullAbilitys[i]])+' уровень');
+        MainForm.DrawString((9+Length(AbilitysData[FullAbilitys[i]].name)+11), (2+i), cGRAY, ')');
       end;
-  end;
+    MainForm.DrawString(6, (2+MenuSelected), cRED, '*');
+    // Описание
+    DrawBorder(5,37,90,2,crLIGHTGRAY);
+    MainForm.DrawString((((85-length(AbilitysData[FullAbilitys[MenuSelected]].descr)) div 2) + 8) , 38, cWHITE, AbilitysData[FullAbilitys[MenuSelected]].descr);
+  end else
+    // Способностей пока нет
+      MainForm.DrawString(5, 5, cLIGHTGRAY, 'Пока у тебя нет никаких особенных способностей.');
 end;
 
 

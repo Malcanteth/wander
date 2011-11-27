@@ -406,7 +406,6 @@ var
   t : shortint;
 begin
   if Item.id > 0 then
-    with Screen.Canvas do
     begin
       DrawBorder(15,31,70,4,crLIGHTGRAY);
       // Начать описание предмета
@@ -440,23 +439,19 @@ begin
       // Масса предмета
       s := s + 'Масса: '+FloatToStr(Item.mass);
       // Вывести некоторые характеристики предмета
-      Font.Color := cCYAN;
       // Атака для оружия, защита для брони или информация о еде и тд
-      TextOut(17*CharX, 32*CharY, s);
+      MainForm.DrawString(17, 32, cCYAN, s);
       // Вывести символ предмета
-      Font.Color := cLIGHTGRAY;
-      TextOut(49*CharX, 31*CharY, '| |');
-      Font.Color := RealColor(ItemColor(Item));
-      TextOut(50*CharX, 31*CharY, ItemTypeData[ItemsData[Item.id].vid].symbol);
+      MainForm.DrawString(49, 31, cLIGHTGRAY, '| |');
+      MainForm.DrawString(50, 31, RealColor(ItemColor(Item)), ItemTypeData[ItemsData[Item.id].vid].symbol);
       // Тип оружия, если это оружие
-      Font.Color := cGREEN;
       if (ItemsData[Item.id].vid = 6) then
-        TextOut((83-Length(CLOSEWPNNAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+CLOSEWPNNAME[ItemsData[Item.id].kind]+'"');
+        MainForm.DrawString((83-Length(CLOSEWPNNAME[ItemsData[Item.id].kind])), 32, cGREEN, '"'+CLOSEWPNNAME[ItemsData[Item.id].kind]+'"');
       if (ItemsData[Item.id].vid = 7) or (ItemsData[Item.id].vid = 13) then
-        TextOut((83-Length(FARWPNNAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+FARWPNNAME[ItemsData[Item.id].kind]+'"');
+        MainForm.DrawString((83-Length(FARWPNNAME[ItemsData[Item.id].kind])), 32, cGREEN, '"'+FARWPNNAME[ItemsData[Item.id].kind]+'"');
       // Тип брони, если это броня или обувь
       if (ItemsData[Item.id].vid = 4) or (ItemsData[Item.id].vid = 12) then
-        TextOut((83-Length(ARMORTYPENAME[ItemsData[Item.id].kind]))*CharX, 32*CharY, '"'+ARMORTYPENAME[ItemsData[Item.id].kind]+'"');
+        MainForm.DrawString((83-Length(ARMORTYPENAME[ItemsData[Item.id].kind])), 32, cGREEN, '"'+ARMORTYPENAME[ItemsData[Item.id].kind]+'"');
     end;
 end;
 
