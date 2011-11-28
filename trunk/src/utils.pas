@@ -28,20 +28,28 @@ type
     function IndexOf(AnInt: integer): integer;
   end;
 
+  TCallback = procedure(Index: byte);
+
   TMenu = class
   private
     _F: TStringList;
     X,Y,Pos: byte;
     Sel: char;
     ForeColor, BgColor, SelColor: LongWord;
+    CallBackProc : TCallback;
+    BreakKey : word;
     function getSelected: byte;
+    function getCount: byte;
   public
     constructor Create(ax,ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
                        aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
     property Selected: byte read getSelected;
+    property Count: byte read getCount;
     procedure Add(s: String); overload;
     procedure Add(s: String; c: LongInt); overload;
+    procedure addBreakKey(Key: word);
     procedure Draw;
+    procedure setCallback(newCallback: TCallback);
     function Run(Start: byte = 1): byte;
     destructor Destroy;
   end;
@@ -700,6 +708,11 @@ begin
   Log('Added '+s);
 end;
 
+procedure TMenu.addBreakKey(Key: word);
+begin
+  BreakKey := Key;
+end;
+
 constructor TMenu.Create(ax, ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
                        aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
 begin
@@ -710,6 +723,8 @@ begin
   ForeColor := aForeColor;
   BgColor := aBgColor;
   SelColor := aSelColor;
+  CallBackProc := nil;
+  BreakKey := 27;
 end;
 
 destructor TMenu.Destroy;
@@ -733,6 +748,11 @@ begin
   MainForm.Redraw;
 end;
 
+function TMenu.getCount: byte;
+begin
+  Result := _F.Count;
+end;
+
 function TMenu.getSelected: byte;
 begin
   Result := Pos;
@@ -747,6 +767,8 @@ begin
   begin
     Pos := Start;
     repeat
+      if (@CallbackProc <> nil) then
+        CallbackProc(Pos);    
       Draw;
       Key := getKey;
       case Key of
@@ -757,8 +779,14 @@ begin
         VK_HOME: Pos := 1;
         VK_END: Pos := _F.Count;
       end;
+      if Key = BreakKey then break;
     until false;
   end;
+end;
+
+procedure TMenu.setCallback(newCallback: TCallback);
+begin
+  CallbackProc := newCallback;
 end;
 
 initialization
