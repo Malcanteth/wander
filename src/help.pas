@@ -21,6 +21,8 @@ uses
 { Показать список команд }
 procedure ShowHelp;
 begin
+  Mainform.Cls;
+  GameMenu := true;
   StartDecorating('<-ПОМОЩЬ->', FALSE);
   AddTextLine(3, 2, 'Все просто - передвигайте своего героя стрелками управления и используйте команды:');
 
@@ -45,6 +47,10 @@ begin
   AddTextLine(3, 30, 'Двигаться по диагонали так же можно зажав *ALT + стрелки*.');
 
   AddTextLine(3, 39, 'Игру разработал Павел Дивненко aka BreakMeThunder *breakmt@mail.ru*');
+
+  Mainform.Redraw;
+  repeat until getKey in [13,27,32];
+  GameMenu := false;
 end;
 
 { Показать историю сообщений }
@@ -53,8 +59,9 @@ var
   x,y,c,t : byte;
   col: LongInt;
 begin
+  Mainform.Cls;
+  GameMenu := true;
   StartDecorating('<-ИСТОРИЯ ПОСЛЕДНИХ СООБЩЕНИЙ->', FALSE);
-  MainForm.SetBgColor(0);
   for y:=1 to MaxHistory do
     if History[y].Msg <> '' then
     begin
@@ -90,6 +97,9 @@ begin
       if History[y].amount > 1 then
         MainForm.DrawString((Length(History[y].msg)+1), (2)+((y-1)), MyRGB(200,255,255), IntToStr(History[y].amount)+' раза.');
     end;
+  Mainform.Redraw;
+  repeat until getKey in [13,27,32];
+  GameMenu := false;
 end;
 
 end.

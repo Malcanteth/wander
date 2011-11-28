@@ -110,7 +110,7 @@ var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsHISTORY] then
+                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsUSEMENU] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -130,9 +130,7 @@ begin
     gsQUESTLIST    : pc.QuestList;
     gsEQUIPMENT    : pc.Equipment;
     gsINVENTORY    : pc.Inventory;
-    gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
-    gsHISTORY      : ShowHistory;
   end;
 //Отображаем курсор
   if GameTimer.Enabled then
@@ -275,9 +273,7 @@ begin
               end;
               // Помощь '?'
               112       :
-              begin
-                ChangeGameState(gsHELP);
-              end;
+                          ShowHelp;
               // Атаковать 'a'
               65        : pc.SearchForAlive(1);
               // Поднять 'g'
@@ -332,13 +328,10 @@ begin
               end;
               // Войти в меню Навыки и Способности 'x'
               88        :
-              begin
-                MenuSelected := 1;
                 SkillsAndAbilitys;
-              end;
               // История сообщений 'm'
               77        :
-                ChangeGameState(gsHISTORY);
+                ShowHistory;
               // Крикнуть 'y'
               89        :
               begin
@@ -558,8 +551,7 @@ begin
             end;
           end;
           // Список квестов, экипировка, помощь
-          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsHISTORY, 
-          gsUSEMENU:
+          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsUSEMENU:
           begin
             // Выход в игру или в другое место
             if GameState = gsUSEMENU then
@@ -569,20 +561,6 @@ begin
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
               
-{            // Чит в навыках
-            if GameState = gsWPNSKILLS then
-            begin
-              case Key of
-                // Отобразить проценты '\'
-                220 :
-                begin
-                  ShowProc := not ShowProc;
-                  Redraw;
-                end;
-              end;
-
-            end ELSE}
-
             // Управление в экипировке
             if GameState = gsEQUIPMENT then
             begin

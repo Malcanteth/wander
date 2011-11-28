@@ -91,13 +91,13 @@ const
   gsQUESTLIST              = 5;
   gsEQUIPMENT              = 6;
   gsINVENTORY              = 7;
-  gsHELP                   = 8;
+//  gsHELP                   = 8;
   gsUSEMENU                = 9;
 //  gsHERONAME               = 10;
 //  gsHEROGENDER             = 11;
   gsOPEN                   = 12;
 //  gsABILITYS               = 13;
-  gsHISTORY                = 14;
+//  gsHISTORY                = 14;
   gsINTRO                  = 15;
 //  gsHEROATR                = 16;
 //  gsHEROCRRESULT           = 17;
