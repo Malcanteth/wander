@@ -982,6 +982,8 @@ procedure Tpc.QuestList;
 var
   i, k : byte;
 begin
+  GameMenu := true;
+  MainForm.Cls;
   StartDecorating('<-ÑÏÈÑÎÊ ÒÅÊÓÙÈÕ ÊÂÅÑÒÎÂ->', FALSE);
   k := 0;
   for i:=1 to QuestsAmount do
@@ -1008,6 +1010,9 @@ begin
         end;
       end;
     end;
+  Mainform.Redraw;
+  repeat until getKey in [13,27,32];
+  GameMenu := false;
 end;
 
 { İêèïèğîâêà }

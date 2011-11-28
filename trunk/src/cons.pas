@@ -88,7 +88,7 @@ const
   gsCLOSE                  = 2;
   gsLOOK                   = 3;
   gsCHOOSEMONSTER          = 4;
-  gsQUESTLIST              = 5;
+//  gsQUESTLIST              = 5;
   gsEQUIPMENT              = 6;
   gsINVENTORY              = 7;
 //  gsHELP                   = 8;
