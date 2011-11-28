@@ -110,8 +110,7 @@ var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsABILITYS,
-                   gsHISTORY, gsSKILLSMENU, gsWPNSKILLS] then
+                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsUSEMENU, gsHISTORY] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -133,10 +132,7 @@ begin
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
-    gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
-    gsSKILLSMENU   : SkillsAndAbilitys;
-    gsWPNSKILLS    : WpnSkills;
   end;
 //Отображаем курсор
   if GameTimer.Enabled then
@@ -338,7 +334,7 @@ begin
               88        :
               begin
                 MenuSelected := 1;
-                ChangeGameState(gsSKILLSMENU);
+                SkillsAndAbilitys;
               end;
               // История сообщений 'm'
               77        :
@@ -562,8 +558,8 @@ begin
             end;
           end;
           // Список квестов, экипировка, помощь
-          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsABILITYS, gsHISTORY, gsSKILLSMENU,
-          gsUSEMENU, gsWPNSKILLS:
+          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsHISTORY, 
+          gsUSEMENU:
           begin
             // Выход в игру или в другое место
             if GameState = gsUSEMENU then
@@ -573,7 +569,7 @@ begin
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
               
-            // Чит в навыках
+{            // Чит в навыках
             if GameState = gsWPNSKILLS then
             begin
               case Key of
@@ -585,7 +581,7 @@ begin
                 end;
               end;
 
-            end ELSE
+            end ELSE}
 
             // Управление в экипировке
             if GameState = gsEQUIPMENT then
@@ -664,34 +660,6 @@ begin
                 end;
               end;
             end ELSE
-
-            // Управление в списке способностей
-            if GameState = gsABILITYS then
-            begin
-              case Key of
-                // Вверх
-                38,104,56 :
-                begin
-                  if MenuSelected = 1 then
-                  begin
-                    for a:=1 to AbilitysAmount-1 do
-                      if FullAbilitys[a+1] = 0 then
-                        break;
-                     MenuSelected := a;
-                  end
-                    else
-                      dec(MenuSelected);
-                end;
-                // Вниз
-                40,98,50 :
-                begin
-                  for a:=1 to AbilitysAmount-1 do
-                    if FullAbilitys[a+1] = 0 then
-                      break;
-                  if MenuSelected = a then MenuSelected := 1 else inc(MenuSelected);
-                end;
-            end;
-          end ELSE
 
           // Список действий над предметом
           if GameState = gsUSEMENU then
@@ -836,39 +804,7 @@ begin
                 end;
               end;
             end;
-          end ELSE
-
-          // Меню навыков и способностей
-          if GameState = gsSKILLSMENU then
-          begin
-            case Key of
-              // Вверх
-              38,104,56 :
-              begin
-                if MenuSelected = 1 then MenuSelected := 4 else dec(MenuSelected);
-                Redraw;
-              end;
-              // Вниз
-              40,98,50 :
-              begin
-                if MenuSelected = 4 then MenuSelected := 1 else inc(MenuSelected);
-                Redraw;
-              end;
-              // Ok...
-              13 :
-              begin
-                case MenuSelected of
-                  3 : // Особенные способности
-                  ChangeGameState(gsWPNSKILLS);
-                  4 : // Особенные способности
-                  ChangeGameState(gsABILITYS);
-                end;
-                MenuSelected := 1;
-                Redraw;
-              end;
-            end;
-          end; {ELSE}
-          
+          end;
         end;
       end;
       pc.AfterTurn;

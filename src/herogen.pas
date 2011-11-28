@@ -305,6 +305,7 @@ var
   Key : Word;
 begin
   Result := false;
+  GameMenu := true;
   MainForm.Cls;
   StartDecorating('<-ÑÎÇÄÀÍÈÅ ÍÎÂÎÃÎ ÏÅÐÑÎÍÀÆÀ->', TRUE);
   Script.Run('CreatePC.pas');
@@ -315,6 +316,7 @@ begin
   repeat
     Key := getKey;
   until Key in [13, 27];
+  GameMenu := false;  
   if Key = 27 then exit;
   Result := true;
   pc.FavWPNSkill;
