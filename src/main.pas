@@ -110,7 +110,7 @@ var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
   if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsUSEMENU] then
+                   gsEQUIPMENT, gsINVENTORY, gsUSEMENU] then
   begin
     if not((GameState = gsPLAY)and GameMenu) then Cls;
   end;
@@ -127,7 +127,6 @@ begin
       // Выводим сообщения
       if GameState = gsConsole then ShowLog else ShowMsgs;
     end;
-    gsQUESTLIST    : pc.QuestList;
     gsEQUIPMENT    : pc.Equipment;
     gsINVENTORY    : pc.Inventory;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
@@ -227,9 +226,7 @@ begin
               84        : pc.SearchForAlive(2);
               // Список квестов 'q'
               81        :
-              begin
-                ChangeGameState(gsQUESTLIST);
-              end;
+                pc.QuestList;
               // Съесть 'f'
               70        :
               begin
@@ -551,7 +548,7 @@ begin
             end;
           end;
           // Список квестов, экипировка, помощь
-          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsUSEMENU:
+          gsEQUIPMENT, gsINVENTORY, gsUSEMENU:
           begin
             // Выход в игру или в другое место
             if GameState = gsUSEMENU then
@@ -560,7 +557,7 @@ begin
                 ChangeGameState(LastGameState);
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
-              
+
             // Управление в экипировке
             if GameState = gsEQUIPMENT then
             begin

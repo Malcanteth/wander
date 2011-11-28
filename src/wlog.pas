@@ -62,6 +62,7 @@ begin
   x := L.Count;
   c := MsgAmount - 1;
   MainForm.SetFont(FontMsg);
+  Mainform.SetBgColor(0);
   for y := 1 to c do
     MainForm.DrawString(0, (MapY + y) , MyRGB(160,160,160), StringOfChar(' ',WindowX));
   if c > x then c := x;
