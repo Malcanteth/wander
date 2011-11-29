@@ -3,7 +3,65 @@ unit utils;
 interface
 
 uses
-  SysUtils, Main, Cons, Windows, Graphics, JPEG, Classes;
+  SysUtils, Cons, Windows, Graphics, JPEG, Classes;
+
+type
+  PInt = ^TInt;
+
+  TInt = record
+    N: integer;
+    next: PInt;
+  end;
+
+  TIntQueue = class
+  private
+    Front, Tail: PInt;
+    function getItem(Index: Integer): integer;
+  public
+    Count: integer;
+    constructor Create;
+    destructor Destroy; override;
+    procedure Clear;
+    function IsEmpty: boolean;
+    procedure Push(AnInt: integer);
+    function Pop: integer;
+    function GetFront(var AnInt: integer): boolean;
+    function InList(AnInt: integer): boolean;
+    function IndexOf(AnInt: integer): integer;
+    property Items[Index: integer] : integer read getItem; default;
+  end;
+
+  TCallback = procedure(Index: byte);
+
+  TMenu = class
+  private
+    _F: TStringList;
+    _H: TStringList;
+    X,Y,Pos: byte;
+    Sel: char;
+    ForeColor, BgColor, SelColor: LongWord;
+    aBreakKey: word;
+    CallBackProc : TCallback;
+    BreakKeys : TIntQueue;
+    function getSelected: byte;
+    function getBreakKey: word;
+    function getCount: byte;
+  public
+    constructor Create(ax,ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
+                       aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
+    property Selected: byte read getSelected;
+    property BreakKey: word read getBreakKey;
+    property Count: byte read getCount;
+    procedure Add(s: String); overload;
+    procedure Add(s: String; c: LongInt); overload;
+    procedure Add(h,s: string); overload;
+    procedure Add(h,s: String; c: LongInt); overload;
+    procedure addBreakKey(Key: word);
+    procedure Draw;
+    procedure setCallback(newCallback: TCallback);
+    function Run(Start: byte = 1): byte;
+    destructor Destroy;
+  end;
 
 function MyRGB(R,G,B : byte) : LongWord;         // Цвет
 function RealColor(c : byte) : longword;
@@ -18,7 +76,6 @@ function IsFlag(flags : LongWord;
 procedure StartDecorating(header : string;
                     withoutexit : boolean);      // Рамочка, название
 procedure DrawBorder(x,y,w,h,color : byte);      // Рамка для инф. о предмете
-function ExistFile(n : string) : boolean;        // Существет ли такой файл?
 function ReturnColor(Rn,n : integer;
                           ow : byte) : integer;  // Вернуть цвет в зависимости от процентов
 function ReturnInvAmount : byte;                 // Вернуть колличество предметов в инвентаре
@@ -35,11 +92,13 @@ procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 function GetDungeonModeMapName : string;         // Генерировать название подземелья
 procedure ChangeGameState(NewState : byte);      // Поменять состояние игры
 procedure StartGameMenu;                         // Отобразить игровое меню
+function Padded(s: string; l: byte; c: char = ' '): string;
 
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
+  Main, Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage,
+  wlog, help, herogen, MapEditor, mbox;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -148,78 +207,30 @@ end;
 
 { Рамочка, название }
 procedure StartDecorating(header : string; withoutexit : boolean);
-const
-  space  = '-=[ НАЖМИ ПРОБЕЛ ДЛЯ ВЫХОДА ]=-';
+const space  = '-=[ НАЖМИ ПРОБЕЛ ДЛЯ ВЫХОДА ]=-';
 var
   i : byte;
 begin
-  with Screen.Canvas do
+  For i:=1 to ((WindowX) div 2)+1 do
   begin
-    For i:=1 to Round(WindowX/2) do
-    begin
-      Font.Color := Darker(cGRAY,100-i);
-      TextOut((i-1)*CharX,0,'=');
-      TextOut((i-1)*CharX,CharY*(WindowY-1),'=');
-    end;
-    For i:=Round(WindowX/2) to WindowX do
-    begin
-      Font.Color := Darker(cGRAY,i);
-      TextOut((i-1)*CharX,0,'=');
-      TextOut((i-1)*CharX,CharY*(WindowY-1),'=');
-    end;
-    Font.Color := cYELLOW;
-    TextOut(((WindowX-length(header)) div 2) * CharX, 0, header);
-    if withoutexit = FALSE then
-    begin
-      Font.Color := cBROWN;
-      TextOut(((WindowX-length(space)) div 2) * CharX, CharY*(WindowY-1), space);
-    end;
+    MainForm.DrawString((i-1),0,Darker(cGRAY,100-i),'=');
+    MainForm.DrawString((i-1),(WindowY-1),Darker(cGRAY,100-i),'=');
+    MainForm.DrawString(WindowX - (i-1),0,Darker(cGRAY,100-i), '=');
+    MainForm.DrawString(WindowX - (i-1),(WindowY-1),Darker(cGRAY,100-i),'=');
   end;
+  MainForm.DrawString(((WindowX-length(header)) div 2),  0, cYELLOW, header);
+  if withoutexit = FALSE then
+    MainForm.DrawString(((WindowX-length(space)) div 2) , (WindowY-1), cBROWN, space);
 end;
 
 { Рамочка для информации о предмете}
 procedure DrawBorder(x,y,w,h,color : byte);
-var
-  i,j : byte;
+var i, j: byte;
 begin
-  with Screen.Canvas do
-  begin
-    Font.Color := RealColor(color);
-    TextOut(x*CharX,y*CharY,'.');
-    TextOut((x+w)*CharX,y*CharY,'.');
-    TextOut(x*CharX,(y+h)*CharY,'''');
-    TextOut((x+w)*CharX,(y+h)*CharY,'''');
-    For i:=x+1 to x+w-1 do
-    begin
-      TextOut(i*CharX,y*CharY,'-');
-      TextOut(i*CharX,(y+h)*CharY,'-');
-    end;
-    For i:=y+1 to y+h-1 do
-    begin
-      TextOut(x*CharX,i*CharY,'|');
-      TextOut((x+w)*CharX,i*CharY,'|');
-    end;
-    for i := y + 1 to y + h - 1 do 
- 	  for j := x + 1 to x + w - 1 do 
- 	    TextOut(j*CharX,i*CharY,' '); 	
-  end;
-end;
-
-{ Существет ли такой файл? }
-function ExistFile(n : string) : boolean;
-var
-  f : file;
-begin
-  assign(f,n);
-  {$I-}
-  reset(f);
-  {$I+}
-  if IOResult=0 then
-  begin
-    close(f);
-    Result := true;
-  end else
-    Result := false;
+  MainForm.DrawString(x,y,RealColor(color),bsBDiagonal,Frame[5]+StringOfChar(Frame[1],w-2)+Frame[6]);
+  for i:=y+1 to y+h-1 do
+    MainForm.DrawString(x,i,RealColor(color),Frame[2]+StringOfChar(' ',w-2)+Frame[4]);
+  MainForm.DrawString(x,(y+h),RealColor(color),Frame[7]+StringOfChar(Frame[3],w-2)+Frame[8]);
 end;
 
 {  Вернуть цвет в зависимости от процентов }
@@ -331,13 +342,13 @@ begin
   // PNG
   P := TPNGObject.Create;
   try
-    P.Assign(Screen);
+    P.Assign(_Screen);
     P.SaveToFile(Path + 'screens/' + fname + '.png');
   finally
     P.Free;
   end;
   AddMsg('#Сделан скриншот# ($'+fname+'$).',0);
-  MainForm.OnPaint(NIL);
+  MainForm.Redraw;
 end;
 
 { Вид вещи соответствующий выбранной ячейки экипировки }
@@ -393,25 +404,16 @@ const
   s4 = '   ###   #    # #   # #  # #### #  #  ';
   s5 = '        #           # ###           # ';
 begin
-  with Screen.Canvas do
-  begin
-    // WANDER
-    Font.Color := cLIGHTGRAY;
-    TextOut(((WindowX-length(s0)) div 2) * CharX, up*CharY, s0);
-    Font.Color := cLIGHTBLUE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, (up+1)*CharY, s1);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (up+2)*CharY, s2);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (up+3)*CharY, s3);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s4)) div 2) * CharX, (up+4)*CharY, s4);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
-    // Версия
-    Font.Color := cBLUEGREEN;
-    TextOut(34*CharY, (up+1)*CharY, GameVersion);
-  end;
+  MainForm.cls;
+  // WANDER
+  MainForm.DrawString(((WindowX-length(s0)) div 2) , up, cLIGHTGRAY, s0);
+  MainForm.DrawString(((WindowX-length(s1)) div 2) , (up+1), cLIGHTBLUE, s1);
+  MainForm.DrawString(((WindowX-length(s2)) div 2) , (up+2), cBLUE, s2);
+  MainForm.DrawString(((WindowX-length(s3)) div 2) , (up+3), cBLUE, s3);
+  MainForm.DrawString(((WindowX-length(s4)) div 2) , (up+4), cBROWN, s4);
+  MainForm.DrawString(((WindowX-length(s5)) div 2) , (up+5), cBROWN, s5);
+  // Версия
+  MainForm.DrawString(((WindowX+length(s1))div 2), (up+1), cBLUEGREEN, GameVersion);
 end;
 
 { Случайное целое число из диапазона }
@@ -512,7 +514,7 @@ begin
 
       MemStream := TMemoryStream.Create; 
       try 
-        BMPImage.SaveToStream(MemStream); 
+        BMPImage.SaveToStream(MemStream);
         //you need to reset the position of the MemoryStream to 0 
         MemStream.Position := 0; 
 
@@ -547,17 +549,308 @@ end;
 
 { Отобразить игровое меню }
 procedure StartGameMenu;
+const
+  TableX = 39;
+  TableW = 20;
+  MenuNames : array[1..GMChooseAmount] of string =
+  ('Новая игра', 'Выход');
+var
+  i,j: byte;
 begin
-  GameMenu := TRUE;
-  MenuSelected := 1;
+  repeat
+    if (GameState = gsPlay) then BlackWhite(_Screen) else Intro;
+    DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
+    GameMenu := TRUE;
+    with TMenu.Create(TableX+2, (WindowY div 2)-(GMChooseAmount+2)div 2) do
+    begin
+      for i:=1 to GMChooseAmount do
+        Add(MenuNames[i]);
+      j := 1;
+      repeat
+        j:=Run(Selected);
+      until ((j = 0) and (GameState <> gsINTRO))or(j<>0);
+      Free;
+    end;
+    GameMenu := FALSE;
+    if j = 0 then exit;
+    case j of
+      gmNEWGAME :
+        if ChooseMode then
+        begin
+          M.MonL[pc.idinlist] := pc;
+          MainForm.InitGame;
+          break;
+        end else GameState := gsIntro;
+      gmEXIT    :
+        begin
+          GameMenu := FALSE;
+          if GameState = gsINTRO then AskForQuit := FALSE;
+          MainForm.Close;
+          break;
+        end;
+      end;
+  until false;
+end;
+
+function Padded(s: string; l: byte; c: char = ' '): string;
+begin
+  if length(s) < l then Result := s + StringOfChar(c, l-length(s)) else Result:=copy(s, 1, l);
+end;
+
+{ Класс TIntQueue }
+
+procedure InitPInt (var AnIntPtr: PInt; AVal: integer);
+begin
+  new(AnIntPtr);
+  with AnIntPtr^ do begin
+    N := AVal;
+    next := nil;
+  end;
+end;
+
+//PInt.prev is older item toward front of queue. PInt.next is new item toward rear of queue.
+constructor TIntQueue.Create;
+begin
+  inherited Create;
+  Front := nil;
+  Tail := nil;
+  Count := 0;
+end;
+
+destructor TIntQueue.Destroy;
+begin
+  Clear;
+  inherited Destroy;
+end;
+
+procedure TIntQueue.Clear;
+var Cur, Nxt: PInt;
+begin
+  Cur := Front;
+  while Cur <> nil do begin
+    Nxt := Cur^.next;
+    dispose(Cur);
+    Cur := Nxt;
+  end;
+  Front := nil;
+  Count := 0;
+end;
+
+function TIntQueue.IsEmpty: boolean;
+begin
+  Result := (Front = nil);
+end;
+
+procedure TIntQueue.Push(AnInt: integer);
+// only adds to the tail
+var
+  NewNode: PInt;
+begin
+  InitPInt(NewNode, AnInt);
+  if Front = nil then
+    Front := NewNode
+  else
+    Tail^.next := NewNode;
+  Tail := NewNode;
+  inc(Count);
+end;
+
+function TIntQueue.Pop: Integer;
+// only can remove from the front
+var oFront: PInt;
+begin
+  if Front <> nil then begin
+    oFront := Front;
+    Result := oFront^.N;
+    Front := Front^.next;
+    dispose(oFront);
+    dec(Count);
+  end;
+end;
+
+function TIntQueue.GetFront(var AnInt: integer): boolean;
+begin
+  Result := false;
+  AnInt := 0;
+  if Front <> nil then begin
+    AnInt := Front^.N;
+    Result := true;
+  end;
+end;
+
+function TIntQueue.InList(AnInt: integer): boolean;
+var Cur: PInt;
+begin
+  Result := false;
+  Cur := Front;
+  while (Cur <> nil) and (not Result) do begin
+    if Cur^.N = AnInt then Result := true
+    else Cur := Cur^.next;
+  end;
+end;
+
+function TIntQueue.getItem(Index: Integer): integer;
+var Cur: PInt;
+  i : integer;
+begin
+  if (Index < 1) then exit;
+  Cur := front;
+  i := 1;
+  while (Cur<>nil) and (i<Index) do
+  begin
+    inc(i);
+    Cur := Cur^.next;
+  end;
+end;
+
+function TIntQueue.IndexOf(AnInt: integer): integer;
+// returns the position of an integer in the Queue from the front, with 1 being the first and 0 being non existent
+var
+Found: boolean;
+Cur: PInt;
+begin
+  Result := 0;
+  Cur := Front;
+  Found := false;
+  while (Cur <> nil) and (not Found) do begin
+    inc(Result);
+    if Cur^.N = AnInt then Found := true
+    else Cur := Cur^.next;
+  end;
+  if not Found then Result := 0;
 end;
 
 var
   EX: TExplodeResult;
 
+{ TMenu }
+
+procedure TMenu.Add(s: String);
+begin
+  _F.AddObject(s, Pointer(ForeColor));
+  _H.Add('');
+  Log('Added '+s);
+end;
+
+procedure TMenu.Add(s: String; c: LongInt);
+begin
+  _F.AddObject(s, Pointer(c));
+  _H.Add('');
+  Log('Added '+s);
+end;
+
+procedure TMenu.Add(h, s: string);
+begin
+  _F.AddObject(s, Pointer(ForeColor));
+  _H.Add(h);
+  Log('Added '+s);
+end;
+
+procedure TMenu.Add(h, s: String; c: Integer);
+begin
+  _F.AddObject(s, Pointer(c));
+  _H.Add(h);
+  Log('Added '+s);
+end;
+
+procedure TMenu.addBreakKey(Key: word);
+begin
+  BreakKeys.Push(Key);
+end;
+
+constructor TMenu.Create(ax, ay: byte; aSel: char = '>'; aForeColor: LongInt = cCYAN;
+                       aBgColor: LongInt = cBROWN; aSelColor: LongInt = cYELLOW);
+begin
+  _F := TStringList.Create;
+  _H := TStringList.Create;
+  BreakKeys:= TIntQueue.Create;
+  aBreakKey:= 0;
+  x := ax;
+  y := ay;
+  Sel := aSel;
+  ForeColor := aForeColor;
+  BgColor := aBgColor;
+  SelColor := aSelColor;
+  CallBackProc := nil;
+end;
+
+destructor TMenu.Destroy;
+begin
+  BreakKeys.Free;
+  _F.Free;
+  _H.Free;
+end;
+
+procedure TMenu.Draw;
+var i: byte;
+begin
+  if not(_F.Count = 0) then
+    begin
+      MainForm.SetBgColor(cBlack);
+      for i:= 0 to _F.Count-1 do
+      begin
+        MainForm.DrawString(x,(y+i),BgColor,'[ ] '+_H[i]);
+        MainForm.DrawString((x+4+length(_H[i])),(y+i),LongInt(_F.Objects[i]),_F[i]);
+      end;
+      MainForm.DrawString((x+1),(y+pos-1),SelColor,Sel);
+    end;
+  MainForm.Redraw;
+end;
+
+function TMenu.getBreakKey: word;
+begin
+  Result := aBreakKey;
+end;
+
+function TMenu.getCount: byte;
+begin
+  Result := _F.Count;
+end;
+
+function TMenu.getSelected: byte;
+begin
+  Result := Pos;
+end;
+
+function TMenu.Run(Start: byte = 1): byte;
+var Key : Word;
+begin
+  if Start = 0 then Start := 1;
+  if Start > _F.Count then Start:=_F.Count;
+  if Start = 0 then Result := 0 else
+  begin
+    Pos := Start;
+    repeat
+      if (@CallbackProc <> nil) then
+        CallbackProc(Pos);
+      Draw;
+      Key := getKey;
+      case Key of
+        13: begin Result := Pos; break; end;
+        27: begin Result := 0; break; end;
+        VK_UP: if Pos > 1 then dec(Pos) else Pos := _F.Count;
+        VK_DOWN: if Pos < _F.Count then inc(Pos) else Pos := 1;
+        VK_HOME: Pos := 1;
+        VK_END: Pos := _F.Count;
+      end;
+      if BreakKeys.IndexOf(Key) > 0 then
+      begin
+        Result := 0;
+        aBreakKey := Key;
+        break;
+      end;
+    until false;
+  end;
+end;
+
+procedure TMenu.setCallback(newCallback: TCallback);
+begin
+  CallbackProc := newCallback;
+end;
+
 initialization
   // Версия игры
   EX := Explode('.', FileVersion(Paramstr(0)));
   GameVersion := EX[0] + '.' + EX[1] + EX[2];
-
+  if (strtoint(Ex[3]) in [1..27]) then GameVersion := GameVersion + chr(96+strtoint(Ex[3]));
 end.
