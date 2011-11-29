@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 286
-  Top = 192
+  Left = 514
+  Top = 208
   BorderStyle = bsSingle
   Caption = 'WANDER'
   ClientHeight = 206
@@ -13,7 +13,6 @@ object MainForm: TMainForm
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
-  OnActivate = FormActivate
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy

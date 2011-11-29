@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
-  Menus, Contnrs, utils, cons;
+  Menus;
 
 type
   TMainForm = class(TForm)
@@ -21,31 +21,21 @@ type
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
-    procedure FormActivate(Sender: TObject);
-    procedure Cls;
-    procedure Redraw;
-    procedure SetFont(newFont: string);
-    procedure SetBgColor(c: LongInt);
-    procedure DrawHPBar(x,y: byte; color: LongInt; hp, rhp: word); //маленькая шкала над существом
-    procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //градиентная шкала
-    procedure ShowCursor;
-    procedure HideCursor;
-  public
-    procedure DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX); overload;
-    procedure DrawString(x,y: byte; c: LongInt; bs: TBrushStyle; s: string; l: byte = WindowX); overload;
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
+    function GetCharFromVirtualKey(Key: Word): string;
   public
   end;
 
 var
   MainForm             : TMainForm;
-  KeyQueue             : TIntQueue;            //Буфер нажатых клавиш
-  _Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
+  Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
+  WaitMore,                                    // --Далее--
+  WaitEnter,                                   // Ждем нажатия Enter
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
-  Inputing, Debug      : boolean;              // Режим ввода
+  Inputing             : boolean;              // Режим ввода
   GameState,                                   // Состояние игры
   MenuSelected2,                               // Выбранный элемент в меню
   VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
@@ -64,21 +54,12 @@ implementation
 {$R *.dfm}
 
 uses
-  Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
-  Conf, SUtils, Script, MBox, Vars, Monsters, wlog;
+  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
+  Conf, SUtils, Script, MBox, Vars, Monsters;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  if Debug then
-  begin
-    Caption := '[Debug] '+Caption;
-    Run('CreatePC.pas', true);
-    Run('GenDungeon.pas', true);
-    Run('GenName.pas', true);
-    Run('InitStory.pas', true);
-    Run('NPCTalk.pas', true);
-  end;
   // контекст главной формы
   DC := GetDC(MainForm.Handle);
   // Прячем главное меню
@@ -86,7 +67,7 @@ begin
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
-  with _Screen do
+  with Screen do
   begin
     Width := ClientWidth;
     Height := ClientHeight;
@@ -96,63 +77,71 @@ begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
-  SetFont(FontMsg);
   GameTimer.Enabled := False;
-  MenuSelected := 1;
-  // Вывести меню
-  KeyQueue := TIntQueue.Create;
   ChangeGameState(gsINTRO);
+  MenuSelected := 1;
+  GameMenu := TRUE;
 end;
 
 { Отрисовка }
 procedure TMainForm.FormPaint(Sender: TObject);
-var OldStyle : TBrushStyle;
 begin
   // Заполняем картинку черным цветом
-  if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE,
-                   gsEQUIPMENT, gsINVENTORY, gsUSEMENU] then
-  begin
-    if not((GameState = gsPLAY)and GameMenu) then Cls;
-  end;
+  Screen.Canvas.Brush.Color := 0;
+  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
   // Выводим
   case GameState of
-    gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE:
-    if not((GameState = gsPLAY)and GameMenu) then
+    gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM:
     begin
       // Выводим карту
       M.DrawScene;
-      // Вывести информацию о герое
-      pc.WriteInfo;      
-      if pc.Hp <= 0 then BlackWhite(_Screen);
       // Выводим сообщения
-      if GameState = gsConsole then ShowLog else ShowMsgs;
+      ShowMsgs;
+      // Вывести информацию о герое
+      pc.WriteInfo;
     end;
+    gsQUESTLIST    : pc.QuestList;
     gsEQUIPMENT    : pc.Equipment;
     gsINVENTORY    : pc.Inventory;
+    gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
+    gsCHOOSEMODE   : pc.ChooseMode;
+    gsHERONAME     : pc.HeroName;
+    gsHEROATR      : pc.HeroAtributes;
+    gsHERORANDOM   : pc.HeroRandom;
+    gsHEROGENDER   : pc.HeroGender;
+    gsHEROCRRESULT : pc.HeroCreateResult;
+    gsHEROCLWPN    : pc.HeroCloseWeapon;
+    gsHEROFRWPN    : pc.HeroFarWeapon;
+    gsABILITYS     : ShowAbilitys;
+    gsHISTORY      : ShowHistory;
+    gsINTRO        : Intro;
+    gsSKILLSMENU   : SkillsAndAbilitys;
+    gsWPNSKILLS    : WpnSkills;
   end;
-//Отображаем курсор
-  if GameTimer.Enabled then
+  // Ввод
+  if Inputing then
   begin
-    BitBlt(_Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, GrayScreen.Canvas.Handle, 0, 0, SRCCopy);
-    With _Screen.Canvas do
-    begin
-      Brush.Color := 0;
-      Font.Color := MyRGB(160,160,160);
-      Textout(InputX*CharX, InputY*CharY, InputString);
-      if GetTickCount mod 1000 < 500 then
-      begin
-        OldStyle := Brush.Style;
-        Brush.Style := bsClear;
-        Font.Color := cLIGHTGREEN;
-        Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
-        Brush.Style := OldStyle;
-      end;
-    end;
+    GameTimer.Interval := 200;
+    GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
+    ShowInput;                  // Показываем поле для ввода имени персонажа
   end;
-  SetStretchBltMode(_Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  // Игровое Меню
+  if GameMenu then
+  begin
+    // Сделать заднюю картинку серой
+    if GameState <> gsINTRO then
+    begin
+      BlackWhite(Screen);
+      GrayScreen := Screen;
+    end;
+    // Вывести меню
+    DrawGameMenu;
+  end;
+  // Отображаем растягиваемый буфер
+  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
   StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-  _Screen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, SRCCopy);
+  Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
 end;
 
 { Нажатие на клавиши }
@@ -160,23 +149,348 @@ procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
   i : integer;
-  n,s : string;
+  n : string;
   Item : TItem;
-  b: boolean;
 begin
   // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
   if Key <> 16 then
   begin
   // Скриншот
   if Key = 116 then TakeScreenShot else
-    if (Inputing) then
-      KeyQueue.Push(Key)
-    else
+    // Пробел или Enter для продолжения
+    if WaitMore then
+    begin
+      if (Key = 32) or (Key = 13) then WaitMore := False;
+    end else
+      // Enter для продолжения
+      if WaitENTER then
+      begin
+        if Key = 13 then
+        begin
+          WaitENTER := False;          // Ввод имени закончен. Мигание курсора 
+          GameTimer.Enabled := False;  // больше не нужно, отключаем таймер
+        end else
+        // Ввод
+        if Inputing then
+        begin
+          if (Key = VK_BACK) and (InputPos > 0) then
+          begin
+            Delete(InputString,InputPos,1);
+            dec(InputPos);
+          end
+          else if (Key = VK_DELETE) and (InputPos < Length(InputString)) then
+          begin
+            Delete(InputString,InputPos+1,1);
+          end
+          else if Key = VK_HOME then
+            InputPos := 0
+          else if Key = VK_END then
+            InputPos := length(InputString)
+          else if (Key = VK_LEFT) and (InputPos > 0) then
+            dec(InputPos)
+          else if (Key = VK_RIGHT) and (InputPos < Length(InputString)) then
+            inc(InputPos)
+          else if length(InputString)<13 then
+          begin
+            n := GetCharFromVirtualKey(Key);
+            if n<>'' then
+            begin
+              if ord(n[1]) > 31 then
+              begin
+                Insert(n, InputString, InputPos+1);
+                Inc(InputPos);
+              end;
+            end;
+          end;                 
+          OnPaint(Sender);
+        end;
+      end else
+        // Вопрос
+        if Answer = ' ' then
+        begin
+          if key = 32 then Answer := '' else Answer := UpCase (Chr(Key));
+        end else
+          // Игровое меню
+          if GameMenu then
+          begin
+            case Key of
+              // Esc
+              27 :
+                if GameState <> gsINTRO then GameMenu := FALSE;
+              // Вверх
+              38,104,56 :    
+              begin
+                if MenuSelected = 1 then MenuSelected := GMChooseAmount else dec(MenuSelected);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
+              end;
+              // Ok...
+              13 :
+              begin
+                GameMenu := FALSE;
+                case MenuSelected of
+                  gmNEWGAME :
+                  begin
+                    if Mode = 0 then
+                      ChangeGameState(gsCHOOSEMODE) else
+                        begin
+                          PlayMode := Mode;
+                          // Если режим приключений то нужно загрузить карты
+                          if PlayMode = AdventureMode then
+                            if not MainEdForm.LoadSpecialMaps then
+                            begin
+                              MsgBox('Ошибка загрузки карт!');
+                              Halt;
+                            end;
+                          ChangeGameState(gsHERORANDOM);
+                        end;
+                  end;
+                  gmEXIT    :
+                  begin
+                    GameMenu := FALSE;
+                    if GameState = gsINTRO then AskForQuit := FALSE;
+                    MainForm.Close;
+                  end;
+                end;
+              end;
+            end;
+            OnPaint(SENDER);
+          end else
       // Все остальное
       begin
         ClearMsg;
         pc.turn := 0;
         case GameState of
+          // Выбор режима игры
+          gsCHOOSEMODE:
+          begin
+            pc.ChooseMode;
+            case Key of
+              // Вверх/Вниз
+              38,104,56,40,98,50 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                PlayMode := MenuSelected;
+                // Если режим приключений то нужно загрузить карты
+                if PlayMode = AdventureMode then
+                  if not MainEdForm.LoadSpecialMaps then
+                  begin
+                    MsgBox('Ошибка загрузки карт!');
+                    Halt;
+                  end;
+                ChangeGameState(gsHERORANDOM);
+                MenuSelected := 1;
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Рандомный герой?
+          gsHERORANDOM:
+          begin
+            pc.ClearPlayer;
+            case Key of
+              // Вверх/Вниз
+              38,104,56,40,98,50 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 2 else MenuSelected := 1;
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                if MenuSelected = 1 then
+                  ChangeGameState(gsHEROGENDER) else
+                    // Всё рандомно
+                    begin
+                      // пол
+                      pc.gender := Rand(1, 2);
+                      // имя
+                      case pc.gender of
+                        genMALE   : pc.name := GenerateName(FALSE);
+                        genFEMALE : pc.name := GenerateName(TRUE);
+                      end;
+                      // атрибуты
+                      pc.atr[1] := Rand(1, 3);
+                      pc.atr[2] := Rand(1, 3);
+                      // Добавить очки умений исходя из класса
+                      pc.Prepare;
+                      pc.PrepareSkills;
+                      if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
+                      begin
+                        pc.CreateClWList;
+                        c_choose := Wlist[Random(wlistsize)+1];
+                      end;
+                      if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
+                      begin
+                        pc.CreateFrWList;
+                        f_choose := Wlist[Random(wlistsize)+1];
+                      end;
+                      ChangeGameState(gsHEROCRRESULT);
+                    end;
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Выбор пола
+          gsHEROGENDER:
+          begin
+            case Key of
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                if MenuSelected < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
+                MenuSelected := 1;
+                MenuSelected2 := 1;
+                pc.startheroname;
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Выбор оружия бл. боя
+          gsHEROCLWPN:
+          begin
+            case Key of
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected > 1 then dec(MenuSelected) else MenuSelected := wlistsize;
+                OnPaint(SENDER);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected < wlistsize then inc(MenuSelected) else MenuSelected := 1;
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                c_choose := Wlist[MenuSelected];
+                MenuSelected := 1;
+                MenuSelected2 := 1;
+                if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW)))  then
+                  ChangeGameState(gsHEROFRWPN) else
+                    ChangeGameState(gsHEROCRRESULT);
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Выбор оружия дальнего боя
+          gsHEROFRWPN:
+          begin
+            case Key of
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected > 1 then dec(MenuSelected) else
+                  for i:= 4 downto 1 do
+                    if WList[i] > 0 then
+                      begin
+                        MenuSelected := i;
+                        break;
+                      end;
+                OnPaint(SENDER);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected < 4 then
+                begin
+                  if WList[MenuSelected+1] > 0 then
+                    inc(MenuSelected) else
+                      MenuSelected := 1;
+                end else
+                  MenuSelected := 1;
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                f_choose := Wlist[MenuSelected];
+                MenuSelected := 1;
+                MenuSelected2 := 1;
+                ChangeGameState(gsHEROCRRESULT);
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Выбор атрибутов
+          gsHEROATR:
+          begin
+            case Key of
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 3 else dec(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = 3 then MenuSelected := 1 else inc(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                pc.atr[MenuSelected2] := MenuSelected;
+                if MenuSelected2 = 1 then
+                begin
+                  MenuSelected := 1;
+                  inc(MenuSelected2);
+                end else
+                  begin
+                    MenuSelected := 1;
+                    // Добавить очки умений исходя из класса
+                    pc.Prepare;
+                    pc.PrepareSkills;
+                    if (pc.HowManyBestWPNCL > 1) and not ((pc.HowManyBestWPNCL < 3) and (pc.OneOfTheBestWPNCL(CLOSE_TWO))) then
+                      ChangeGameState(gsHEROCLWPN) else
+                        if (pc.HowManyBestWPNFR > 1) and not ((pc.HowManyBestWPNFR < 3) and (pc.OneOfTheBestWPNFR(FAR_THROW))) then
+                          ChangeGameState(gsHEROFRWPN) else
+                            ChangeGameState(gsHEROCRRESULT);
+                  end;
+                OnPaint(Sender);
+              end;
+            end;
+          end;
+          // Подтвердить
+          gsHEROCRRESULT:
+          begin
+            case Key of
+              13, 32 :
+              begin
+                pc.FavWPNSkill;
+                M.MonL[pc.idinlist] := pc;
+                InitGame;
+              end;
+              27     :
+              begin
+                MenuSelected := 1;
+                ChangeGameState(gsHERORANDOM);
+              end;
+            end;
+          end;
           // Во время игры
           gsPLAY:
           begin
@@ -208,9 +522,8 @@ begin
               // Меню 'Esc'
               27        :
               begin
-                {MenuSelected := 1;
-                GameMenu := TRUE;}
-                StartGameMenu;
+                MenuSelected := 1;
+                GameMenu := TRUE;
               end;
               // Закрыть дверь 'c'
               67        : pc.SearchForDoors;
@@ -226,7 +539,9 @@ begin
               84        : pc.SearchForAlive(2);
               // Список квестов 'q'
               81        :
-                pc.QuestList;
+              begin
+                ChangeGameState(gsQUESTLIST);
+              end;
               // Съесть 'f'
               70        :
               begin
@@ -270,7 +585,9 @@ begin
               end;
               // Помощь '?'
               112       :
-                          ShowHelp;
+              begin
+                ChangeGameState(gsHELP);
+              end;
               // Атаковать 'a'
               65        : pc.SearchForAlive(1);
               // Поднять 'g'
@@ -325,31 +642,18 @@ begin
               end;
               // Войти в меню Навыки и Способности 'x'
               88        :
-                SkillsAndAbilitys;
+              begin
+                MenuSelected := 1;
+                ChangeGameState(gsSKILLSMENU);
+              end;
               // История сообщений 'm'
               77        :
-                ShowHistory;
+                ChangeGameState(gsHISTORY);
               // Крикнуть 'y'
               89        :
               begin
                 AddMsg('Что ты хочешь крикнуть?',0);
                 Input(LastMsgL+1, MapY+(LastMsgY-1), '');
-              end;
-              //Консоль '~'
-              192 :
-              if Debug then
-              begin
-                changeGameState(gsConsole);
-                repeat
-                  ShowLog;
-                  s := Input(2, MapY, '',b);
-                  if s <> '' then
-                  begin
-                    Log(' > '+s);
-                    Run(s+';');
-                  end;
-                until (s = '');
-                changeGameState(gsPlay);
               end;
               // Стрелять 's'
               83       :  pc.PrepareShooting(pc.eq[7], pc.eq[13], 1);
@@ -548,7 +852,8 @@ begin
             end;
           end;
           // Список квестов, экипировка, помощь
-          gsEQUIPMENT, gsINVENTORY, gsUSEMENU:
+          gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsABILITYS, gsHISTORY, gsSKILLSMENU,
+          gsUSEMENU, gsWPNSKILLS:
           begin
             // Выход в игру или в другое место
             if GameState = gsUSEMENU then
@@ -557,6 +862,20 @@ begin
                 ChangeGameState(LastGameState);
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
+              
+            // Чит в навыках
+            if GameState = gsWPNSKILLS then
+            begin
+              case Key of
+                // Отобразить проценты '\'
+                220 :
+                begin
+                  ShowProc := not ShowProc;
+                  OnPaint(SENDER);
+                end;
+              end;
+
+            end ELSE
 
             // Управление в экипировке
             if GameState = gsEQUIPMENT then
@@ -636,6 +955,34 @@ begin
               end;
             end ELSE
 
+            // Управление в списке способностей
+            if GameState = gsABILITYS then
+            begin
+              case Key of
+                // Вверх
+                38,104,56 :
+                begin
+                  if MenuSelected = 1 then
+                  begin
+                    for a:=1 to AbilitysAmount-1 do
+                      if FullAbilitys[a+1] = 0 then
+                        break;
+                     MenuSelected := a;
+                  end
+                    else
+                      dec(MenuSelected);
+                end;
+                // Вниз
+                40,98,50 :
+                begin
+                  for a:=1 to AbilitysAmount-1 do
+                    if FullAbilitys[a+1] = 0 then
+                      break;
+                  if MenuSelected = a then MenuSelected := 1 else inc(MenuSelected);
+                end;
+            end;
+          end ELSE
+
           // Список действий над предметом
           if GameState = gsUSEMENU then
           begin
@@ -644,13 +991,13 @@ begin
               38,104,56 :
               begin
                 if MenuSelected2 = 1 then MenuSelected2 := HOWMANYVARIANTS else dec(MenuSelected2);
-                Redraw;
+                OnPaint(SENDER);
               end;
               // Вниз
               40,98,50 :
               begin
                 if MenuSelected2 = HOWMANYVARIANTS then MenuSelected2 := 1 else inc(MenuSelected2);
-                Redraw;
+                OnPaint(SENDER);
               end;
               // Сделать выбранное действие с предметом
               13 :
@@ -779,7 +1126,39 @@ begin
                 end;
               end;
             end;
-          end;
+          end ELSE
+
+          // Меню навыков и способностей
+          if GameState = gsSKILLSMENU then
+          begin
+            case Key of
+              // Вверх
+              38,104,56 :
+              begin
+                if MenuSelected = 1 then MenuSelected := 4 else dec(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Вниз
+              40,98,50 :
+              begin
+                if MenuSelected = 4 then MenuSelected := 1 else inc(MenuSelected);
+                OnPaint(SENDER);
+              end;
+              // Ok...
+              13 :
+              begin
+                case MenuSelected of
+                  3 : // Особенные способности
+                  ChangeGameState(gsWPNSKILLS);
+                  4 : // Особенные способности
+                  ChangeGameState(gsABILITYS);
+                end;
+                MenuSelected := 1;
+                OnPaint(Sender);
+              end;
+            end;
+          end; {ELSE}
+          
         end;
       end;
       pc.AfterTurn;
@@ -820,11 +1199,11 @@ begin
         AddMsg('Ты решил{/a} пожить еще чуть-чуть.',0);
     end else
       begin
-//        if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
-//        begin
+        if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
+        begin
           ChangeGameState(gsPLAY);
-          Redraw;
-//        end;
+          OnPaint(SENDER);
+        end;
       end;
 end;
 
@@ -832,7 +1211,7 @@ end;
 procedure TMainForm.FormResize(Sender: TObject);
 begin
   if GameState > 0 then
-    Redraw;
+    OnPaint(Sender);
 end;
 
 { Это нужно, что бы TAB обработать }
@@ -870,7 +1249,7 @@ begin
   pc.FOV;
   Addmsg(' ',0);
   Addmsg('Нажми (#F1#), если нужна помощь.',0);
-  Redraw;
+  OnPaint(NIL);
 end;
 
 { Анимация летящего объекта }
@@ -919,7 +1298,7 @@ begin
         break;
       end else
         begin
-          Redraw;
+          OnPaint(NIL);
           sleep(FlySpeed);
         end;
   end;
@@ -927,52 +1306,48 @@ begin
   FlyY := 0;
 end;
 
+{ Word 2 Char }
+function TMainForm.GetCharFromVirtualKey(Key: Word): string;
+var
+  keyboardState: TKeyboardState;
+  asciiResult: Integer;
+begin
+  GetKeyboardState(keyboardState) ;
+  SetLength(Result, 2) ;
+  asciiResult := ToAscii(key, MapVirtualKey(key, 0), keyboardState, @Result[1], 0) ;
+  case asciiResult of
+    0: Result := '';
+    1: SetLength(Result, 1) ;
+    2:;
+  else
+    Result := '';
+end;
+
+end;
+
 procedure TMainForm.GameTimerTimer(Sender: TObject);
 begin
-  MainForm.Redraw;
+  MainForm.Paint;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
-  KeyQueue.Free;
   ReleaseDC(MainForm.Handle, DC);
   DeleteDC(DC);
 end;
 
-procedure TMainForm.FormActivate(Sender: TObject);
-begin
-  StartGameMenu; //Главное игровое меню
-end;
-
-procedure TMainForm.cls;
-begin
-  with _Screen.Canvas do
+initialization
+  Randomize;
+  // Создаем картинку (буфер)
+  Screen := TBitMap.Create;
+  GrayScreen := TBitMap.Create;
+  // Разумные границы
+  if (FontSize < 8 ) then FontSize := 8;
+  if (FontSize > 20) then FontSize := 20;
+  // Свойства шрифта
+  with Screen.Canvas do
   begin
-    Brush.Color := 0;
-    FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
-  end;
-end;
-
-procedure TMainForm.Redraw;
-begin
-  OnPaint(nil);
-end;
-
-procedure TMainForm.DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX);
-begin
-  with _Screen.Canvas do
-  begin
-    Font.Color := c;
-    TextOut(x * CharX, y * CharY, s);
-//    log(inttostr(x*CharX)+','+inttostr(y*CharY)+','+s+'/'+inttostr(Font.Size));
-  end;
-end;
-
-procedure TMainForm.SetFont(newFont: string);
-begin
-  with _Screen.Canvas do
-  begin
-    Font.Name := newFont;
+    Font.Name := FontMsg;
     Font.Size := FontSize;
     case FontStyle of
       1:   Font.Style := [fsBold];
@@ -983,108 +1358,9 @@ begin
     CharX := TextWidth('W');
     CharY := TextHeight('W');
   end;
-end;
-
-procedure TMainForm.SetBgColor(c: Integer);
-begin
-  _Screen.Canvas.Brush.Color := c;
-end;
-
-procedure TMainForm.DrawHPBar(x, y: byte; color: Integer; hp, rhp: word);
-begin
-  with _Screen.Canvas do
-  begin
-    Pen.Color := cGRAY;
-    Pen.Width := 3;
-    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
-    LineTo((x)*CharX-1, (y-1)*CharY - 2);
-    Pen.Color := cLIGHTRED;
-    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
-    if M.MonP[x,y] = 1 then
-    begin
-      if pc.Hp > 0 then
-        LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
-    end
-    else
-      if M.MonL[M.MonP[x,y]].Hp > 0 then
-        LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2))
-             / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
-  end;
-end;
-
-procedure TMainForm.DrawString(x, y: byte; c: Integer; bs: TBrushStyle;
-  s: string; l: byte = WindowX);
-var OldStyle: TBrushStyle;
-begin
-  with _Screen.Canvas do
-  begin
-    OldStyle := Brush.Style;
-    Brush.Style := bs;
-    DrawString(x,y,c,s,l);
-    Brush.Style := OldStyle;
-  end;
-end;
-
-procedure TMainForm.DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка шкалы здоровья/маны/опыта/ещё чего-то
-var i,j: word;
-  StartRGB, EndRGB: array[0..2] of Byte; // разложенный цвет
-  ax, ay, Colors, Delta: Word; // число цветов, которые использовать для рисования
-begin
-  with _Screen.Canvas do
-  begin
-    Pen.Width := 9;
-    ax :=  x*CharX+(CharX div 2);
-    ay := y*CharY+(CharY div 2);
-    if (c1 = c2)or(l<4) then
-    begin
-      Pen.Color := c2;
-      MoveTo(ax, ay);
-      LineTo(ax+l, ay);
-    end
-    else
-    begin
-      StartRGB[0] := GetRValue(c1);
-      StartRGB[1] := GetGValue(c1);
-      StartRGB[2] := GetBValue(c1);
-      EndRGB[0] := GetRValue(c2);
-      EndRGB[1] := GetGValue(c2);
-      EndRGB[2] := GetBValue(c2);
-      Colors := l div 2; // число градаций на ширину
-      Delta := l div Colors; // число пикселей для одной градации
-      For i := 0 to Colors do
-      begin
-        Pen.Color := RGB((StartRGB[0] + MulDiv(i, EndRGB[0] - StartRGB[0], Colors-1)),
-                         (StartRGB[1] + MulDiv(i, EndRGB[1] - StartRGB[1], Colors-1)),
-                         (StartRGB[2] + MulDiv(i, EndRGB[2] - StartRGB[2], Colors-1)));
-        MoveTo(ax+i*delta, ay);
-        LineTo(ax+i*delta, ay);
-      end;
-    end;
-  end;
-end;
-
-procedure TMainForm.HideCursor;
-begin
-  GameTimer.Enabled := false;
-end;
-
-procedure TMainForm.ShowCursor;
-begin
-  GameTimer.Enabled := true;
-end;
-
-initialization
-  Randomize;
-  // Создаем картинку (буфер)
-  _Screen := TBitMap.Create;
-  GrayScreen := TBitMap.Create;
-  // Разумные границы
-  if (FontSize < 8 ) then FontSize := 8;
-  if (FontSize > 20) then FontSize := 20;
 
 finalization
   // Освобождаем картинку (буфер)
-  _Screen.Free;
-  GrayScreen.Free;
+  Screen.Free;
 
 end.

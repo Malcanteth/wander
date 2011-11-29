@@ -51,7 +51,35 @@ const
     (name: 'Дуб';            hardy: TRUE;  void: FALSe; blood: TRUE; move: FALSE; important: FALSE; char: '|'; color: crBROWN)
   );
 
-{$include ../Data/Scripts/Tiles.pas}
+  { Уникальные идентификаторы тайлов }
+  tdEMPTY    = 0;
+  tdROCK     = 1;
+  tdCDOOR    = 2;
+  tdODOOR    = 3;
+  tdUSTAIRS  = 4;
+  tdDSTAIRS  = 5;
+  tdFLOOR    = 6;
+  tdGRASS    = 7;
+  tdKLEN     = 8;
+  tdMOUNT    = 9;
+  tdROAD     = 10;
+  tdWATER    = 11;
+  tdREDFLOOR = 12;     
+  tdHOTROCK  = 13;
+  tdCHATCH   = 14;
+  tdBIGGATES = 15;
+  tdLGRASS   = 16;
+  tdOHATCH   = 17;
+  tdSECSTONE = 18;
+  tdEWALL    = 19;
+  tdEARTH    = 20;
+  tdDUNENTER = 21;
+  tdSHFLOOR  = 22;
+  tdSECEARTH = 23;
+  tdIVA      = 24;
+  tdGREENWALL= 25;
+  tdSECGRWALL= 26;
+  tdDUB      = 27;
 
 implementation
 
