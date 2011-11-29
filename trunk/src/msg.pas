@@ -3,7 +3,7 @@ unit msg;
 interface
 
 uses
-  Main, Cons, Utils, SUtils, Controls, classes, Mbox;
+  Main, Cons, Utils, SUtils;
 
 type
   THistory = record
@@ -15,9 +15,9 @@ var
   Msgs : array[1..MsgAmount] of string;
   History : array[1..MaxHistory] of THistory;
   InputX, InputY : integer;
-  InputString : string;
+  InputString : string[13];
+  InputPos : byte;
   LastMsgY, LastMsgL : byte;
-  InputPos: byte;
 
 
 procedure AddMsg(s : string; id : integer);
@@ -28,17 +28,12 @@ procedure More;
 procedure Apply;
 procedure ShowMsgs;
 function Ask(s: string): char;
-function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2): string; overload;
-function Input(sx,sy : integer; ss : string; out Cancelled: boolean; MaxLen: byte = MsgLength-2): string; overload;
-function getKey: word;
-procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
+function Input(sx, sy: integer; ss: string): string;
+procedure ShowInput;
 
 implementation
 
 uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
-
-var InputCancel: boolean = false;
-    InputLength : byte;
 
 // Добавить сообщение
 procedure AddMsg(s: string; id : integer);
@@ -124,6 +119,8 @@ begin
   for b:=1 to Length(s) do
     if (s[b] = '*') or (s[b] = '$') or (s[b] = '#') then
       Delete(s,b,1);  
+  // Добавляем в лог
+  if (S <> '') and (S <> ' ') then Log(S);
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
@@ -165,7 +162,7 @@ end;
 procedure AddDrawMsg(s: string; id : integer);
 begin
   AddMsg(s,id);
-  MainForm.Redraw;;
+  MainForm.OnPaint(NIL);
 end;
 
 { Очистить все сообщения }
@@ -177,33 +174,14 @@ begin
     Msgs[i] := '';
 end;
 
-function getKey: word;
-var Key: word;
-begin
-  if KeyQueue.isEmpty then
-  begin
-    Key := 0;
-    Inputing := true;
-    while Key = 0 do
-    begin
-      Sleep(10);
-      MainForm.ProcessMsg;
-      if KeyQueue.isEmpty then Key := 0 else Key := KeyQueue.Pop;
-    end;
-    Inputing := false;
-    Result := Key;
-  end
-  else Result := KeyQueue.Pop;
-//  Log(inttostr(Key)); //удобно смотреть коды клавиш в консоли)))
-end;
-
 { Дальше }
 procedure More;
-var Key : Word;
 begin
   Msgs[MsgAmount] := '$(Дальше)$';
-  MainForm.Redraw;
-  while not (GetKey in [13,32]) do;
+  MainForm.OnPaint(NIL);
+  WaitMore := True;
+  while WaitMore = True do
+    MainForm.ProcessMsg;
   ClearMsg
 end;
 
@@ -211,167 +189,104 @@ end;
 procedure Apply;
 begin
   Msgs[MsgAmount] := '$(Нажми ENTER для продолжения)$';
-  MainForm.Redraw;
-  while not (GetKey = 13) do;
-  ClearMsg ;
+  MainForm.OnPaint(NIL);
+  WaitENTER := True;
+  while WaitENTER = True do
+    MainForm.ProcessMsg;
+  ClearMsg
 end;
 
 { Показать сообщения }
 procedure ShowMsgs;
 var
   x,y,c,t : byte;
-  col: LongInt;
 begin
   //Сообщения
-  MainForm.SetFont(FontMsg);
-  MainForm.SetBgColor(0);
-  c := 0;
-  for y:=1 to MsgAmount do
-    if Msgs[y] <> '' then
-    begin
-      t := 1;
-      for x:=1 to Length(Msgs[y]) do
+  with Screen.Canvas do
+  begin
+    Font.Name := FontMsg;
+    Brush.Color := 0;
+    c := 0;
+    for y:=1 to MsgAmount do
+      if Msgs[y] <> '' then
       begin
-        //Символы начала и конца цвета
-        if Msgs[y][x] = '$' then  // желтый
+        t := 1;
+        for x:=1 to Length(Msgs[y]) do
         begin
-          if c = 0 then c := 1 else c := 0;
-        end else
-        if Msgs[y][x] = '*' then  // красный
-        begin
-          if c= 0 then c := 2 else c := 0;
-        end else
-        if Msgs[y][x] = '#' then  // зеленый
-        begin
-          if c= 0 then c := 3 else c := 0;
-        end else
+          //Символы начала и конца цвета
+          if Msgs[y][x] = '$' then  // желтый
           begin
-            //Цвет букв
-            case c of
-              0 : col := MyRGB(160,160,160);  //Серый
-              1 : col := MyRGB(255,255,0);    //Желтый
-              2 : col := MyRGB(200,0,0);      //Красный
-              3 : col := MyRGB(0,200,0);      //Зеленый
+            if c = 0 then c := 1 else c := 0;
+          end else
+          if Msgs[y][x] = '*' then  // красный
+          begin
+            if c= 0 then c := 2 else c := 0;
+          end else
+          if Msgs[y][x] = '#' then  // зеленый
+          begin
+            if c= 0 then c := 3 else c := 0;
+          end else
+            begin
+              //Цвет букв
+              case c of
+                0 : Font.Color := MyRGB(160,160,160);  //Серый
+                1 : Font.Color := MyRGB(255,255,0);    //Желтый
+                2 : Font.Color := MyRGB(200,0,0);      //Красный
+                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
+              end;
+              Textout((t-1)*CharX, (MapY*CharY)+((y-1)*CharY), Msgs[y][x]);
+              inc(t);
             end;
-            MainForm.DrawString((t-1), (MapY)+((y-1)), col, Msgs[y][x]);
-            inc(t);
-          end;
+        end;
       end;
-    end;
+  end;
 end;
 
 { Задать вопрос }
 function Ask(s : string) : char;
 begin
   AddDrawMsg(s,0);
-  Result := UpCase (Chr(GetKey));
- 
-end;
-
-function GetCharFromVirtualKey(Key: Word): string;
-var
-  keyboardState: TKeyboardState;
-  asciiResult: Integer;
-begin
-  GetKeyboardState(keyboardState) ;
-  SetLength(Result, 2) ;
-  asciiResult := ToAscii(key, MapVirtualKey(key, 0), keyboardState, @Result[1], 0) ;
-  case asciiResult of
-    0: Result := '';
-    1: SetLength(Result, 1) ;
-    2:;
-  else
-    Result := '';
-  end;
+  Answer := ' ';
+  while Answer = ' ' do
+    MainForm.ProcessMsg;
+  Result := Answer[1];
+  Answer := '';
 end;
 
 { Функция ввода текста пльзователем }
-function Input(sx,sy : integer; ss : string; MaxLen: byte = MsgLength-2) : string;
-var Key : Word;
-  n : string;
+function Input(sx,sy : integer; ss : string) : string;
 begin
   InputString := ss;
   InputPos := Length(ss);
   InputX := sx;
   InputY := sy;
-  InputLength := MaxLen;
-  BitBlt(GrayScreen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, _Screen.Canvas.Handle, 0, 0, SRCCopy);
-  MainForm.ShowCursor;
-  Result := '';
-  repeat
-    Key := getKey;
-    case Key of
-      13: break; //Enter
-      VK_ESCAPE: if (InputCancel) then begin InputString := ''; MainForm.GameTimer.Enabled := false; exit; end;
-      192: if (GameState = gsConsole) then begin InputString := ''; break; end; // '~'
-      VK_BACK: if (InputPos > 0) then
-               begin
-                 Delete(InputString,InputPos,1);
-                 dec(InputPos);
-               end;
-      VK_DELETE: if (InputPos < Length(InputString)) then Delete(InputString,InputPos+1,1);
-      VK_HOME: InputPos := 0;
-      VK_END: InputPos := length(InputString);
-      VK_LEFT: if (InputPos > 0) then dec(InputPos);
-      VK_RIGHT:if (InputPos < Length(InputString)) then inc(InputPos);
-      VK_UP: if (GameState = gsConsole) then if LogPos > 0 then dec(LogPos);
-      VK_DOWN: if (GameState = gsConsole) then if LogPos < 250 then inc(LogPos);
-      else if length(InputString)<InputLength then
-      begin
-        n := GetCharFromVirtualKey(Key);
-        if n<>'' then
-        begin
-          if ord(n[1]) > 31 then
-          begin
-            Insert(n, InputString, InputPos+1);
-            Inc(InputPos);
-          end;
-        end;
-      end;
-    end;
-    MainForm.Redraw;
-  until false;
-  MainForm.HideCursor;
-  InputCancel := false;
+  WaitENTER := True;
+  Inputing := TRUE;
+  MainForm.OnPaint(NIL);  
+  while WaitENTER = True do
+    MainForm.ProcessMsg;
+  Inputing := FALSE;
   Result := InputString;
 end;
 
-{ Функция ввода текста пльзователем }
-function Input(sx,sy : integer; ss : string; out Cancelled: boolean; MaxLen: byte = MsgLength-2): string; overload;
-var Key : Word;
-  n : string;
+{ Вывести то, что ввел пользователь }
+procedure ShowInput;
+var OldStyle : TBrushStyle;
 begin
-  InputCancel := true;
-  Result := Input(sx, sy, ss, MaxLen);
-  Cancelled := not InputCancel;
-  InputCancel := false;
-end;
-
-// Цветная строка
-procedure AddTextLine(X, Y: Word; Msg: string);
-var
-  C, I, T: Integer;
-  col: LongInt;
-begin
-  T := X;
-  C := 0;
-  for I := 1 to Length(Msg) do
+  //Сообщения
+  with Screen.Canvas do
   begin
-    // Маркер в тексте (не показывается)
-    case Msg[I] of
-      '$': begin if C = 0 then C := 1 else C := 0; Continue; end;
-      '#': begin if C = 0 then C := 2 else C := 0; Continue; end;
-      '*': begin if C = 0 then C := 3 else C := 0; Continue; end;
+    Brush.Color := 0;
+    Font.Color := MyRGB(160,160,160);
+    Textout(InputX*CharX, InputY*CharY, InputString);
+    if GetTickCount mod 1000 < 500 then
+    begin
+      OldStyle := Brush.Style;
+      Brush.Style := bsClear;
+      Font.Color := cLIGHTGREEN;
+      Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
+      Brush.Style := OldStyle;
     end;
-    // Текущий цвет
-    case C of
-      0 : col := cLIGHTGRAY;
-      1 : col := cORANGE;
-      2 : col := cGREEN;
-      3 : col := cGRAY;
-    end;
-    MainForm.DrawString(T, Y, col, Msg[I]);
-    Inc(T);
   end;
 end;
 

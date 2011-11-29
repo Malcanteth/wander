@@ -1,0 +1,855 @@
+unit main;
+
+interface
+
+uses
+  Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
+  Menus, Contnrs, utils, cons;
+
+type
+  TMainForm = class(TForm)
+    GameTimer: TTimer;
+    procedure FormCreate(Sender: TObject);
+    procedure FormPaint(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure ProcessMsg;
+    procedure EndGame;
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormResize(Sender: TObject);
+    procedure InitGame;
+    procedure GameTimerTimer(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
+    procedure FormActivate(Sender: TObject);
+    procedure Cls;
+    procedure Redraw;
+    procedure SetFont(newFont: string);
+    procedure SetBgColor(c: LongInt);
+    procedure DrawHPBar(x,y: byte; color: LongInt; hp, rhp: word); //маленькая шкала над существом
+    procedure DrawBar(x,y,l: word; c1,c2: LONGWORD); //градиентная шкала
+    procedure ShowCursor;
+    procedure HideCursor;
+  public
+    procedure DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX); overload;
+    procedure DrawString(x,y: byte; c: LongInt; bs: TBrushStyle; s: string; l: byte = WindowX); overload;
+  private
+    procedure CMDialogKey( Var msg: TCMDialogKey );
+    message CM_DIALOGKEY;
+  public
+  end;
+
+var
+  MainForm             : TMainForm;
+  KeyQueue             : TIntQueue;            //Буфер нажатых клавиш
+  _Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
+  GameMenu,                                    // Игровое меню
+  AskForQuit,                                  // Подтверждение выхода
+  Inputing, Debug      : boolean;              // Режим ввода
+  GameState,                                   // Состояние игры
+  MenuSelected2,                               // Выбранный элемент в меню
+  VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
+  wtd,                                         // Что сделать при выборе монстра
+  LastGameState,                               // Последнее состояние игры
+  WasEqOrInv,                                  // Была открыта экипировка или инвентарь
+  PlayMode             : byte;                 // Выбранный режим игры
+  GameVersion          : string;               // Версия игры
+  Answer               : string[1];            // Ожидается ответ
+  MenuSelected,
+  a                    : integer;
+  DC                   : HDC;                  // Контекст устройства
+
+implementation
+
+{$R *.dfm}
+
+uses
+  Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
+  Conf, SUtils, Script, MBox, Vars, Monsters, wlog;
+
+{ Инициализация }
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  if Debug then
+  begin
+    Caption := '[Debug] '+Caption;
+    Run('CreatePC.pas', true);
+    Run('GenDungeon.pas', true);
+    Run('GenName.pas', true);
+    Run('InitStory.pas', true);
+    Run('NPCTalk.pas', true);
+  end;
+  // контекст главной формы
+  DC := GetDC(MainForm.Handle);
+  // Прячем главное меню
+  Menu := nil;
+  // Рамеры окна
+  ClientWidth := WindowX * CharX;
+  ClientHeight := WindowY * CharY;
+  with _Screen do
+  begin
+    Width := ClientWidth;
+    Height := ClientHeight;
+  end;
+  with GrayScreen do
+  begin
+    Width := ClientWidth;
+    Height := ClientHeight;
+  end;
+  SetFont(FontMsg);
+  GameTimer.Enabled := False;
+  MenuSelected := 1;
+  // Вывести меню
+  KeyQueue := TIntQueue.Create;
+  ChangeGameState(gsINTRO);
+end;
+
+{ Отрисовка }
+procedure TMainForm.FormPaint(Sender: TObject);
+var OldStyle : TBrushStyle;
+begin
+  // Заполняем картинку черным цветом
+  if GameState in [gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE] then
+  begin
+    if not((GameState = gsPLAY)and GameMenu) then Cls;
+  end;
+  // Выводим
+  case GameState of
+    gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM, gsCONSOLE:
+    if not((GameState = gsPLAY)and GameMenu) then
+    begin
+      // Выводим карту
+      M.DrawScene;
+      // Вывести информацию о герое
+      pc.WriteInfo;      
+      if pc.Hp <= 0 then BlackWhite(_Screen);
+      // Выводим сообщения
+      if GameState = gsConsole then ShowLog else ShowMsgs;
+    end;
+  end;
+//Отображаем курсор
+  if GameTimer.Enabled then
+  begin
+    BitBlt(_Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, GrayScreen.Canvas.Handle, 0, 0, SRCCopy);
+    With _Screen.Canvas do
+    begin
+      Brush.Color := 0;
+      Font.Color := MyRGB(160,160,160);
+      Textout(InputX*CharX, InputY*CharY, InputString);
+      if GetTickCount mod 1000 < 500 then
+      begin
+        OldStyle := Brush.Style;
+        Brush.Style := bsClear;
+        Font.Color := cLIGHTGREEN;
+        Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
+        Brush.Style := OldStyle;
+      end;
+    end;
+  end;
+  SetStretchBltMode(_Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
+  _Screen.Canvas.Handle, 0, 0, _Screen.Width, _Screen.Height, SRCCopy);
+end;
+
+{ Нажатие на клавиши }
+procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  i : integer;
+  n,s : string;
+  Item : TItem;
+  b: boolean;
+begin
+  // Если кнопка не Shift, Alt или Ctrl И сейчас не ожидается ответ
+  if Key <> 16 then
+  begin
+  // Скриншот
+  if Key = 116 then TakeScreenShot else
+    if (Inputing) then
+      KeyQueue.Push(Key)
+    else
+      // Все остальное
+      begin
+        ClearMsg;
+        pc.turn := 0;
+        case GameState of
+          // Во время игры
+          gsPLAY:
+          begin
+            { Передвижение по диагонали alt+две стрелки}
+            if ssAlt in Shift then
+            begin
+              If ((GetKeyState(VK_LEFT) AND 128)=128) and ((GetKeyState(VK_DOWN) AND 128)=128) then
+                pc.Move(-1,1) else
+              If ((GetKeyState(VK_RIGHT) AND 128)=128) and ((GetKeyState(VK_DOWN) AND 128)=128) then
+                pc.Move(1,1) else
+              If ((GetKeyState(VK_LEFT) AND 128)=128) and ((GetKeyState(VK_UP) AND 128)=128) then
+                pc.Move(-1,-1) else
+              If ((GetKeyState(VK_RIGHT) AND 128)=128) and ((GetKeyState(VK_UP) AND 128)=128) then
+                pc.Move(1,-1);
+            end else
+            case Key of
+              { Передвижение }
+              35,97,49     : if ssShift in Shift then pc.Run(-1,1) else pc.Move(-1,1);
+              40,98,50     : if ssShift in Shift then pc.Run(0,1) else pc.Move(0,1);
+              34,99,51     : if ssShift in Shift then pc.Run(1,1) else pc.Move(1,1);
+              37,100,52    : if ssShift in Shift then pc.Run(-1,0) else pc.Move(-1,0);
+              12,101,53,32 : pc.Move(0,0);
+              39,102,54    : if ssShift in Shift then pc.Run(1,0) else pc.Move(1,0);
+              36,103,55    : if ssShift in Shift then pc.Run(-1,-1) else pc.Move(-1,-1);
+              38,104,56    : if ssShift in Shift then pc.Run(0,-1) else pc.Move(0,-1);
+              33,105,57    : if ssShift in Shift then pc.Run(1,-1) else pc.Move(1,-1);
+              13           : pc.UseStairs;
+              { Комманды }
+              // Меню 'Esc'
+              27        :
+              begin
+                {MenuSelected := 1;
+                GameMenu := TRUE;}
+                StartGameMenu;
+              end;
+              // Закрыть дверь 'c'
+              67        : pc.SearchForDoors;
+              // Смотреть 'l'
+              76        :
+              begin
+                ChangeGameState(gsLOOK);
+                lx := pc.x;
+                ly := pc.y;
+                pc.AnalysePlace(lx,ly,2);
+              end;
+              // Говорить 't'
+              84        : pc.SearchForAlive(2);
+              // Список квестов 'q'
+              81        :
+                pc.QuestList;
+              // Съесть 'f'
+              70        :
+              begin
+                if pc.HaveItemVid(14) then
+                begin
+                  MenuSelected := 1;
+                  VidFilter := 14;
+                  pc.Inventory;
+                end else
+                  AddMsg('У тебя нет ничего съестного!',0);
+              end;
+              // Выпить 'd'
+              68        :
+              begin
+                if pc.HaveItemVid(19) then
+                begin
+                  MenuSelected := 1;
+                  VidFilter := 19;
+                  pc.Inventory;
+                end else
+                  AddMsg('В инвентаре нет ничего, что можно выпить!',0);
+              end;
+              // Экипировка 'e'
+              69        :
+              begin
+                  MenuSelected := 1;
+                  WasEqOrInv := 2;
+                  pc.Inventory(1);
+              end;
+              // Инвентарь 'i'
+              73        :
+              begin
+                if pc.ItemsAmount > 0 then
+                begin
+                  MenuSelected := 1;
+                  VidFilter := 0;
+                  WasEqOrInv := 1;
+                  pc.Inventory;
+                end else
+                  AddMsg('Твой инвентарь пуст!',0);
+              end;
+              // Помощь '?'
+              112       :
+                          ShowHelp;
+              // Атаковать 'a'
+              65        : pc.SearchForAlive(1);
+              // Поднять 'g'
+              71        :
+              begin
+                i := 1;
+                if M.Item[pc.x,pc.y].amount > 1 then
+                begin
+                  // Если золото, то взять все без вопросов
+                  if not (ssShift in Shift) then
+                    i := M.Item[pc.x,pc.y].amount else
+                      begin
+                        AddMsg(ItemName(M.Item[pc.x,pc.y], 0, TRUE)+'. Сколько хочешь взять?',0);
+                        n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(M.Item[pc.x,pc.y].amount));
+                        if TryStrToInt(n,i) then
+                        begin
+                          if (i > M.Item[pc.x,pc.y].amount) then
+                          begin
+                            AddMsg('Введено слишком большое значение.',0);
+                            i := 0;
+                          end;
+                        end else
+                          begin
+                            AddMsg('Нужно ввести число.',0);
+                            i := 0;
+                          end;
+                      end;
+                end;
+                if i > 0 then
+                begin
+                  case pc.PickUp(M.Item[pc.x,pc.y], FALSE,i) of
+                    0 :
+                    begin
+                      Item := M.Item[pc.x,pc.y];
+                      Item.amount := i;
+                      AddMsg('Ты поднимаешь '+ItemName(Item,0,TRUE)+'.',0);
+                      if M.Item[pc.x,pc.y].amount > i then
+                        dec(M.Item[pc.x,pc.y].amount,i) else
+                          M.Item[pc.x,pc.y].id := 0;
+                    end;
+                    1 : AddMsg('Здесь ничего не лежит!',0);
+                    2 : AddMsg('Твой инвентарь полностью забит! Как такое могло случиться?! Пора бы подумать о том, чтобы выкинуть или продать некоторые вещи...',0);
+                    3 : AddMsg('Ты не можешь нести больше... Слишком тяжело!',0);
+                  end;
+                end;
+              end;
+              // Открыть 'o'
+              79        :
+              begin
+                AddMsg('Что ты хочешь открыть?',0);
+                ChangeGameState(gsOPEN);
+              end;
+              // Войти в меню Навыки и Способности 'x'
+              88        :
+                SkillsAndAbilitys;
+              // История сообщений 'm'
+              77        :
+                ShowHistory;
+              // Крикнуть 'y'
+              89        :
+              begin
+                AddMsg('Что ты хочешь крикнуть?',0);
+                Mainform.Redraw;
+                Input(LastMsgL+1, MapY+(LastMsgY-1), '');
+              end;
+              //Консоль '~'
+              192 :
+              if Debug then
+              begin
+                changeGameState(gsConsole);
+                repeat
+                  ShowLog;
+                  s := Input(2, MapY, '',b);
+                  if s <> '' then
+                  begin
+                    Log(' > '+s);
+                    Run(s+';');
+                  end;
+                until (s = '');
+                changeGameState(gsPlay);
+              end;
+              // Стрелять 's'
+              83       :  pc.PrepareShooting(pc.eq[7], pc.eq[13], 1);
+              // Поменять тактику 'tab'
+              VK_TAB    :
+              begin
+                case pc.tactic of
+                   0 : AddMsg('Текущая тактика - $Стандартная$.',0);
+                   1 : AddMsg('Текущая тактика - *Агрессивное нападение*.',0);
+                   2 : AddMsg('Текущая тактика - #Защита#.',0);
+                end;
+                case Ask('Выбрать тактику: (#A#) - Агрессивное нападение, (#S#) - Стандартная, (#D#) - Защищаться.') of
+                  'A' :
+                  begin
+                    ClearMsg;
+                    pc.tactic := 1;
+                    AddMsg('Выбрано агрессивное нападение.',0);
+                    AddMsg('Распределение шансов:',0);
+                    AddMsg('#+50% к успешному попадению и урону#, *-50% к уклонению и эффективности брони*.',0);
+                  end;
+                  'S' :
+                  begin
+                    ClearMsg;
+                    pc.tactic := 0;
+                    AddMsg('Выбрана стандартная тактика.',0);
+                    AddMsg('Никаких плюсов и минусов во время боя.',0);
+                  end;
+                  'D' :
+                  begin
+                    ClearMsg;
+                    pc.tactic := 2;
+                    AddMsg('Выбрана защитная тактика.',0);
+                    AddMsg('Распределение шансов:',0);
+                    AddMsg('*-50% к успешному попадению и урону*, #+50% к уклонению и эффективности брони#.',0);
+                  end;
+                  ELSE
+                    AddMsg('Ты решил{/a} не менять тактику.',0);
+                end;
+              end;
+            end;
+          end;
+          // Закрыть дверь
+          gsCLOSE:
+          begin
+            case Key of
+              35,97,49  : pc.CloseDoor(-1,1);
+              40,98,50  : pc.CloseDoor(0,1);
+              34,99,51  : pc.CloseDoor(1,1);
+              37,100,52 : pc.CloseDoor(-1,0);
+              39,102,54 : pc.CloseDoor(1,0);
+              36,103,55 : pc.CloseDoor(-1,-1);
+              38,104,56 : pc.CloseDoor(0,-1);
+              33,105,57 : pc.CloseDoor(1,-1);
+              else
+                AddDrawMsg('Указано неправильное направление!',0);
+            end;
+            pc.turn := 1;
+            ChangeGameState(gsPLAY);
+          end;
+          // Открыть
+          gsOPEN:
+          begin
+            case Key of
+              35,97,49  : pc.Open(-1,1);
+              40,98,50  : pc.Open(0,1);
+              34,99,51  : pc.Open(1,1);
+              37,100,52 : pc.Open(-1,0);
+              39,102,54 : pc.Open(1,0);
+              36,103,55 : pc.Open(-1,-1);
+              38,104,56 : pc.Open(0,-1);
+              33,105,57 : pc.Open(1,-1);
+              else
+                AddDrawMsg('Указано неправильное направление!',0);
+            end;
+            pc.turn := 1;
+            ChangeGameState(gsPLAY);
+          end;
+          // Атаковать!
+          gsCHOOSEMONSTER:
+          begin
+            case Key of
+              35,97,49  :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y+1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y+1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y+1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y+1]]);
+              end;
+              40,98,50  :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y+1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y+1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x,pc.y+1]]) else
+                       pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x,pc.y+1]]);
+              end;
+              34,99,51  :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y+1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y+1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y+1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y+1]]);
+              end;
+              37,100,52 :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y]]);
+              end;
+              39,102,54 :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y]]);
+              end;
+              36,103,55 :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x-1,pc.y-1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x-1,pc.y-1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x-1,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x-1,pc.y-1]]);
+              end;
+              38,104,56 :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x,pc.y-1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x,pc.y-1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x,pc.y-1]]);
+              end;
+              33,105,57 :
+              case wtd of
+                1 : pc.Fight(M.MonL[M.MonP[pc.x+1,pc.y-1]], 0);
+                2 : pc.Talk(M.MonL[M.MonP[pc.x+1,pc.y-1]]);
+                3 : //if LastGameState = gsEQUIPMENT then pc.GiveItem(MenuSelected, 2, M.MonL[M.MonP[pc.x+1,pc.y-1]]) else
+                      pc.GiveItem(MenuSelected, 1, M.MonL[M.MonP[pc.x+1,pc.y-1]]);
+              end;
+              else
+                AddDrawMsg('Указано неправильное направление!',0);
+            end;
+            pc.turn := 1;
+            ChangeGameState(gsPLAY);
+          end;
+          // Управление курсором осмотра
+          gsLOOK:
+          begin
+            case Key of
+              35,97,49  : pc.MoveLook(-1,1);
+              40,98,50  : pc.MoveLook(0,1);
+              34,99,51  : pc.MoveLook(1,1);
+              37,100,52 : pc.MoveLook(-1,0);
+              12,101,53 : pc.MoveLook(0,0);
+              39,102,54 : pc.MoveLook(1,0);
+              36,103,55 : pc.MoveLook(-1,-1);
+              38,104,56 : pc.MoveLook(0,-1);
+              33,105,57 : pc.MoveLook(1,-1);
+              13        : AnimFly(pc.x,pc.y,lx,ly,'`',crBrown);
+              else
+                ChangeGameState(gsPlay);
+              M.DrawScene;
+            end;
+          end;
+          // Управление курсором прицела
+          gsAIM:
+          begin
+            case Key of
+              35,97,49  : pc.MoveAim(-1,1);
+              40,98,50  : pc.MoveAim(0,1);
+              34,99,51  : pc.MoveAim(1,1);
+              37,100,52 : pc.MoveAim(-1,0);
+              12,101,53 : pc.MoveAim(0,0);
+              39,102,54 : pc.MoveAim(1,0);
+              36,103,55 : pc.MoveAim(-1,-1);
+              38,104,56 : pc.MoveAim(0,-1);
+              33,105,57 : pc.MoveAim(1,-1);
+              13,83     :
+                if (lx = pc.x) and (ly = pc.y) then
+                  AddMsg('Проще нажми ESC, если уж так хочешь умереть!',0) else
+                  begin
+                    // Удалить бросаемый предмет
+                    if Bow.id = 0 then
+                      pc.DeleteItemInv(13, 1, 2) else
+                      begin
+                        case WasEqOrInv of
+                          1 : pc.DeleteItemInv(MenuSelected, 1, 1);
+                          2 : pc.DeleteItemInv(MenuSelected, 1, 2);
+                        end;
+                      end;
+                    ChangeGameState(gsPLAY);
+                    pc.StartShooting(ShootingMode);
+                    pc.turn := 1;
+                  end;
+              ELSE
+                ChangeGameState(gsPLAY);
+              M.DrawScene;
+            end;
+          end;
+          // Список квестов, экипировка, помощь
+
+      end;
+      pc.AfterTurn;
+    end;
+  end;
+end;
+
+{ Обработка сигналов }
+procedure TMainForm.ProcessMsg;
+begin
+  Application.ProcessMessages;
+end;
+
+{ Завершить игру }
+procedure TMainForm.EndGame;
+begin
+  // Удаляем сохранения
+  DeleteSwap;
+end;
+
+{ Выйти из игры }
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose := FALSE;
+  if (pc.Hp <= 0) or (AskForQuit = False) then
+  begin
+    EndGame;
+    CanClose := TRUE;
+  end else
+    if (GameState = gsPLAY) or (GameState = gsLOOK) or (GameState = gsCLOSE) or (GameState = gsCHOOSEMONSTER) then
+    begin
+      MenuSelected := 1;
+      if (Ask('Покинуть мир, совершив суицид? #(Y/n)#')) = 'Y' then
+      begin
+        CanClose := TRUE;
+        EndGame;
+      end else
+        AddMsg('Ты решил{/a} пожить еще чуть-чуть.',0);
+    end else
+      begin
+//        if (GameState <> gsHEROGENDER) and (GameState <> gsHERONAME) then
+//        begin
+          ChangeGameState(gsPLAY);
+          Redraw;
+//        end;
+      end;
+end;
+
+{ Развернуть - свернуть окно }
+procedure TMainForm.FormResize(Sender: TObject);
+begin
+  if GameState > 0 then
+    Redraw;
+end;
+
+{ Это нужно, что бы TAB обработать }
+procedure TMainForm.CMDialogKey(var msg: TCMDialogKey);
+begin
+  if msg.Charcode <> VK_TAB then inherited;
+end;
+
+{ Начальные данные }
+procedure TMainForm.InitGame;
+begin
+  // Состояние игры -> игра
+  ChangeGameState(gsPLAY);
+  AskForQuit := TRUE;
+  // Цвета и состояния напитков
+  GenerateColorAndStateOfLiquids;
+  // Выбор режима приключения
+  V.SetInt('PlayMode', PlayMode);
+  case PlayMode of
+    AdventureMode:  // Деревушка Эвилиар
+    begin
+      pc.level := 1;
+      M.MakeSpMap(pc.level);
+      pc.PlaceHere(6,18);
+      Run('InitStory.pas');
+    end;
+    DungeonMode:    // Вход в подземелье
+    begin
+      pc.level := 7;
+      M.MakeSpMap(pc.level);
+      pc.PlaceHere(42,16);
+      Run('InitStory.pas');
+    end;
+  end;
+  pc.FOV;
+  Addmsg(' ',0);
+  Addmsg('Нажми (#F1#), если нужна помощь.',0);
+  Redraw;
+end;
+
+{ Анимация летящего объекта }
+procedure TMainForm.AnimFly(x1,y1,x2,y2:integer; symbol:string; color:byte);
+var
+  dx,dy,i,sx,sy,check,e,oldx,oldy:integer;
+begin
+  dx:=abs(x1-x2);
+  dy:=abs(y1-y2);
+  sx:=Sign(x2-x1);
+  sy:=Sign(y2-y1);
+  FlyX:=x1;
+  FlyY:=y1;
+  FlyS:=symbol;
+  FlyC:=color;
+  check:=0;
+  if dy>dx then begin
+      dx:=dx+dy;
+      dy:=dx-dy;
+      dx:=dx-dy;
+      check:=1;
+  end;
+  e:= 2*dy - dx;
+  for i:=0 to dx-1 do
+  begin
+    oldx := FlyX;
+    oldy := FlyY;
+    if e>=0 then
+    begin
+      if check=1 then FlyX:=FlyX+sx else FlyY:=FlyY+sy;
+      e:=e-2*dx;
+    end;
+    if check=1 then FlyY:=FlyY+sy else FlyX:=FlyX+sx;
+    e:=e+2*dy;
+    // А теперь проверить с чем столкнулось
+    if not TilesData[M.Tile[FlyX,FlyY]].void then
+    begin
+      // Надо придумать какое сообщение здесь вывести
+      break;
+    end else
+      // Стоит монстр
+      if M.MonP[FlyX,FlyY] > 0 then
+      begin
+        autoaim := M.MonP[FlyY,FlyY];
+        pc.Fire(M.MonL[M.MonP[FlyX,FlyY]]);
+        break;
+      end else
+        begin
+          Redraw;
+          sleep(FlySpeed);
+        end;
+  end;
+  FlyX := 0;
+  FlyY := 0;
+end;
+
+procedure TMainForm.GameTimerTimer(Sender: TObject);
+begin
+  MainForm.Redraw;
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  KeyQueue.Free;
+  ReleaseDC(MainForm.Handle, DC);
+  DeleteDC(DC);
+end;
+
+procedure TMainForm.FormActivate(Sender: TObject);
+begin
+  StartGameMenu; //Главное игровое меню
+end;
+
+procedure TMainForm.cls;
+begin
+  with _Screen.Canvas do
+  begin
+    Brush.Color := 0;
+    FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  end;
+end;
+
+procedure TMainForm.Redraw;
+begin
+  OnPaint(nil);
+end;
+
+procedure TMainForm.DrawString(x,y: byte; c: LongInt; s: string; l: byte = WindowX);
+begin
+  with _Screen.Canvas do
+  begin
+    Font.Color := c;
+    TextOut(x * CharX, y * CharY, s);
+//    log(inttostr(x*CharX)+','+inttostr(y*CharY)+','+s+'/'+inttostr(Font.Size));
+  end;
+end;
+
+procedure TMainForm.SetFont(newFont: string);
+begin
+  with _Screen.Canvas do
+  begin
+    Font.Name := newFont;
+    Font.Size := FontSize;
+    case FontStyle of
+      1:   Font.Style := [fsBold];
+      2:   Font.Style := [fsItalic];
+      3:   Font.Style := [fsBold, fsItalic];
+      else Font.Style := [];
+    end;
+    CharX := TextWidth('W');
+    CharY := TextHeight('W');
+  end;
+end;
+
+procedure TMainForm.SetBgColor(c: Integer);
+begin
+  _Screen.Canvas.Brush.Color := c;
+end;
+
+procedure TMainForm.DrawHPBar(x, y: byte; color: Integer; hp, rhp: word);
+begin
+  with _Screen.Canvas do
+  begin
+    Pen.Color := cGRAY;
+    Pen.Width := 3;
+    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
+    LineTo((x)*CharX-1, (y-1)*CharY - 2);
+    Pen.Color := cLIGHTRED;
+    MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
+    if M.MonP[x,y] = 1 then
+    begin
+      if pc.Hp > 0 then
+        LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
+    end
+    else
+      if M.MonL[M.MonP[x,y]].Hp > 0 then
+        LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2))
+             / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
+  end;
+end;
+
+procedure TMainForm.DrawString(x, y: byte; c: Integer; bs: TBrushStyle;
+  s: string; l: byte = WindowX);
+var OldStyle: TBrushStyle;
+begin
+  with _Screen.Canvas do
+  begin
+    OldStyle := Brush.Style;
+    Brush.Style := bs;
+    DrawString(x,y,c,s,l);
+    Brush.Style := OldStyle;
+  end;
+end;
+
+procedure TMainForm.DrawBar(x,y,l: word; c1,c2: LONGWORD); //отрисовка шкалы здоровья/маны/опыта/ещё чего-то
+var i,j: word;
+  StartRGB, EndRGB: array[0..2] of Byte; // разложенный цвет
+  ax, ay, Colors, Delta: Word; // число цветов, которые использовать для рисования
+begin
+  with _Screen.Canvas do
+  begin
+    Pen.Width := 9;
+    ax :=  x*CharX+(CharX div 2);
+    ay := y*CharY+(CharY div 2);
+    if (c1 = c2)or(l<4) then
+    begin
+      Pen.Color := c2;
+      MoveTo(ax, ay);
+      LineTo(ax+l, ay);
+    end
+    else
+    begin
+      StartRGB[0] := GetRValue(c1);
+      StartRGB[1] := GetGValue(c1);
+      StartRGB[2] := GetBValue(c1);
+      EndRGB[0] := GetRValue(c2);
+      EndRGB[1] := GetGValue(c2);
+      EndRGB[2] := GetBValue(c2);
+      Colors := l div 2; // число градаций на ширину
+      Delta := l div Colors; // число пикселей для одной градации
+      For i := 0 to Colors do
+      begin
+        Pen.Color := RGB((StartRGB[0] + MulDiv(i, EndRGB[0] - StartRGB[0], Colors-1)),
+                         (StartRGB[1] + MulDiv(i, EndRGB[1] - StartRGB[1], Colors-1)),
+                         (StartRGB[2] + MulDiv(i, EndRGB[2] - StartRGB[2], Colors-1)));
+        MoveTo(ax+i*delta, ay);
+        LineTo(ax+i*delta, ay);
+      end;
+    end;
+  end;
+end;
+
+procedure TMainForm.HideCursor;
+begin
+  GameTimer.Enabled := false;
+end;
+
+procedure TMainForm.ShowCursor;
+begin
+  GameTimer.Enabled := true;
+end;
+
+initialization
+  Randomize;
+  // Создаем картинку (буфер)
+  _Screen := TBitMap.Create;
+  GrayScreen := TBitMap.Create;
+  // Разумные границы
+  if (FontSize < 8 ) then FontSize := 8;
+  if (FontSize > 20) then FontSize := 20;
+
+finalization
+  // Освобождаем картинку (буфер)
+  _Screen.Free;
+  GrayScreen.Free;
+
+end.

@@ -4,7 +4,11 @@ interface
 
 const
   { Общие константы игры }
-  MapEditorVersion         = '0.7.1.0';
+  MapEditorVersion         = '0.7.0.0';
+
+  { Константы режимов игры }
+  AdventureMode            = 1;
+  DungeonMode              = 2;
 
   { Константы  окна }
   WindowX                  = 100;
@@ -77,38 +81,36 @@ const
   cLIGHTBLUE               = 16711680;
   cORANGE                  = 212675;
   cBLUEGREEN               = 6668288;
-
-  { Дополнительные темные цвета }
-  cDARKRED                 = $00000066;
-  cDARKBLUE                = $00660000;
-  cDARKGREEN               = $00003300;
+  
+  cDARKRED                 = $00000066; 
+  cDARKBLUE                = $00660000; 
+  cDARKGREEN               = $00003300; 
 
   { Состояние игры }
   gsPLAY                   = 1;
   gsCLOSE                  = 2;
   gsLOOK                   = 3;
   gsCHOOSEMONSTER          = 4;
-//  gsQUESTLIST              = 5;
+  gsQUESTLIST              = 5;
   gsEQUIPMENT              = 6;
   gsINVENTORY              = 7;
-//  gsHELP                   = 8;
+  gsHELP                   = 8;
   gsUSEMENU                = 9;
-//  gsHERONAME               = 10;
-//  gsHEROGENDER             = 11;
+  gsHERONAME               = 10;
+  gsHEROGENDER             = 11;
   gsOPEN                   = 12;
-//  gsABILITYS               = 13;
-//  gsHISTORY                = 14;
+  gsABILITYS               = 13;
+  gsHISTORY                = 14;
   gsINTRO                  = 15;
-//  gsHEROATR                = 16;
-//  gsHEROCRRESULT           = 17;
-//  gsSKILLSMENU             = 18;
-//  gsHEROCLWPN              = 19;
-//  gsHEROFRWPN              = 20;
-//  gsWPNSKILLS              = 21;
+  gsHEROATR                = 16;
+  gsHEROCRRESULT           = 17;
+  gsSKILLSMENU             = 18;
+  gsHEROCLWPN              = 19;
+  gsHEROFRWPN              = 20;
+  gsWPNSKILLS              = 21;
   gsAIM                    = 22;
-//  gsHERORANDOM             = 23;
-//  gsCHOOSEMODE             = 24;
-  gsCONSOLE                = 25;
+  gsHERORANDOM             = 23;
+  gsCHOOSEMODE             = 24;
 
   { Статусы героя}
   stHUNGRY                 = 1;
@@ -128,11 +130,6 @@ const
 
   { Сколько действий в списке использования предмета }
   HOWMANYVARIANTS          = 5;       //1-Использовать,2-Рассмотреть повнимательнее,3-Бросить,4-Отдать,5-Выкинуть
-
-  { Текстовая рамка }
-  Frame = '-|-|..'''''; // '-|-|/+/+'
-
-{$include ../Data/Scripts/Const.pas}
 
 implementation
 
