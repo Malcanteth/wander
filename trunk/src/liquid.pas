@@ -52,11 +52,6 @@ const
     (name : 'кефира'; state : lsDENSE; color : crWHITE; effect : leDRUNK; power : 10; chance : 25; flags : NOF or L_LITTLEHEAL or L_WSATURATION;)
   );
 
-  lqCURE        = 1;
-  lqHEAL        = 2;
-  lqCHEAPBEER   = 3;
-  lqKEFIR       = 4;
-
   {Обычное насыщение жидкостью и ее масса}
   LiquidSaturation = 40;
   LiquidMass       = 0.3;

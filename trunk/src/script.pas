@@ -1,50 +1,67 @@
 unit script;
 
 interface
+uses classes;
 
-procedure Run(Script: string); // Запускаем скрипт на выполнение
+procedure Run(Script: string; CompileOnly: Boolean = false); // Запускаем скрипт на выполнение
+
+type
+  TPSPc = class
+  private
+    procedure getHP(var value: Integer);
+    procedure setHP(value: Integer);
+    procedure getRHP(var value: Integer);
+    procedure setRHP(value: Integer);
+    procedure getX(var value: word);
+    procedure getY(var value: word);
+    function getName(): string;
+    procedure getQuest(var Value: byte; Index:byte);
+    procedure setQuest(Value, Index:byte);
+    function getGold(): word;
+    function addItem(id: byte; amount: integer): boolean;
+    function addPotion(id: byte; amount: integer): boolean;
+    function removeGold(amount: word): boolean;
+  end;
+
+  TPSMap = class
+  private
+    procedure putItem(x,y,id: byte; amount: integer);
+    procedure putPotion(x,y,id: byte; amount: integer);
+    procedure getTile(var Value: byte; IndexX,IndexY: byte);
+    procedure setTile(Value, IndexX, IndexY: byte);
+  end;
+
 
 implementation
 
-uses uPSCompiler, uPSRuntime, SysUtils, Classes, wlog, sutils, vars, utils, mbox,
-  msg;
+uses uPSCompiler, uPSRuntime, uPSC_std, uPSR_std, SysUtils, wlog, sutils, vars,
+  utils, mbox, msg, player, monsters, items, liquid, map, main;
 
 const ScriptPath = '\Data\Scripts\'; // Путь к папке со скриптами
 
 var
   Path: string;
-  L, F, H, D: TStringList;
+  H, Z: TStringList;
 
-{ Функция Rand, случайное число }
-function WanderRand(A, B: Integer): Integer;
-begin
-  Result := Utils.Rand(A, B);
-end;
-
-{ Диалог WinAPI MessageBox }
-procedure WanderMsgBox(Msg: String);
-begin
-  MBox.MsgBox(Msg);
-end;
-
-{ Лог }
-procedure WanderLog(LogMsg: String);
-begin
-  WLog.Log(LogMsg);
-end;
-
-{ Добавить сообщение }
-procedure WanderAddMsg(S: string; Id : integer);
-begin
-  Msg.AddDrawMsg(S, Id);
-  S := '';
-end;
-
-(* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
-function WanderGetMsg(s: string; gid : integer): string;
-begin
-  Result := Msg.GetMsg(s, gid);
-end;
+{ класс TPSPc }
+function TPSPc.getName(): string; begin Result := pc.name; end;
+function TPSPc.getGold(): word; begin Result := pc.getGold(); end;
+function TPSPc.removeGold(amount: word): boolean; begin Result := pc.removeGold(amount); end;
+procedure TPSPc.getQuest(var Value: byte; Index:byte); begin Value := pc.quest[Index]; end;
+procedure TPSPc.setQuest(Value, Index:byte); begin pc.quest[Index] := Value; end;
+procedure TPSPc.getHP(var value: Integer); begin Value := pc.hp; end;
+procedure TPSPc.getRHP(var value: Integer); begin Value := pc.Rhp; end;
+procedure TPSPc.getX(var value: Word); begin Value := pc.X; end;
+procedure TPSPc.getY(var value: Word); begin Value := pc.Y; end;
+procedure TPSPc.setHP(value: Integer); begin pc.HP:= value; end;
+procedure TPSPc.setRHP(value: Integer); begin pc.RHP:= value; end;
+function TPSPc.addItem(id: byte; amount: integer): boolean; begin Result := pc.PickUp(CreateItem(id, amount, 0), FALSE,amount)=0; end;
+function TPSPc.addPotion(id: byte; amount: integer): boolean; begin Result := pc.PickUp(CreatePotion(id, amount), FALSE,amount)=0; end;
+{ класс TPSMap }
+procedure TPSMap.putItem(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreateItem(id, amount, 0),amount); end;
+procedure TPSMap.putPotion(x,y,id: byte; amount: integer); begin items.PutItem(x,y,CreatePotion(id, amount),amount); end;
+procedure TPSMap.getTile(var Value: byte; IndexX,IndexY: byte); begin Value := M.Tile[IndexX,IndexY]; end;
+procedure TPSMap.setTile(Value, IndexX, IndexY: byte); begin M.Tile[IndexX,IndexY] :=Value; end;
 
 { Вернуть переменную как строку }
 function WanderGetStr(VR: String): String;
@@ -100,137 +117,267 @@ begin
   V.Let(V1, V2);
 end;
 
-{ Выполнение скрипта }
-procedure WanderRun(Script: string);
+{ Имя монстра в нужной форме }
+function WanderMonstersName(id, form: byte): string;
 begin
-  Run(Script);
+  case form of
+    2: Result := MonstersData[id].name2;
+    3: Result := MonstersData[id].name3;
+    4: Result := MonstersData[id].name4;
+    5: Result := MonstersData[id].name5;
+    6: Result := MonstersData[id].name6;
+    else Result := MonstersData[id].name1;
+  end;
 end;
 
 { Заголовки }
-function ScriptOnUses(Sender: TPSPascalCompiler; const Name: string): Boolean;
+function ExtendCompiler(Sender: TPSPascalCompiler; const Name: string): Boolean;
 begin
+  Result := False;
   if Name = 'SYSTEM' then
-  begin
-    Sender.AddDelphiFunction('function Rand(A, B: Integer): Integer;');
-    Sender.AddDelphiFunction('procedure MsgBox(S: String);');
-    Sender.AddDelphiFunction('procedure Log(LogMsg: String);');
-    Sender.AddDelphiFunction('procedure AddMsg(s: string; id : integer);');
-    Sender.AddDelphiFunction('function GetMsg(AString: String; gender : byte): string;');
-    Sender.AddDelphiFunction('procedure Run(Script: String);');
-    Sender.AddDelphiFunction('function  GetStr(VR: String): String;');
-    Sender.AddDelphiFunction('procedure SetStr(VR, D: String);');
-    Sender.AddDelphiFunction('function  GetInt(VR: String): Integer;');
-    Sender.AddDelphiFunction('procedure SetInt(VR: String; I: Integer);');
-    Sender.AddDelphiFunction('procedure IncInt(VR: String; A: Integer);');
-    Sender.AddDelphiFunction('procedure DecInt(VR: String; A: Integer);');
-    Sender.AddDelphiFunction('function  GetBool(VR: String): Boolean;');
-    Sender.AddDelphiFunction('procedure SetBool(VR: String; B: Boolean);');
-    Sender.AddDelphiFunction('procedure LetVar(V1, V2: String);');
-    Result := True;
-  end else
-    Result := False;
-end;
-
-{ Процедура Run, загрузка, компиляция и выполнение скрипта }
-procedure Run(Script: string);
-var
-  Compiler: TPSPascalCompiler;
-  Exec: TPSExec;
-  S, Data: string;
-  I: Integer;
-  procedure ShowScriptErrors(const FileName: String);
-  var
-    I: Integer;
-    S: string;
-  begin
-    // Если ошибка...
-    S := Format('Ошибки в скрипте: "%s":', [ExtractFileName(FileName)]) + #10#13;
-    for I := 0 to Compiler.MsgCount - 1 do
-      S := S + Compiler.Msg[I].MessageToString + ';'#10#13;
-    MsgBox(S);
-  end;
-begin
   try
-    S := Script;
-    //
-    if (StrRight(S, 4) = '.pas') then
+    Sender.AddDelphiFunction('function Rand(A, B: Integer): Integer');
+    Sender.AddDelphiFunction('procedure MsgBox(S: String)');
+    Sender.AddDelphiFunction('procedure Log(LogMsg: String)');
+    Sender.AddDelphiFunction('procedure AddMsg(s: string; id : integer)');
+    Sender.AddDelphiFunction('function Ask(s: string): char');
+    Sender.AddDelphiFunction('procedure More');
+    Sender.AddDelphiFunction('function GetMsg(AString: String; gender : byte): string');
+    Sender.AddDelphiFunction('procedure Run(Script: String)');
+
+    Sender.AddDelphiFunction('function  GetStr(VR: String): String');
+    Sender.AddDelphiFunction('procedure SetStr(VR, D: String)');
+    Sender.AddDelphiFunction('function  GetInt(VR: String): Integer');
+    Sender.AddDelphiFunction('procedure SetInt(VR: String; I: Integer)');
+    Sender.AddDelphiFunction('procedure IncInt(VR: String; A: Integer)');
+    Sender.AddDelphiFunction('procedure DecInt(VR: String; A: Integer)');
+    Sender.AddDelphiFunction('function  GetBool(VR: String): Boolean');
+    Sender.AddDelphiFunction('procedure SetBool(VR: String; B: Boolean)');
+    Sender.AddDelphiFunction('procedure LetVar(V1, V2: String)');
+    Sender.AddDelphiFunction('function MonstersName(id, form: byte): string');
+
+    SIRegisterTObject(Sender);
+    with Sender.AddClassN(Sender.FindClass('TOBJECT'), 'TPSPC') do
     begin
-      // Берем скрипт из кеша...
-      I := F.IndexOf(Script);
-      if I > -1 then Script := D[I] else
-      begin
-        // Если нет в кеше...
-        F.Append(Script);
-        S := Path + Script;
-        if Not FileExists(S) then
-        begin
-          MsgBox('Файл скрипта "' + ExtractFileName(S) + '" не найден!');
-          Exit;
-        end;
-        L.LoadFromFile(S);
-        Script := L.Text;
-        D.Append(Script);
-      end;
+      RegisterMethod('function getGold(): word');
+      RegisterMethod('function removeGold(amount: word): boolean');
+      RegisterMethod('function addItem(id: byte; amount: integer): boolean');
+      RegisterMethod('function addPotion(id: byte; amount: integer): boolean');
+      RegisterProperty('HP', 'Integer', iptRW);
+      RegisterProperty('RHP', 'Integer', iptRW);
+      RegisterProperty('X', 'Word', iptR);
+      RegisterProperty('Y', 'Word', iptR);
+      RegisterProperty('NAME', 'String', iptR);
+      RegisterProperty('QUEST', 'Byte Byte', iptRW);
     end;
-    // Компилируем скрипт
-    Script := H.Text + ' begin ' + Script + ' end.';
-    Compiler := TPSPascalCompiler.Create;
-    Compiler.OnUses := ScriptOnUses;
-    if not Compiler.Compile(Script) then
+
+    with Sender.AddClassN(Sender.FindClass('TOBJECT'), 'TPSMAP') do
     begin
-      // Если ошибки
-      ShowScriptErrors(S);
-      Compiler.Free;
-      Exit;
+      RegisterMethod('procedure putItem(x,y,id: byte; amount: integer): boolean');
+      RegisterMethod('procedure putPotion(x,y,id: byte; amount: integer): boolean');
+      RegisterProperty('TILE', 'Byte Byte Byte', iptRW);
+      SetDefaultPropery('TILE');
     end;
-    Compiler.GetOutput(Data);
-    Compiler.Free;
-    // Выполняем скрипт
-    Exec := TPSExec.Create;
-    // Указатели
-    Exec.RegisterDelphiFunction(@WanderRand,'RAND',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderLog,'LOG',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderMsgBox,'MSGBOX',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderAddMsg,'ADDMSG',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderGetMsg,'GETMSG',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderRun,'RUN',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderGetStr,'GETSTR',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderSetStr,'SETSTR',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderGetInt,'GETINT',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderSetInt,'SETINT',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderIncInt,'INCINT',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderDecInt,'DECINT',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderGetBool,'GETBOOL',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderSetBool,'SETBOOL',cdRegister);
-    Exec.RegisterDelphiFunction(@WanderLetVar,'LETVAR',cdRegister);
-    // Выполняем скрипт
-    if not Exec.LoadData(Data) then
-    begin
-      Exec.Free;
-      Exit;
-    end;
-    Exec.RunScript;
-    Exec.Free;
+    Result := True;
   except end;
 end;
 
+procedure ExtendRuntime(Exec: TPSExec; ClassImporter: TPSRuntimeClassImporter);
+begin
+  // Указатели на функции из других модулей
+  Exec.RegisterDelphiFunction(@Rand,'RAND',cdRegister);
+  Exec.RegisterDelphiFunction(@Log,'LOG',cdRegister);
+  Exec.RegisterDelphiFunction(@MsgBox,'MSGBOX',cdRegister);
+  Exec.RegisterDelphiFunction(@AddDrawMsg,'ADDMSG',cdRegister);
+  Exec.RegisterDelphiFunction(@Ask,'ASK',cdRegister);
+  Exec.RegisterDelphiFunction(@More,'MORE',cdRegister);
+  Exec.RegisterDelphiFunction(@GetMsg,'GETMSG',cdRegister);
+  Exec.RegisterDelphiFunction(@Run,'RUN',cdRegister);
+  // Указатели на функции из этого модуля
+  Exec.RegisterDelphiFunction(@WanderGetStr,'GETSTR',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderSetStr,'SETSTR',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderGetInt,'GETINT',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderSetInt,'SETINT',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderIncInt,'INCINT',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderDecInt,'DECINT',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderGetBool,'GETBOOL',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderSetBool,'SETBOOL',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderLetVar,'LETVAR',cdRegister);
+  Exec.RegisterDelphiFunction(@WanderMonstersName,'MONSTERSNAME',cdRegister);
+  // Указатели на классы
+  RIRegisterTObject(ClassImporter);
+  with ClassImporter.Add(TPSPc) do
+  begin
+    RegisterMethod(@TPSPc.getGold, 'GETGOLD');
+    RegisterMethod(@TPSPc.removeGold, 'REMOVEGOLD');
+    RegisterMethod(@TPSPc.addItem, 'ADDITEM');
+    RegisterMethod(@TPSPc.addPotion, 'ADDPOTION');
+    RegisterPropertyHelper(@TPSPc.getHP, @TPSPc.setHP, 'HP');
+    RegisterPropertyHelper(@TPSPc.getRHP, @TPSPc.setRHP, 'RHP');
+    RegisterPropertyHelper(@TPSPc.getQuest, @TPSPc.setQuest, 'QUEST');
+    RegisterPropertyHelper(@TPSPc.getX, nil, 'X');
+    RegisterPropertyHelper(@TPSPc.getY, nil, 'Y');
+    RegisterPropertyHelper(@TPSPc.getName, nil, 'NAME');
+  end;
+  with ClassImporter.Add(TPSMap) do
+  begin
+    RegisterMethod(@TPSMap.putItem, 'PUTITEM');
+    RegisterMethod(@TPSMap.putItem, 'PUTPOTION');
+    RegisterPropertyHelper(@TPSMap.getTile, @TPSMap.setTile, 'TILE');        
+  end;
+end;
+
+function CompileScript(Script: AnsiString; out Bytecode, Messages: AnsiString): Boolean;
+var
+  Compiler: TPSPascalCompiler;
+  I: Integer;
+begin
+  Bytecode := '';
+  Messages := 'Compiler Messages:';
+
+  Compiler := TPSPascalCompiler.Create;
+  Compiler.OnUses := ExtendCompiler;
+
+  try
+    Result := Compiler.Compile(Script) and Compiler.GetOutput(Bytecode);
+    for I := 0 to Compiler.MsgCount - 1 do
+      if Length(Messages) = 0 then
+        Messages := Compiler.Msg[I].MessageToString
+       else
+         Messages := Messages + #13#10 + Compiler.Msg[I].MessageToString;
+  finally
+    Compiler.Free;
+  end;
+end;
+
+function RunCompiledScript(Bytecode: AnsiString; out RuntimeErrors: AnsiString): Boolean;
+var
+  Runtime: TPSExec;
+  ClassImporter: TPSRuntimeClassImporter;
+begin
+  Runtime := TPSExec.Create;
+  ClassImporter := TPSRuntimeClassImporter.CreateAndRegister(Runtime, false);
+  try
+    ExtendRuntime(Runtime, ClassImporter);
+    Result := Runtime.LoadData(Bytecode)
+          and Runtime.RunScript
+          and (Runtime.ExceptionCode = erNoError);
+    if not Result then
+      RuntimeErrors :=  PSErrorToString(Runtime.LastEx, '');
+  finally
+    ClassImporter.Free;
+    Runtime.Free;
+  end;
+end;
+
+function PrepareScript(Script: String; var Data, Messages: AnsiString): boolean;
+var S, FileName: AnsiString;
+I: Integer;
+_F: File;
+begin
+  FileName := '';
+  S := Script;
+  Result := false;
+  if Debug then
+  begin
+    if (StrRight(S, 4) = '.pas') then
+    begin
+      FileName := Path + Script;
+      if Not FileExists(FileName) then
+      begin
+        MsgBox('Файл скрипта "' + ExtractFileName(FileName) + '" не найден!');
+        Exit;
+      end;
+      AssignFile (_F, FileName);
+      Reset(_F,1);
+      I := FileSize(_F);
+      SetLength(Script, I);
+      BlockRead(_F, PChar(Script)^, I);
+      CloseFile(_F);
+    end;
+    // Компилируем скрипт
+    Script := H.Text + Script + Z.Text;
+    Result := CompileScript(Script, Data, Messages);
+    s := ExtractFileName(FileName);
+    if s <> '' then Messages := '['+s+'] '+Messages;
+    if Result and (FileName <> '') then
+    begin
+      FileName[length(FileName)-1]:='c';
+      AssignFile (_F, FileName);
+      Rewrite(_F,1);
+      I := length(Data);
+      BlockWrite(_F, PChar(Data)^, I);
+      CloseFile(_F);
+    end;
+  end
+  else
+    if (StrRight(S, 4) = '.pas') then
+    begin
+      FileName := Path + Script;
+      FileName[length(FileName)-1]:='c';
+      if Not FileExists(FileName) then
+      begin
+        MsgBox('Файл скрипта "' + ExtractFileName(FileName) + '" не найден!');
+        Exit;
+      end;
+      Result := true;
+      FileName[length(FileName)-1]:='c';
+      AssignFile (_F, FileName);
+      Reset(_F,1);
+      I := FileSize(_F);
+      SetLength(Data, I);
+      BlockRead(_F, PChar(Data)^, I);
+      CloseFile(_F);
+    end
+    else
+    begin
+      Script := H.Text + Script + Z.Text;
+      Result := CompileScript(Script, Data, S);
+    end;
+end;
+
+{ Процедура Run, загрузка, компиляция и выполнение скрипта }
+procedure Run(Script: string; CompileOnly: Boolean = false);
+var Compiled, Run: Boolean;
+S, Data: AnsiString;
+begin
+  Compiled := PrepareScript(Script, Data, S);
+  // Выполняем скрипт
+  if (Compiled) and (not CompileOnly) then
+  begin
+    Run := RunCompiledScript(Data,s);
+    if s<>'' then MsgBox(s);
+  end else if s<>'' then Log(s);
+end;
+
+var i: word;
 initialization
   // Путь
   GetDir(0, Path);
   Path := Path + ScriptPath;
   // Списки
-  L := TStringList.Create;
-  F := TStringList.Create;
-  D := TStringList.Create;
   H := TStringList.Create;
+  Z := TStringList.Create;
   // Заголовочный скрипт
-  H.LoadFromFile(Path + 'utils.pas');
+  if FileExists(Path + 'Const.pas') then begin
+  Z.LoadFromFile(Path + 'Const.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists(Path + 'Monsters.pas') then begin
+  Z.LoadFromFile(Path + 'Monsters.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists(Path + 'Items.pas') then begin
+  Z.LoadFromFile(Path + 'Items.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists(Path + 'Tiles.pas') then begin
+  Z.LoadFromFile(Path + 'Tiles.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists(Path + 'Init.pas') then begin
+  Z.LoadFromFile(Path + 'Init.pas');
+  for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
+  if FileExists(Path + 'Final.pas') then Z.LoadFromFile(Path + 'Final.pas');
 
 finalization
   // Осв. ресурсы
-  F.Free;
   H.Free;
-  L.Free;
-  D.Free;
-  
+  Z.Free;
 end.

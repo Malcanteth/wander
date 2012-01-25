@@ -54,71 +54,69 @@ procedure TMap.DrawScene;
 var
   x, y, i   : integer;
   color,
-  back       : longword;
+  back       : longint;
   char       : string[1];
   dx,dy,sx,sy,check,e:integer;
   onway      : boolean;
 begin
-  with Screen.Canvas do
-  begin
-    Font.Name := FontMap;
-    for x:=1 to MapX do
-      for y:=1 to MapY do
+  MainForm.SetFont(FontMap);
+  for x:=1 to MapX do
+    for y:=1 to MapY do
+      begin
+        color := 255;
+        back := 0;
+        if M.Saw[x,y] > 0 then
         begin
-          color := 255;
-          back := 0;
-          if M.Saw[x,y] > 0 then
+          // Тайл
+          case M.Blood[x,y] of
+            0 : color := RealColor(TilesData[M.Tile[x,y]].color);
+            1 : color := cLIGHTRED;
+            2 : color := cRED;
+          end;
+          char := TilesData[M.Tile[x,y]].char;
+          back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
+          // Предметы
+          if M.Item[x,y].id > 0 then
           begin
-            // Тайл
-            case M.Blood[x,y] of
-              0 : color := RealColor(TilesData[M.Tile[x,y]].color);
-              1 : color := cLIGHTRED;
-              2 : color := cRED;
-            end;
-            char := TilesData[M.Tile[x,y]].char;
-            back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
-            // Предметы
-            if M.Item[x,y].id > 0 then
+            color := RealColor(ItemColor(M.Item[x,y]));
+            char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
+          end;
+          // Монстры
+          if M.MonP[x,y] > 0 then
+          begin
+            if M.MonP[x,y] = 1 then
             begin
-              color := RealColor(ItemColor(M.Item[x,y]));
-              char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
-            end;
-            // Монстры
-            if M.MonP[x,y] > 0 then
-            begin
-              if M.MonP[x,y] = 1 then
+              color := RealColor(pc.ClassColor);
+              char := '@';
+              if pc.tactic > 0 then back := pc.ColorOfTactic;
+              if pc.felldown then color:= cGRAY;
+              if pc.underhit then
               begin
-                color := RealColor(pc.ClassColor);
-                char := '@';
-                if pc.tactic > 0 then back := pc.ColorOfTactic;
-                if pc.felldown then color:= cGRAY;
-                if pc.underhit then
-                begin
-                  case Random(2)+1 of
-                    1 :color := cLIGHTRED;
-                    2 :color := cRED;
-                  end;
-                  pc.underhit := FALSE;
+                case Random(2)+1 of
+                  1 :color := cLIGHTRED;
+                  2 :color := cRED;
                 end;
-              end else
-                begin
-                  color := RealColor(M.MonL[M.MonP[x,y]].ClassColor);
-                  if (M.MonL[M.MonP[x,y]].relation = 1) and (M.MonL[M.MonP[x,y]].tactic > 0) then
-                    back := M.MonL[M.MonP[x,y]].ColorOfTactic;
-                  if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
-                  char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
-                  if M.MonL[M.MonP[x,y]].underhit then
-                  begin
-                    case Random(2)+1 of
-                      1 :color := cLIGHTRED;
-                      2 :color := cRED;
-                    end;
-                    M.MonL[M.MonP[x,y]].underhit := FALSE;
-                  end;
+                pc.underhit := FALSE;
+              end;
+            end else
+            begin
+              color := RealColor(M.MonL[M.MonP[x,y]].ClassColor);
+              if (M.MonL[M.MonP[x,y]].relation = 1) and (M.MonL[M.MonP[x,y]].tactic > 0) then
+                back := M.MonL[M.MonP[x,y]].ColorOfTactic;
+              if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
+              char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
+              if M.MonL[M.MonP[x,y]].underhit then
+              begin
+                case Random(2)+1 of
+                  1 :color := cLIGHTRED;
+                  2 :color := cRED;
                 end;
+                M.MonL[M.MonP[x,y]].underhit := FALSE;
+              end;
             end;
-            // Курсор просмотра
-            if (GameState = gsLook) and (x=lx) and (y=ly) then
+          end;
+          // Курсор просмотра
+          if (GameState = gsLook) and (x=lx) and (y=ly) then
               Back := MyRGB(140, 140, 255);
             // Курсор прицела
             if (GameState = gsAim) and (x=lx) and (y=ly) then
@@ -142,9 +140,8 @@ begin
               color := 0;
             end;
           // Вывести символ
-          Font.Color := color;
-          Brush.Color := back;
-          TextOut((x-1)*CharX, (y-1)*CharY, char);
+          MainForm.SetBgColor(back);
+          MainForm.DrawString(x-1,y-1,color, char);
         end;
      // Хелс-бары
      for x:=pc.x - pc.los to pc.x + pc.los do
@@ -156,23 +153,16 @@ begin
               if (M.MonL[M.MonP[x,y]].relation = 1)
                 or ((ShowPCBar=1)and(x=pc.x)and(y=pc.y)) then
               begin
-                Pen.Color := cGRAY;
-                Pen.Width := 3;
-                MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
-                LineTo((x)*CharX-1, (y-1)*CharY - 2);
-                Pen.Color := cLIGHTRED;
-                MoveTo((x-1)*CharX+1, (y-1)*CharY - 2);
                 if M.MonP[x,y] = 1 then
                 begin
                   if pc.Hp > 0 then
-                    LineTo((x-1)*CharX+1 + Round( (pc.Hp * (CharX-2)) / pc.RHp), (y-1)*CharY - 2);
-                end else
-                  if M.MonL[M.MonP[x,y]].Hp > 0 then
-                    LineTo((x-1)*CharX+1 + Round( (M.MonL[M.MonP[x,y]].Hp * (CharX-2))
-                     / M.MonL[M.MonP[x,y]].RHp), (y-1)*CharY - 2);
+                    MainForm.DrawHPBar(x,y,cLIGHTRED,pc.hp, pc.rhp);
+                end
+                else if M.MonL[M.MonP[x,y]].Hp > 0 then
+                  MainForm.DrawHPBar(x,y,cLIGHTRED, M.MonL[M.MonP[x,y]].Hp, M.MonL[M.MonP[x,y]].RHp);
               end;
         end;
-    Font.Name := FontMsg;
+    MainForm.SetFont(FontMsg);
     // Если режим прицеливания
     if (GameState = gsAIM) and NOT ((pc.x=lx)and(pc.y=ly)) then
     begin
@@ -201,16 +191,12 @@ begin
         end;
         if check=1 then y:=y+sy else x:=x+sx;
         e:=e+2*dy;
-        if onway then
-          Font.Color := cRED else
-            Font.Color := cYELLOW;
-        Brush.Style := bsClear;
-        TextOut((x-1)*CharX, (y-1)*CharY, '*');
+        if onway then color := cRED else color := cYELLOW;
+        MainForm.DrawString(x-1,y-1,color, bsClear, '*');
         // А теперь проверить на столкновение и если оно есть выводить уже красным цветом
         if (not TilesData[M.Tile[x,y]].void) or (M.MonP[x,y] > 0) then inc(onway);
       end;
     end;
-  end;
 end;
 
 { Генерация подземелья }

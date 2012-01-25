@@ -46,7 +46,6 @@ type
     //
     underhit        : boolean;
 
-
     procedure ClearMonster;                           // Очистить
     function Replace(nx, ny : integer) : byte;        // Попытаться передвинуться
     procedure DoTurn;                                 // AI
@@ -95,6 +94,19 @@ type
     procedure StartShooting(mode : byte);             // Стрельнуть / кинуть
   end;
 
+  TMonClass = record
+    name1m, name2m, name3m, name4m, name5m, name6m : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
+    name1f, name2f, name3f, name4f, name5f, name6f : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
+  end;
+
+  TSpot = record
+    nx,ny : integer;
+    speedx, speedy : byte;
+    color : byte;
+    live : boolean;
+  end;
+
+type
   TMonData = record
     name1, name2, name3, name4, name5, name6 : string[40];  // Названия (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи)
     char                       : string[1];       // Символ
@@ -108,18 +120,6 @@ type
     mass                       : real;
     coollevel                  : byte;
     flags                      : longlong;        // Флажки
-  end;
-
-  TMonClass = record
-    name1m, name2m, name3m, name4m, name5m, name6m : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
-    name1f, name2f, name3f, name4f, name5f, name6f : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
-  end;
-
-  TSpot = record
-    nx,ny : integer;
-    speedx, speedy : byte;
-    color : byte;
-    live : boolean;
   end;
 
 const
@@ -265,32 +265,9 @@ const
       exp : 12; mass : 60.0;
       flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
     )
-  );
+  );  
 
-  { Уникальные идентификаторы монстров }
-  mdHERO               = 1;
-  mdMALECITIZEN        = 2;
-  mdFEMALECITIZEN      = 3;
-  mdELDER              = 4;
-  mdBREAKMT            = 5;
-  mdRAT                = 6;
-  mdBAT                = 7;
-  mdSPIDER             = 8;
-  mdGOBLIN             = 9;
-  mdORC                = 10;
-  mdOGR                = 11;
-  mdBLINDBEAST         = 12;
-  mdDRUNK              = 13;
-  mdBARTENDER          = 14;
-  mdDRUNKKILLED        = 15;
-  mdHEALER             = 16;
-  mdMEATMAN            = 17;
-  mdCOCKROACH          = 18;
-  mdLITTLEWORM         = 19;
-  mdSELLER             = 20;
-  mdFANATIK            = 21;
-  mdKEYWIFE            = 22;
-  mdKEYMAN             = 23;
+{$I ../data/scripts/Monsters.pas}
 
   {Названия классов}
   MonsterClassNameAmount = 9;
@@ -334,7 +311,7 @@ procedure MonstersTurn;                    // У каждого монстра есть право на хо
 implementation
 
 uses
-  Map, Player, MapEditor, Script, Vars, SUtils, MBox, Liquid;
+  Map, Player, MapEditor, Script, Vars, SUtils, MBox, Liquid, wlog;
 
 { Создать монстра }
 procedure CreateMonster(n,px,py : byte);
@@ -842,7 +819,6 @@ end;
 procedure TMonster.TalkToMe;
 var
   s : string;
-  w : boolean;
   p : integer;
   i: byte;
 begin
@@ -851,271 +827,10 @@ begin
     // Переменные для работы скрипта
     for i := 1 to QuestsAmount do V.SetInt('PCQuest'+IntToStr(I)+'State', pc.quest[I]); // Состояние квестов
     V.SetStr('NPCWeaponName', ItemsData[eq[6].id].name1);
-    V.SetStr('PCName', PC.Name);
     V.SetStr('NPCName', Name);    // Имя монстра
+    V.SetStr('TalkStr', FullName(1, TRUE) + ' говорит: ');    
     V.SetInt('NPCID', ID);        // Идентификатор монстра
-    w := TRUE;
-    s := FullName(1, TRUE) + ' говорит: ';
-    case id of
-        mdMALECITIZEN, mdFEMALECITIZEN: // Жители деревушки
-        begin
-          // Выполняем скрипт
-          Run('NPCTalk.pas');
-          // Сохраняем результат
-          S := S + V.GetStr('TalkStr');
-        end;
-        mdELDER: // Старейшина
-        begin
-          // Если оба квеста от старейшины выполнены
-          if (pc.quest[1] = 4) and (pc.quest[2] = 4) then
-            s := s + '"Ох... дела.. дела. Надеюсь, у тебя все в порядке..."' else
-          case pc.quest[1] of
-            0 :
-            begin
-              w := FALSE;
-              AddMsg('Ты представил{ся/ась} '+MonstersData[id].name3+'.',0);
-              More;
-              AddMsg(MonstersData[id].name1 + ' говорит: "Здравствуй, '+pc.name+'! Меня зовут '+name+'. Я старейшина Эвилиара и у меня есть к тебе просьба."',0);
-              More;
-              AddMsg('"Понимаешь, в Эвилиаре есть хранилище в котором все наши жители держат свои запасы продовольствия. Оно находится в северо-восточной части деревни и представляет собой всего один этаж под землёй."',0);
-              More;
-              AddMsg('"Две недели назад пара жителей спустилась в хранилище. Они хотели заменить старые несущие балки и раскинуть отраву для крыс. Но только спустившись вниз крысы ожесточились и начали кидаться на людей!"',0);
-              More;
-              AddMsg('"Более того, сквозь мрак жители увидели нескольких тварей, которые были агрессивно на них настроены! Бедняги говорили, что видели гоблинов и кобольда, но... я не особо им верю."',0);
-              More;
-              AddMsg('"Откуда им там взяться? В деревне их никто не видел... Уж не из под земли же они взялись! В любом случае - в хранилище теперь все боятся спускаться, запасы еды заканчиваются... Не знаю, что будет дальше!"',0);
-              More;
-              AddMsg('"Я очень прошу тебя - спустись в хранилище и избавь нас от этого ужаса!"',0);
-              pc.quest[1] := 1;
-            end;
-            1 :
-            begin
-              case Random(3)+1 of
-                1 : s := s + '"Ну как? Ты еще не исследовал{/а} хранилище? Как жаль!"';
-                2 : s := s + '"Пожалуйста, '+pc.name+', поторопись! Люди в опасности!"';
-                3 : s := s + '"Мы все надеемся на тебя, '+pc.name+'!"';
-              end;{case}
-            end;
-            2 : // Выполнил!
-            begin
-              w := FALSE;
-              AddMsg('Ты рассказал{/а} '+MonstersData[id].name3+' о своем приключении в хранилище.',0);
-              More;
-              AddMsg('Он очень удивился твоему рассказу, но, кажется, не особо тебе поверил...',0);
-              More;
-              AddMsg('Тебе нужно дать ему какие-нибудь доказательства!',0);
-            end;
-            3 : // Дал доказательство!
-            begin
-              w := FALSE;
-              AddMsg(MonstersData[id].name3+', пожав тебе руку, сказал:',0);
-              More;
-              AddMsg('"Ты не представляешь, как я тебе благодарен! Ты избавил{/а} нас от этого кошмара!"',0);
-              More;
-              AddMsg('"Вот, возьми эти деньги! Надеюсь, они тебе помогут!"',0);
-              More;
-              AddMsg('Ты взял{/а} золотые монеты и положил{/а} их в карман.',0);
-              pc.PickUp(CreateItem(idCOIN, 300, 0), FALSE,300);
-              pc.quest[1] := 4;
-              More;
-              AddMsg('"Есть у меня еще одно дельце! Будешь заинтересован{/а} - обращайся!"',0);
-              More;
-            end;
-            4 : // Выполнен квест №1
-            begin
-              // Квест № 2
-              case pc.quest[2] of
-                0 :
-                begin
-                  w := FALSE;
-                  AddMsg(FullName(1, TRUE) + ' говорит: "Ну что, я вижу ты готов{/а} для нового задания. А дело вот в чем..."',0);
-                  More;
-                  AddMsg('"Не знаю заметил{/а} ты или нет, но восточный выход из деревни закрыт. Там стоят врата, которые закрыты на тяжелый замок."',0);
-                  More;
-                  AddMsg('"Сделано это было недавно по причине участившихся нападений и визитов нежеланных гостей..."',0);
-                  More;
-                  AddMsg('"Сейчас нам потребовалось открыть эти врата, что бы пустить торговцев с востока..."',0);
-                  More;
-                  AddMsg('"Но, будь он проклят, этот ключник куда-то пропал!"',0);
-                  More;
-                  AddMsg('"Где искать ключ от врат - ума не приложу!"',0);
-                  More;
-                  if Ask('"Ну что? Готов{/а} взяться за это дельце?"  [(Y/n)]') = 'Y' then
-                  begin
-                    AddMsg('"Отлично! Я рассчитываю на тебя!"',0);
-                    pc.quest[2] := 1;
-                    More;
-                  end else
-                    begin
-                      AddMsg('"Очень жаль... Надеюсь, ты передумаешь в ближайшее время!"',0);
-                      More;
-                    end;
-                end;
-                // Взял квест...
-                1 :
-                begin
-                  s := s + '"Ты еше не наш{ел/ла} ключ? Очень жаль..."';
-                end;
-                // Узнал кое-что о ключнике (убил его :)
-                2 :
-                begin
-                  w := FALSE;
-                  AddMsg(FullName(1, TRUE) + ' говорит: "О, боже... Это невероятно... Какая трагедия...."',0);
-                  More;
-                  AddMsg('"Я уже давно заметил, что наш ключник... как бы... сам не свой..."',0);
-                  More;
-                  AddMsg('"Невероятно..."',0);
-                  More;
-                  AddMsg('"Но... Был ли при нём ключ?"',0);
-                  More;
-                end;
-                // Отдал ключ
-                3 :
-                begin
-                  w := FALSE;
-                  AddMsg(MonstersData[id].name3+', пожав тебе руку, сказал:',0);
-                  More;
-                  AddMsg('"И снова ты выручил{/а} всех жителей Эвилиара! Теперь можно наконец открыть восточные врата!"',0);
-                  More;
-                  AddMsg('"Вот, возьми эти деньги! Ничего более оригинального я не придумал, но когда-нибудь я дам тебе что-то более весомое!"',0);
-                  More;
-                  AddMsg('Ты взял{/а} золотые монеты и положил{/а} их в карман.',0);
-                  pc.PickUp(CreateItem(idCOIN, 500, 0), FALSE,500);
-                  pc.quest[2] := 4;
-                  M.Tile[79,18] := tdROAD;
-                  More;
-                end;
-              end; {case quest 2}
-            end;
-          end;
-        end;
-        mdBREAKMT:
-        begin
-          // Выполняем скрипт
-          Run('NPCTalk.pas');
-          // Сохраняем результат
-          S := S + V.GetStr('TalkStr');
-        end;
-        mdKEYWIFE:
-        begin
-          // Выполняем скрипт
-          Run('NPCTalk.pas');
-          // Сохраняем результат
-          S := S + V.GetStr('TalkStr');
-        end;
-        mdBARTENDER:
-        begin
-          w := False;
-          if (Ask(FullName(1, TRUE) + ' говорит: "Могу предложить бутылёк свежего пивасика всего за 15 золотых, хочешь?" #(Y/n)#')) = 'Y' then
-          begin
-            if pc.FindCoins = 0 then
-              AddMsg('К сожалению, у тебя совсем нет денег.',0) else
-              if pc.inv[pc.FindCoins].amount < 15 then
-                AddMsg('У тебя недостаточно золотых монет для покупки.',0) else
-                if pc.inv[pc.FindCoins].amount >= 15 then
-                begin
-                  AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.',0);
-                  dec(pc.inv[pc.FindCoins].amount, 15);
-                  pc.RefreshInventory;
-                  More;
-                  AddMsg('Он их пересчитывает и протягивает бутылку холодного пива.',0);
-                  if pc.PickUp(CreatePotion(lqCHEAPBEER, 1), FALSE,1) <> 0 then
-                  begin
-                    AddMsg('Оно упало на пол.',0);
-                    PutItem(pc.x,pc.y, CreatePotion(lqCHEAPBEER, 1),1);
-                  end;
-                  More;
-                  AddMsg('"Далеко не уходи - вдруг еще захочешь! Можешь посидеть с нашими постояльцами..."',0);
-                end;
-            end else
-              AddMsg('"Ну что ж... Мое дело предложить!"',0);
-        end;
-        mdDRUNK:
-        begin
-          // Выполняем скрипт
-          Run('NPCTalk.pas');
-          // Сохраняем результат
-          S := S + V.GetStr('TalkStr');
-        end;
-        mdHEALER:
-        begin
-          w := False;
-          if pc.Hp < pc.RHp then
-          begin
-            if (Ask(FullName(1, TRUE) + ' говорит: "Хочешь я подлечу тебя?" #(Y/n)#')) = 'Y' then
-            begin
-              p := Round((pc.RHp - pc.Hp) * 1.1);
-              if (Ask('"Твое полное исцеление будет стоить {'+IntToStr(p)+'} золотых. Идет?" #(Y/n)#')) = 'Y' then
-              begin
-                if pc.FindCoins = 0 then
-                  AddMsg('К сожалению, у тебя совсем нет денег.',0) else
-                  if pc.inv[pc.FindCoins].amount < p then
-                  begin
-                    p := Round(pc.inv[pc.FindCoins].amount / 1.1);
-                    if p > 0 then
-                    begin
-                      if (Ask('"Недостаточно монет... Но, если хочешь, могу немного подлечить тебя и за {'+IntToStr(pc.inv[pc.FindCoins].amount)+'} золотых. Идет?" #(Y/n)#')) = 'Y' then
-                      begin
-                        AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.',0);
-                        pc.inv[pc.FindCoins].amount := 0;
-                        pc.RefreshInventory;
-                        More;
-                        AddMsg('Она быстренько пересчитывает и прячет их. Затем достает фляжку с горячим отваром и дает тебе выпить... ',0);
-                        More;
-                        AddMsg('#Сначала тебя немного затошнило, но несколько секунд спустя стало лучше!# ($+'+IntToStr(p)+'$)',0);
-                        inc(pc.Hp, p);
-                      end else
-                        AddMsg('"Тогда ищи более выгодные предложения!"',0);
-                    end else
-                      AddMsg('К сожалению, у тебя недостаточно монет, что бы хоть чуть-чуть подлечиться.',0);
-                  end else
-                    if pc.inv[pc.FindCoins].amount >= p then
-                    begin
-                      AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.',0);
-                      dec(pc.inv[pc.FindCoins].amount, p);
-                      pc.RefreshInventory;
-                      More;
-                      AddMsg('Она быстренько пересчитывает и прячет их. После этого она протягивает обе руки к твоей голове... ',0);
-                      More;
-                      AddMsg('#На секунду ты теряешь сознание, но, когда приходишь в себя, чувствуешь себя великолепно!#',0);
-                      pc.Hp := pc.RHp;
-                    end;
-              end;
-            end else
-              AddMsg('"Не хочешь - как хочешь..."',0);
-          end else
-            AddMsg(FullName(1, TRUE) + ' говорит: "Здравствуй, '+pc.name+'! Меня зовут '+name+'. Если тебя ранят - заходи ко мне, я смогу тебе помочь."',0);
-        end;
-        mdMEATMAN:
-        begin
-          w := False;
-          if (Ask(FullName(1, TRUE) + ' говорит: "Хочешь купить кусок отличного свежего мяса всего за 15 золотых?" #(Y/n)#')) ='Y' then
-          begin
-            if pc.FindCoins = 0 then
-              AddMsg('К сожалению, у тебя совсем нет денег.',0) else
-              if pc.inv[pc.FindCoins].amount < 15 then
-                AddMsg('У тебя недостаточно золотых монет для покупки.',0) else
-                if pc.inv[pc.FindCoins].amount >= 15 then
-                begin
-                  AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.',0);
-                  dec(pc.inv[pc.FindCoins].amount, 15);
-                  RefreshInventory;
-                  More;
-                  AddMsg('Он их пересчитывает и отдает кусок мяса.',0);
-                  if pc.PickUp(CreateItem(idMEAT, 1, 0), FALSE,1) <> 0 then
-                  begin
-                    AddMsg('Оно упало на пол.',0);
-                    PutItem(pc.x,pc.y, CreateItem(idMEAT, 1, 0),1);
-                  end;
-                  More;
-                  AddMsg('"Возвращайся еще, когда захочешь кушать!"',0);
-                end;
-            end else
-              AddMsg('"Если вдруг передумаешь - обязательно заходи ко мне!"',0);
-        end;
-        else s := 'Говорить впустую...';
-      end;
-      if W then AddMsg(s,id);
+    Run('NPCTalk.pas');
   end else
     AddMsg('Ох! Вы не в таких отношениях, чтобы беседовать!',0);
 end;
@@ -1441,19 +1156,21 @@ begin
   M.MonP[x,y] := 0;
   // Труп
   if idinlist = 1 then
-    PutItem(x,y,CreateItem(idCORPSE, 1, id),1) else
-      begin
-        if id = mdBLINDBEAST then
-          PutItem(x,y,CreateItem(idHEAD, 1, id),1) else
-          begin
-            // Тело
-            if Random(5)+1 = 1 then
-              PutItem(x,y,CreateItem(idCORPSE, 1, id),1);
-            // Голова  
-            if Random(15)+1 = 1 then
-              PutItem(x,y,CreateItem(idHEAD, 1, id),1);
-          end;
-      end;
+    PutItem(x,y,CreateItem(idCORPSE, 1, id),1)
+  else
+  begin
+    if id = mdBLINDBEAST then
+      PutItem(x,y,CreateItem(idHEAD, 1, id),1)
+    else
+    begin
+      // Тело
+      if Random(5)+1 = 1 then
+        PutItem(x,y,CreateItem(idCORPSE, 1, id),1);
+      // Голова
+      if Random(15)+1 = 1 then
+        PutItem(x,y,CreateItem(idHEAD, 1, id),1);
+    end;
+  end;
   // Выкинуть вещи
   for i:=1 to EqAmount do
     if Eq[i].id > 0 then
@@ -1461,11 +1178,12 @@ begin
   for i:=1 to MaxHandle do
     if Inv[i].id > 0 then
       PutItem(x,y, Inv[i], Inv[i].amount);
-  // Если это герой, то
-  if idinlist = 1 then pc.AfterDeath;
-  // Всё.
-  id := 0;
-  idinlist := 0;
+  // Если это герой, то не удаляем его
+  if idinlist = 1 then pc.AfterDeath else
+  begin
+    id := 0;
+    idinlist := 0;
+  end;
 end;
 
 { Отдать вещь From Where 1 - ивентарь 2 - экипировка }
@@ -1856,6 +1574,7 @@ begin
   if id = 1 then
     g := pc.gender else
       g := MonstersData[id].gender;
+//  log(inttostr(g));
   case situation of
     1 :
       case g of
@@ -2225,7 +1944,7 @@ begin
   if (UnderHitSpeed > 0) and (Victim.Hp > 0) then
   begin
     Victim.underhit := TRUE;
-    MainForm.OnPaint(NIL);
+    MainForm.Redraw;
     sleep(UnderHitSpeed);
   end;
 end;
