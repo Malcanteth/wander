@@ -25,6 +25,7 @@ type
     procedure FOV;                                     // Поле видимости
     procedure AfterTurn;                               // Действия после хода героя
     procedure AnalysePlace(px,py: byte; All : byte);   // Описать место
+
     procedure PlaceHere(px,py : byte);                 // Поставить героя в это место
     procedure UseStairs;                               // Спуститься или подняться по лестнице
     procedure PlaceAtTile(t : byte);                   // Переместить героя на тайл
@@ -39,20 +40,29 @@ type
     procedure Talk(Mon : TMonster);                    // Говорить
     procedure QuestList;                               // Список квестов
     procedure Equipment;                               // Экипировка
-    procedure Inventory(invMode: byte = 0);            // Инвентарь 0 - инвентарь, 1 - экипировка
+    procedure Inventory;                               // Инвентарь
     function ItemsAmount : byte;                       // Колличество вещей
     procedure GainLevel;                               // Повышение уровня
     function ExpToNxtLvl : integer;                    // Сколько нужно опыта для следующего уровня
+    procedure UseMenu;                                 // Меню действия с предметом
     procedure AfterDeath;                              // Действия после смерти героя
     function FindCoins : byte;                         // Найти ячейку с монетами
     procedure Search;                                  // Искать
     function HaveItemVid(vid : byte) : boolean;        // Есть ли хоть один предмет этого вида?
+    procedure HeroRandom;                              // Сделать рандомного
+    procedure StartHeroName;                           // Окно ввода имени
+    procedure HeroName;                                // Окно ввода имени
+    procedure HeroGender;                              // Окно выбора пола
+    procedure HeroAtributes;                           // Расстановка приоритетов
     procedure CreateClWList;                           // Создать список навыков ближнего боя
+    procedure HeroCloseWeapon;                         // Оружие ближнего боя
     procedure CreateFrWList;                           // Создать список навыков дальнего боя
+    procedure HeroFarWeapon;                           // Оружие дальнего боя
+    procedure HeroCreateResult;                        // Подтвердить
+    procedure ChooseMode;                              // Выбрать режим игры
     procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
     procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
     function getGold(): word;                          // Узнать количество монет в инвентаре
-    function removeGold(amount: word): boolean;        // Отобрать у игрока amount монет. Возвращает false и не отбирает деньги, если их не хватает.
   end;
 
 var
@@ -69,7 +79,7 @@ var
 implementation
 
 uses
-  Map, MapEditor, conf, sutils, vars, script, mbox, wlog;
+  Map, MapEditor, conf, sutils, vars, script;
 
 { Очистить }
 procedure Tpc.ClearPlayer;
@@ -87,7 +97,7 @@ begin
   exp := 0;
   explevel := 1;
   fillchar(status,sizeof(status),0);
-  warning := FALSE;
+  warning := FALSE
 end;
 
 { Подготовка в самом начале игры }
@@ -439,7 +449,7 @@ begin
       pc.Search;
     end;
   end;
-  MainForm.Redraw;
+  MainForm.OnPaint(NIL);
 end;
 
 { Описать место }
@@ -484,19 +494,19 @@ begin
                   s := s + Format(' На нем ты видишь %s.', [ItemsData[M.MonL[M.MonP[px,py]].eq[4].id].name3]);
             end;
 {    Font.Color := cBROWN;
-    TextOut(5, 11, '[ ] - Голова            :');
-    TextOut(5, 12, '[ ] - Шея               :');
-    TextOut(5, 13, '[ ] - Плащ              :');
-    TextOut(5, 14, '[ ] - Тело              :');
-    TextOut(5, 15, '[ ] - Пояс              :');
-    TextOut(5, 16, '[ ] - Оружие            :');
-    TextOut(5, 17, '[ ] - Дальний бой       :');
-    TextOut(5, 18, '[ ] - Щит               :');
-    TextOut(5, 19, '[ ] - Запястье          :');
-    TextOut(5, 20, '[ ] - Кольцо            :');
-    TextOut(5, 21, '[ ] - Перчатки          :');
-    TextOut(5, 22, '[ ] - Обувь             :');
-    TextOut(5, 23, '[ ] - Амуниция          :');}
+    TextOut(5*CharX, 11*CharY, '[ ] - Голова            :');
+    TextOut(5*CharX, 12*CharY, '[ ] - Шея               :');
+    TextOut(5*CharX, 13*CharY, '[ ] - Плащ              :');
+    TextOut(5*CharX, 14*CharY, '[ ] - Тело              :');
+    TextOut(5*CharX, 15*CharY, '[ ] - Пояс              :');
+    TextOut(5*CharX, 16*CharY, '[ ] - Оружие            :');
+    TextOut(5*CharX, 17*CharY, '[ ] - Дальний бой       :');
+    TextOut(5*CharX, 18*CharY, '[ ] - Щит               :');
+    TextOut(5*CharX, 19*CharY, '[ ] - Запястье          :');
+    TextOut(5*CharX, 20*CharY, '[ ] - Кольцо            :');
+    TextOut(5*CharX, 21*CharY, '[ ] - Перчатки          :');
+    TextOut(5*CharX, 22*CharY, '[ ] - Обувь             :');
+    TextOut(5*CharX, 23*CharY, '[ ] - Амуниция          :');}
             AddMsg(s,  M.MonL[M.MonP[px,py]].id);
           end;
      end;
@@ -574,7 +584,7 @@ begin
   end else
     if M.Tile[pc.x,pc.y] = tdUSTAIRS then
     begin
-      //dunname := M.name;
+      dunname := M.name;
       // Убрать указатель на героя
       M.MonP[pc.x,pc.y] := 0;
       // Сохранить уровень
@@ -595,7 +605,7 @@ begin
         AskForQuit := FALSE;
         MainForm.Close;
       end;
-      if (M.Special<>0)and(SpecialMaps[M.Special].name <> '') then M.name := SpecialMaps[M.Special].name;
+      if SpecialMaps[M.Special].name = '' then M.name := DunName else M.name := SpecialMaps[M.Special].name;
       if M.Special > 0 then
         pc.level := M.Special;
       // Поместить героя
@@ -689,7 +699,7 @@ begin
               case whattodo of
                 1 : Fight(M.MonL[M.MonP[a,b]], 0); // Атаковать
                 2 : Talk(M.MonL[M.MonP[a,b]]);     // Говорить
-                3 : {if LastGameState = gsEQUIPMENT then GiveItem(Slot, 2, M.MonL[M.MonP[a,b]]) else }
+                3 : if LastGameState = gsEQUIPMENT then GiveItem(MenuSelected, 2, M.MonL[M.MonP[a,b]]) else
                       GiveItem(MenuSelected, 1, M.MonL[M.MonP[a,b]]);   // Отдать
               end;
               pc.turn := 1;
@@ -837,130 +847,215 @@ procedure Tpc.WriteInfo;
 var
   HLine: Byte;
   MB, WW: Integer;
-  V: Word;
-  c: LongInt;
 begin
-  // Ширина бара
-  WW := (98) - (82);
-  // Имя
-  HLine := 0;
-  MainForm.SetBgColor(pc.ColorOfTactic);
-  Inc(HLine);
-  MainForm.DrawString(((20-length(name)) div 2)+80, HLine, cLIGHTGRAY, name);
-  Inc(HLine);
-  MainForm.DrawString(((20-(length(CLName(1))+2)) div 2)+80, HLine, cGRAY,'(');
-  MainForm.DrawString(((20-(length(CLName(1))+2)) div 2)+80+1 , HLine, RealColor(pc.ClassColor),CLName(1));
-  MainForm.DrawString(((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1)), HLine, cGRAY, ')');
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.SetBgColor(cBLACK);
-  MainForm.DrawString(81, HLine, cBROWN, '-------------------');
-  Inc(HLine);
-  Inc(HLine);
-  if Hp < 0 then Hp := 0;
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ЗДОРОВЬЕ :');
-  MainForm.DrawString(92, HLine, ReturnColor(Rhp, hp, 1), IntToStr(hp));
-  MainForm.DrawString(95, HLine, cLIGHTGRAY, '('+IntToStr(Rhp)+')');
-  // Полоса здоровья
-  if (ShowBars = 1) then begin
-    Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
-    if (Hp > 0) then
-      MainForm.DrawBar(82, HLine, BarWidth(HP, RHP, WW*CharX), cDARKRED, cRED);
-  end;
-  //
-  Inc(HLine);
-  if Mp < 0 then Mp := 0;
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'МАНА     :');
-  MainForm.DrawString(92, HLine, ReturnColor(Rmp, mp, 2), IntToStr(mp));
-  MainForm.DrawString(95, HLine, cLIGHTGRAY, '('+IntToStr(Rmp)+')');
-  // Полоса маны
-  if (ShowBars = 1) then begin
-    Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
-    if (Mp > 0) then
-      MainForm.DrawBar(82, HLine, BarWidth(MP, RMP, WW*CharX), cDARKBLUE, cBLUE);
-  end;
-  inc(HLine);
-  // Золото
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ЗОЛОТО   :'+inttostr(getGold));
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(81, HLine, cBROWN, '-------------------');
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'СИЛА     :');
-  if str > Rstr then c := cLIGHTGREEN else if str < Rstr then
-    c := cLIGHTRED else c := cLIGHTGRAY;
-  MainForm.DrawString(92, HLine, c, IntToStr(str));
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ЛОВКОСТЬ :');
-  if dex > Rdex then c := cLIGHTGREEN else if dex < Rdex then
-    c := cLIGHTRED else c := cLIGHTGRAY;
-  MainForm.DrawString(92, HLine, c, IntToStr(dex));
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ИНТЕЛЛЕКТ:');
-  if int > Rint then c := cLIGHTGREEN else if int < Rint then
-    c := cLIGHTRED else c := cLIGHTGRAY;
-  MainForm.DrawString(92, HLine, c, IntToStr(int));
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(81, HLine, cBROWN, '-------------------');
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'УРОВЕНЬ  :'+IntToStr(explevel));
-  // Полоса опыта
-  if (ShowBars = 1) then begin
-    Inc(HLine);
-    MainForm.DrawBar(82, HLine, 16*CharX, cGray, cGray);
-    if exp < 0 then exp := 0;
-    if (exp > 0) then
-      MainForm.DrawBar(82, HLine, BarWidth(exp, ExpToNxtLvl, WW*CharX), cDARKGREEN, cGREEN);
-  end;
-  //
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ОПЫТ     :'+IntToStr(pc.exp));
-  Inc(HLine);
-  MainForm.DrawString(82, HLine, cLIGHTGRAY, 'НУЖНО    :'+IntToStr(pc.ExpToNxtLvl));
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(81, HLine, cBROWN, '-------------------');
-  Inc(HLine);
-  Inc(HLine);
-  // Название текущей карты
-  if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
-    MainForm.DrawString(82, HLine, cLIGHTGRAY, SpecialMaps[M.Special].name) else
+  with Screen.Canvas do
   begin
-    if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and
-      (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
-    begin
-      // Отображаем название подземелья и его глубину
-      MainForm.DrawString(82, HLine, cLIGHTGRAY, M.name);
-      Inc(HLine);
-      MainForm.DrawString(82, HLine, cLIGHTGRAY, 'ГЛУБИНА  :'+IntToStr(pc.depth))
-    end else
-        MainForm.DrawString(82, HLine, cLIGHTGRAY, 'Странное место...');
-  end;
-  Inc(HLine);
-  Inc(HLine);
-  MainForm.DrawString(81, HLine, cBROWN, '-------------------');
-  Inc(HLine);
-  Inc(HLine);
-  if (hp > 0) then
-  case pc.status[stHUNGRY] of
-    -500..-400: MainForm.DrawString(82, HLine, cLIGHTRED, 'Тошнит...');
-    -399..-1  : MainForm.DrawString(82, HLine, cGREEN, GetMsg('Переел{/a}...',gender));
-    0..450    : MainForm.DrawString(82, HLine, cGRAY, GetMsg('Сыт{ый/ая}',gender));
-    451..750  : MainForm.DrawString(82, HLine, cYELLOW, GetMsg('Проголодал{ся/ась}',gender));
-    751..1200 : MainForm.DrawString(82, HLine, cLIGHTRED, GetMsg('Голод{ен/на}',gender));
-    1201..1500: MainForm.DrawString(82, HLine, cRED, GetMsg('Умираешь от голода!',gender));
-  end else
-    MainForm.DrawString(82, HLine, cGRAY, GetMsg('Мертв{ый/ая}',gender));
-  if (hp > 0) then begin
+    // Ширина бара
+    WW := (98*CharX) - (82*CharX);
+    // Имя
+    HLine := 0;
+    Font.Color := cLIGHTGRAY;
+    Brush.Color := pc.ColorOfTactic;
     Inc(HLine);
-    case pc.status[stDRUNK] of
-      350..500: MainForm.DrawString(82, HLine, cYELLOW, GetMsg('Пьян{ый/ая}',gender));
-      501..800: MainForm.DrawString(82, HLine, cLIGHTRED, GetMsg('Пьян{ый/ая}! Ик!',gender));
+    TextOut((((20-length(name)) div 2)+80) * CharX, HLine*CharY, name);
+    Font.Color := cGRAY;
+    Inc(HLine);
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80) * CharX, HLine*CharY, '(');
+    Font.Color := RealColor(pc.ClassColor);
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1) * CharX, HLine*CharY, CLName(1));
+    Font.Color := cGRAY;
+    TextOut((((20-(length(CLName(1))+2)) div 2)+80+1+length(CLName(1))) * CharX, HLine*CharY, ')');
+    Font.Color := cBROWN;
+    Brush.Color := cBLACK;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    if Hp < 0 then Hp := 0;
+    Font.Color := cLIGHTGRAY;
+    TextOut(82*CharX, HLine*CharY, 'ЗДОРОВЬЕ :');
+    Font.Color := ReturnColor(Rhp, hp, 1);
+    TextOut(92*CharX, HLine*CharY, IntToStr(hp));
+    Font.Color := cLIGHTGRAY;
+    TextOut(95*CharX, HLine*CharY, '('+IntToStr(Rhp)+')');
+    // Полоса здоровья
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if (Hp > 0) then
+      begin
+        Pen.Color := cLIGHTRED;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(HP, RHP, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    //
+    Inc(HLine);
+    if Mp < 0 then Mp := 0;
+    Font.Color := cLIGHTGRAY;
+    TextOut(82*CharX, HLine*CharY, 'МАНА     :');
+    Font.Color := ReturnColor(Rmp, mp, 2);
+    TextOut(92*CharX, HLine*CharY, IntToStr(mp));
+    Font.Color := cLIGHTGRAY;
+    TextOut(95*CharX, HLine*CharY, '('+IntToStr(Rmp)+')');
+    // Полоса маны
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if (Mp > 0) then
+      begin
+        Pen.Color := cLIGHTBLUE;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(MP, RMP, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    inc(HLine);
+    // Золото
+    Font.Color := cLIGHTGRAY;
+    TextOut(82*CharX, HLine*CharY, 'ЗОЛОТО   :'+inttostr(getGold));
+    Font.Color := cBROWN;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    Font.Color := cLIGHTGRAY;
+    TextOut(82*CharX, HLine*CharY, 'СИЛА     :');
+    if str > Rstr then
+      Font.Color := cLIGHTGREEN else
+        if str < Rstr then
+          Font.Color := cLIGHTRED else
+            Font.Color := cLIGHTGRAY;
+    TextOut(92*CharX, HLine*CharY, IntToStr(str));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ЛОВКОСТЬ :');
+    if dex > Rdex then
+      Font.Color := cLIGHTGREEN else
+        if dex < Rdex then
+          Font.Color := cLIGHTRED else
+            Font.Color := cLIGHTGRAY;
+    TextOut(92*CharX, HLine*CharY, IntToStr(dex));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ИНТЕЛЛЕКТ:');
+    if int > Rint then
+      Font.Color := cLIGHTGREEN else
+        if int < Rint then
+          Font.Color := cLIGHTRED else
+            Font.Color := cLIGHTGRAY;
+    TextOut(92*CharX, HLine*CharY, IntToStr(int));
+    Font.Color := cBROWN;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Font.Color := cLIGHTGRAY;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'УРОВЕНЬ  :'+IntToStr(explevel));
+    // Полоса опыта
+    if (ShowBars = 1) then begin
+      Inc(HLine);
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+      LineTo((98*CharX) + 4, Round((HLine + 0.5)*CharY));
+      if pc.exp < 0 then pc.exp := 0;
+      if (pc.exp > 0) then
+      begin
+        Pen.Color := cBLUEGREEN;
+        MoveTo((82*CharX) + 4, Round((HLine + 0.5)*CharY));
+        LineTo((82*CharX) + BarWidth(pc.exp, pc.ExpToNxtLvl, WW) + 4, Round((HLine + 0.5)*CharY));
+      end;
+    end;
+    //
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'ОПЫТ     :'+IntToStr(pc.exp));
+    Inc(HLine);
+    TextOut(82*CharX, HLine*CharY, 'НУЖНО    :'+IntToStr(pc.ExpToNxtLvl));
+    Font.Color := cBROWN;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    // Название текущей карты
+    Font.Color := cLIGHTGRAY;
+    if (M.Special > 0) and (SpecialMaps[M.Special].ShowName) then
+      TextOut(82*CharX, HLine*CharY, SpecialMaps[M.Special].name) else
+    begin
+      if ((M.Special > 0) and (SpecialMaps[M.Special].ShowName = False) and
+        (pc.depth > 0)) or ((M.Special = 0) and (pc.depth > 0)) then
+      begin
+        // Отображаем название подземелья и его глубину
+        TextOut(82*CharX, HLine*CharY, M.name);
+        Inc(HLine);
+        TextOut(82*CharX, HLine*CharY, 'ГЛУБИНА  : '+IntToStr(pc.depth))
+      end else
+          TextOut(82*CharX, HLine*CharY, 'Странное место...');
+    end;
+    Font.Color := cBROWN;
+    Inc(HLine);
+    Inc(HLine);
+    TextOut(81*CharX, HLine*CharY, '-------------------');
+    Inc(HLine);
+    Inc(HLine);
+    if (hp > 0) then
+    case pc.status[stHUNGRY] of
+      -500..-400:
+      begin
+        Font.Color := cLIGHTRED;
+        TextOut(82*CharX, HLine*CharY, 'Тошнит...');
+      end;
+      -399..-1  :
+      begin
+        Font.Color := cGREEN;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Переел{/a}...',gender));
+      end;
+      0..450    :
+      begin
+        Font.Color := cGRAY;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Сыт{ый/ая}',gender));
+      end;
+      451..750  :
+      begin
+        Font.Color := cYELLOW;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Проголодал{ся/ась}',gender));
+      end;
+      751..1200  :
+      begin
+        Font.Color := cLIGHTRED;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Голод{ен/на}',gender));
+      end;
+      1201..1500 :
+      begin
+        Font.Color := cRED;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Умираешь от голода!',gender));
+      end;
+    end else
+    begin
+      Font.Color := cGRAY;
+      TextOut(82*CharX, HLine*CharY, GetMsg('Мертв{ый/ая}',gender));
+    end;
+    if (hp > 0) then begin
+      Inc(HLine);
+      case pc.status[stDRUNK] of
+      350..500:
+      begin
+        Font.Color := cYELLOW;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Пьян{ый/ая}',gender));
+      end;
+      501..800:
+      begin
+        Font.Color := cLIGHTRED;
+        TextOut(82*CharX, HLine*CharY, GetMsg('Пьян{ый/ая}! Ик!',gender));
+      end;
+      end;
     end;
   end;
 end;
@@ -981,37 +1076,46 @@ procedure Tpc.QuestList;
 var
   i, k : byte;
 begin
-  GameMenu := true;
-  MainForm.Cls;
   StartDecorating('<-СПИСОК ТЕКУЩИХ КВЕСТОВ->', FALSE);
-  k := 0;
-  for i:=1 to QuestsAmount do
-    if (pc.quest[i] in [1..3]) then
-    begin
-      k := 1;
-      break;
-    end;
-  if k = 0 then
-    MainForm.DrawString(5,5,cLIGHTGRAY, GetMsg('Пока что ты не взял{/a} ни одного квеста.',gender))
-  else
-    // Вывести квесты
+  with Screen.Canvas do
+  begin
+    k := 0;
     for i:=1 to QuestsAmount do
-    begin
       if (pc.quest[i] in [1..3]) then
       begin
-        case i of
-          1 : MainForm.DrawString(4,(4+i),cLIGHTGREEN,'Исследовать хранилище и освободить людей от зла, таящегося в нем (Старейшина)');
-          2 : MainForm.DrawString(4,(4+i),cLIGHTGREEN,'Найти ключ от восточных врат деревни (Старейшина)');
-        end;
-        case pc.quest[i] of
-          1 : MainForm.DrawString(2,(4+i),cRED,'-');
-          2 : MainForm.DrawString(2,(4+i),cGREEN,'+');
+        k := 1;
+        break;
+      end;
+    if k = 0 then
+    begin
+      Font.Color := cLIGHTGRAY;
+      TextOut(5*CharX,5*CharY,GetMsg('Пока что ты не взял{/a} ни одного квеста.',gender));
+    end else
+      // Вывести квесты
+      for i:=1 to QuestsAmount do
+      begin
+        if (pc.quest[i] in [1..3]) then
+        begin
+          Font.Color := cLIGHTGREEN;
+          case i of
+            1 : TextOut(4*CharX,(4+i)*CharY,'Исследовать хранилище и освободить людей от зла, таящегося в нем (Старейшина)');
+            2 : TextOut(4*CharX,(4+i)*CharY,'Найти ключ от восточных врат деревни (Старейшина)');
+          end;
+          case pc.quest[i] of
+            1 :
+            begin
+              Font.Color := cRED;
+              TextOut(2*CharX,(4+i)*CharY,'-');
+            end;
+            2 :
+            begin
+              Font.Color := cGREEN;
+              TextOut(2*CharX,(4+i)*CharY,'+');
+            end;
+          end;
         end;
       end;
-    end;
-  Mainform.Redraw;
-  repeat until getKey in [13,27,32];
-  GameMenu := false;
+  end;
 end;
 
 { Экипировка }
@@ -1023,284 +1127,101 @@ const
 var
   i : byte;
 begin
- { StartDecorating('<-ЭКИПИРОВКА->', FALSE);
-  MainForm.DrawString(5, 11, cBROWN, '[ ] - Голова            :');
-  MainForm.DrawString(5, 12, cBROWN, '[ ] - Шея               :');
-  MainForm.DrawString(5, 13, cBROWN, '[ ] - Плащ              :');
-  MainForm.DrawString(5, 14, cBROWN, '[ ] - Тело              :');
-  MainForm.DrawString(5, 15, cBROWN, '[ ] - Пояс              :');
-  MainForm.DrawString(5, 16, cBROWN, '[ ] - Оружие            :');
-  MainForm.DrawString(5, 17, cBROWN, '[ ] - Дальний бой       :');
-  MainForm.DrawString(5, 18, cBROWN, '[ ] - Щит               :');
-  MainForm.DrawString(5, 19, cBROWN, '[ ] - Запястье          :');
-  MainForm.DrawString(5, 20, cBROWN, '[ ] - Кольцо            :');
-  MainForm.DrawString(5, 21, cBROWN, '[ ] - Перчатки          :');
-  MainForm.DrawString(5, 22, cBROWN, '[ ] - Обувь             :');
-  MainForm.DrawString(5, 23, cBROWN, '[ ] - Амуниция          :');
-  for i:=1 to EqAmount do
-    if pc.eq[i].id = 0 then
-    begin
-      if HaveItemVid(Eq2Vid(i)) then
-        MainForm.DrawString(31,(10+i),cYELLOW,'+')
-      else
-        MainForm.DrawString(31,(10+i),cGRAY,'-');
-      // Отобразить атаку в рукопашной схватке
-      if i = 6 then
-        MainForm.DrawString(33, (10+i), cLIGHTGRAY, Format('{Атака в рукопашной схватке: %d}{', [pc.attack]));
-   { end else
-      MainForm.DrawString(31 , (10+i), cLIGHTGRAY, ItemName(pc.eq[i], 0, TRUE));
-  if ItemsAmount > 0 then
-    MainForm.DrawString((WindowX-length(s1)) div 2, 39, cGRAY, s1)
-  else
-    MainForm.DrawString((WindowX-length(s2)) div 2, 39, cGRAY, s2);
-  if pc.Eq[MenuSelected].id > 0 then
-    MainForm.DrawString((WindowX-length(s3)) div 2, 37, cGRAY, s3);
-  MainForm.DrawString(6, (10+Slot),cRED,'*');
-  WriteSomeAboutItem(pc.Eq[Slot]);
-  WriteAboutInvMass;  }
-end;
-
-procedure InvCallback(Index: byte);
-begin
-  WriteSomeAboutItem(pc.Inv[Index], true);
-  pc.WriteAboutInvMass;
-end;
-
-procedure EqCallback(Index: byte);
-begin
-  WriteSomeAboutItem(pc.Eq[Index]);
-  pc.WriteAboutInvMass;
+  StartDecorating('<-ЭКИПИРОВКА->', FALSE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cBROWN;
+    TextOut(5*CharX, 11*CharY, '[ ] - Голова            :');
+    TextOut(5*CharX, 12*CharY, '[ ] - Шея               :');
+    TextOut(5*CharX, 13*CharY, '[ ] - Плащ              :');
+    TextOut(5*CharX, 14*CharY, '[ ] - Тело              :');
+    TextOut(5*CharX, 15*CharY, '[ ] - Пояс              :');
+    TextOut(5*CharX, 16*CharY, '[ ] - Оружие            :');
+    TextOut(5*CharX, 17*CharY, '[ ] - Дальний бой       :');
+    TextOut(5*CharX, 18*CharY, '[ ] - Щит               :');
+    TextOut(5*CharX, 19*CharY, '[ ] - Запястье          :');
+    TextOut(5*CharX, 20*CharY, '[ ] - Кольцо            :');
+    TextOut(5*CharX, 21*CharY, '[ ] - Перчатки          :');
+    TextOut(5*CharX, 22*CharY, '[ ] - Обувь             :');
+    TextOut(5*CharX, 23*CharY, '[ ] - Амуниция          :');
+    for i:=1 to EqAmount do
+      if pc.eq[i].id = 0 then
+      begin
+        if HaveItemVid(Eq2Vid(i)) then
+        begin
+          Font.Color := cYELLOW;
+          TextOut(31*CharX,(10+i)*CharY,'+');
+        end else
+            begin
+              Font.Color := cGRAY;
+              TextOut(31*CharX,(10+i)*CharY,'-');
+            end;
+        // Отобразить атаку в рукопашной схватке
+        if i = 6 then
+        begin
+          Font.Color := cLIGHTGRAY;
+          TextOut(33*CharX, (10+i)*CharY, Format('{Атака в рукопашной схватке: %d}', [pc.attack])); 
+        end;
+      end else
+        begin
+          Font.Color := cLIGHTGRAY;
+          TextOut(31 * CharX, (10+i)*CharY, ItemName(pc.eq[i], 0, TRUE));
+        end;
+    Font.Color := cGRAY;
+    if ItemsAmount > 0 then
+      TextOut(((WindowX-length(s1)) div 2) * CharX, 39*CharY, s1) else
+        TextOut(((WindowX-length(s2)) div 2) * CharX, 39*CharY, s2);
+    if pc.Eq[MenuSelected].id > 0 then
+      TextOut(((WindowX-length(s3)) div 2) * CharX, 37*CharY, s3);
+    Font.Color := cRED;
+    TextOut(6*CharX, (10+MenuSelected)*CharY,'*');
+  end;
+  WriteSomeAboutItem(pc.Eq[MenuSelected]);
+  WriteAboutInvMass;
 end;
 
 { Инвентарь }
-procedure Tpc.Inventory(invMode: byte = 0);
-
-  function getInvItem(n: byte; filter: byte = 0): byte;
-  var i,j: byte;
-  begin
-    j := 0;
-    for i := 1 to ItemsAmount do
-      if (pc.inv[i].id <> 0) then
-        if (filter = 0) or (ItemsData[pc.inv[i].id].vid = VidFilter) then
-        begin
-          inc(j);
-          if n = j then begin Result := i; exit; end;
-        end;
-  end;
-
-  { Меню действия с предметом }
-  function UseMenu(InvMode, Slot: byte):byte; //0 - перети в инвентарь, 1 - в снаряжение, 2 - в игру
-  var j,k: byte;
-  i: integer;
-  n: string;
-  Item: TItem;
-  begin
-    DrawBorder(75,2,20,HOWMANYVARIANTS+1,crLIGHTGRAY);
-    GameMenu := true;
-    with TMenu.Create(77,3, '*', cWHITE, cBROWN, cRED) do
-    begin
-      if InvMode=1 then // В экипировке
-        Add('В инвентарь')
-      else // В инвентаре
-        Add(WhatToDo(ItemsData[pc.Inv[Slot].id].vid));
-      Add('Рассмотреть');
-      Add('Бросить');
-      Add('Отдать');
-      Add('Выкинуть', cRED);
-      k := Run;
-      Free;
-    end;
-    GameMenu := false;
-    case k of
-      0: exit;
-      1: // Использовать
-          if InvMode = 1 then //В экипировке
-          begin
-            Result := 2;
-            case pc.PickUp(pc.eq[Slot], TRUE, pc.eq[Slot].amount) of
-              0 :
-                 begin
-                   ItemOnOff(pc.eq[Slot], FALSE);
-                   AddMsg('Ты положил{/a} '+ItemName(pc.eq[Slot], 1, TRUE)+' обратно в инвентарь.',0);
-                   pc.eq[Slot].id := 0;
-                 end;
-              1 : AddMsg('*Ты положил{/a} пустоту обратно в свой инвентарь :)*',0);
-              2 : AddMsg('Твой инвентарь полностью забит! Так что тебе придется нести это в руках.',0);
-              3 : AddMsg('*Этого быть не должно - даже если у тебя перегрузка, ты можешь положить то, что ты уже несешь в инвентарь.*',0);
-            end;
-            exit; //В инвентаре
-          end else begin
-            UseItem(Slot);
-            if ItemsData[pc.Inv[Slot].id].vid in [1..13] then Result:=1;
-          end;
-      2: // Рассмотреть
-        begin
-          Result := 2;
-          if InvMode = 1 then
-          ExamineItem(pc.Eq[Slot]) else
-          ExamineItem(pc.Inv[Slot]);
-          pc.turn := 1;
-          exit;
-        end;
-      3: // Бросить
-        begin
-          Result := 2;
-          if InvMode = 1 then
-          pc.PrepareShooting(pc.Eq[Slot], pc.Eq[Slot], 2) else
-          pc.PrepareShooting(pc.Inv[Slot], pc.Inv[Slot], 2);
-        end;
-      4: // Отдать
-        begin
-          Result := 2;
-          pc.SearchForAlive(3);
-          exit;
-        end;
-      5: // Выкинуть
-        begin
-          Result := 2;
-          if InvMode = 1 then
-          begin
-            i := 1;
-            if pc.Eq[Slot].amount > 1 then
-            begin
-              AddMsg(ItemName(pc.Eq[Slot], 0, TRUE)+'. Сколько хочешь выкинуть?',0);
-              Mainform.Redraw;
-              n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(pc.Eq[Slot].amount));
-              if TryStrToInt(n,i) then
-              begin
-                if (i > pc.Eq[Slot].amount) then
-                begin
-                  AddMsg('Введено слишком большое значение.',0);
-                  i := 0;
-                end;
-              end else
-            begin
-              AddMsg('Нужно ввести число.',0);
-              i := 0;
-            end;
-          end;
-          if i > 0 then
-          begin
-            if PutItem(pc.x,pc.y, pc.Eq[Slot], i) then
-            begin
-              Item := pc.Eq[Slot];
-              Item.amount := i;
-              AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-              pc.DeleteItemInv(Slot, i, 2);
-              pc.turn := 1;
-            end else
-              AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
-          end;
-        end else
-        begin
-          i := 1;
-          if pc.Inv[Slot].amount > 1 then
-          begin
-            AddMsg(ItemName(pc.Inv[Slot], 0, TRUE)+'. Сколько хочешь выкинуть?',0);
-            n := Input(LastMsgL+1, MapY+(LastMsgY-1), IntToStr(pc.Inv[Slot].amount));
-            if TryStrToInt(n,i) then
-            begin
-              if (i > pc.Inv[Slot].amount) then
-              begin
-                AddMsg('Введено слишком большое значение.',0);
-                i := 0;
-              end;
-            end else
-            begin
-              AddMsg('Нужно ввести число.',0);
-              i := 0;
-            end;
-          end;
-          if i > 0 then
-          begin
-            if PutItem(pc.x,pc.y, pc.Inv[Slot], i) then
-             begin
-               Item := pc.Inv[Slot];
-               Item.amount := i;
-             AddMsg('Ты выкидываешь '+ItemName(Item,0,TRUE)+'.',0);
-             pc.DeleteItemInv(Slot, i, 1);
-             pc.turn := 1;
-           end else
-             AddMsg('Здесь нет места для того, что бы выкинуть что-либо!',0);
-           exit;
-          end;
-        end;
-      end;
-    end;
-  end;
-
-
+procedure Tpc.Inventory;
 const
   s1 = '< Нажми ENTER для того, что бы использовать предмет >';
   s2 = '< Нажми ''i'' чтобы перейти в экран экипировки  >';
-  s3 = '< Нажми ''i'' чтобы увидеть все вещи, которые ты несешь >';
-  s4 = '< Твой инвентарь пуст! >';
 var
-  i,j,k : byte;
-  s: string;
-  Key: word;
+  i,k : byte;
 begin
-  GameMenu := true;
-  j := InvMode;
-  repeat
-    // Интерфейс
-    GameMenu := true;
-    Mainform.Cls;
-    if j = 0 then
-      if VidFilter = 0 then
-        StartDecorating('<-ИНВЕНТАРЬ->', FALSE)
-      else
-        StartDecorating('<-'+WhatToDo(VidFilter)+'->', FALSE)
-    else
-      StartDecorating('<-ЭКИПИРОВКА->', FALSE);
-    With TMenu.Create(5,3+j*8,'*', cLIGHTGRAY, cBROWN, cRED) do
+  // Интерфейс
+  if VidFilter = 0 then
+    StartDecorating('<-ИНВЕНТАРЬ->', FALSE) else
+      StartDecorating('<-'+WhatToDo(VidFilter)+'->', FALSE);
+  // Очистить указатели
+  for i:=1 to MaxHandle do InvList[i] := 0;
+  // Занести указатели по фильтру
+  k := 1;
+  for i:=1 to ItemsAmount do
+    if (VidFilter = 0) or (ItemsData[pc.inv[i].id].vid = VidFilter) then
     begin
-      if j = 0 then //Инвентарь
-      begin
-        for i := 1 to ItemsAmount do
-          if (VidFilter = 0) or (ItemsData[pc.inv[i].id].vid = VidFilter) then
-            Add(ItemName(pc.inv[i], 0, TRUE));
-        SetCallback(@InvCallback);
-      end
-      else //Экипировка
-      begin
-        for i:=1 to EqAmount do
-        begin
-          s := '- '+Padded(EqSlots[i],18)+': ';
-          if pc.eq[i].id = 0 then
-          begin
-            if HaveItemVid(Eq2Vid(i)) then
-              Add(s,'+',cYELLOW)
-            else
-              Add(s,'-',cGRAY);
-            if i = 6 then //хак для вывода атаки в рукопашном бою
-              MainForm.DrawString(33, 16, cLIGHTGRAY, Format('{Атака в рукопашной схватке: %d}', [pc.attack]));
-          end
-          else
-            Add(s, ItemName(pc.eq[i], 0, TRUE));
-        end;
-        SetCallback(@EqCallback);
-      end;
-      AddBreakKey(32);
-      if (VidFilter = 0)or(j=1) then AddBreakKey(73);
-      k := Run;
-      if k=0 then Key := BreakKey else Key := 0;
-      Free;
+      InvList[k] := i;
+      inc(k);
     end;
-    GameMenu := false;
-    if k = 0 then
-      if (Key = 73) then begin j := 1 - j; continue; end else break
-    else
-      if (j = 0) and (VidFilter <> 0) then
-      begin UseItem(getInvItem(k, VidFilter)); break end
-      else  //меню использования предмета
-        case UseMenu(j, k) of
-          0: j:=0;
-          1: j:=1;
-          2: break;
-        end;
-  until false;
-  GameMenu := false;
+  // Вывести список предметов
+  with Screen.Canvas do
+  begin
+    Font.Color := cGRAY;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 37*CharY, s1);
+    TextOut(((WindowX-length(s2)) div 2) * CharX, 39*CharY, s2);
+    for i:=1 to ItemsAmount do
+      if InvList[i] > 0 then
+      begin
+        Font.Color := cBROWN;
+        TextOut(5 * CharX, (2+i)*CharY, '[ ]');
+        Font.Color := cLIGHTGRAY;
+        TextOut(9 * CharX, (2+i)*CharY, ItemName(pc.inv[InvList[i]], 0, TRUE));
+        Font.Color := cRED;
+        TextOut(6*CharX, (2+MenuSelected)*CharY,'*');
+      end else
+        break;
+    WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]]);
+    WriteAboutInvMass;
+  end;
 end;
 
 { Колличество вещей }
@@ -1407,6 +1328,41 @@ begin
   Result := Round((explevel * 20) - (int/1.5));
 end;
 
+{ Меню действия с предметом }
+procedure Tpc.UseMenu;
+begin
+  with Screen.Canvas do
+  begin
+    DrawBorder(75,2,20,HOWMANYVARIANTS+1,crLIGHTGRAY);
+    Font.Color := cBROWN;
+    TextOut(77*CharX, 3*CharY, '[ ]');
+    Font.Color := cWHITE;
+    if LastGameState = gsEQUIPMENT then
+      // В экипировке
+      TextOut(81*CharX, 3*CharY, 'В инвентарь') else
+        // В инвентаре
+        TextOut(81*CharX, 3*CharY, WhatToDo(ItemsData[pc.Inv[MenuSelected].id].vid));
+    Font.Color := cBROWN;
+    TextOut(77*CharX, 4*CharY, '[ ]');
+    Font.Color := cWHITE;
+    TextOut(81*CharX, 4*CharY, 'Рассмотреть');
+    Font.Color := cBROWN;
+    TextOut(77*CharX, 5*CharY, '[ ]');
+    Font.Color := cWHITE;
+    TextOut(81*CharX, 5*CharY, 'Бросить');
+    Font.Color := cBROWN;
+    TextOut(77*CharX, 6*CharY, '[ ]');
+    Font.Color := cWHITE;
+    TextOut(81*CharX, 6*CharY, 'Отдать');
+    Font.Color := cBROWN;
+    TextOut(77*CharX, 7*CharY, '[ ]');
+    Font.Color := cRED;
+    TextOut(81*CharX, 7*CharY, 'Выкинуть');
+    Font.Color := cYELLOW;
+    TextOut(78*CharX, (2+MenuSelected2)*CharY, '*');
+  end;
+end;
+
 { Действия после смерти героя }
 procedure TPc.AfterDeath;
 begin
@@ -1438,22 +1394,6 @@ begin
     Result := 0
   else
     Result:=inv[slot].amount;
-end;
-
-function TPc.removeGold(amount: word) : boolean;
-var slot:byte;
-begin
-  slot := findCoins();
-  if (slot = 0) then
-    Result := false
-  else if (inv[slot].amount>=amount) then
-  begin
-    dec(inv[slot].amount, amount);
-    Result := true;
-    RefreshInventory;
-  end
-  else
-    Result := false;
 end;
 
 { Искать }
@@ -1489,6 +1429,128 @@ begin
   Result := f;
 end;
 
+{ Окно ввода имени }
+procedure TPc.StartHeroName;
+begin
+  GameState := gsHERONAME;
+  Input(((WindowX-13) div 2), 17, '');
+end;
+
+{ Окно ввода имени }
+procedure TPc.HeroName;
+const s2 = '^^^^^^^^^^^^^';
+var
+  n : string[13];
+  s1: string;
+begin
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  s1 := GetMsg('Введи имя геро{я/ини}:',gender);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
+    Font.Color := cBROWN;
+    TextOut(((WindowX-length(s2)) div 2) * CharX, 18*CharY, s2);
+    if (Inputing = FALSE) then
+    begin
+      if InputString = '' then
+      begin
+        case pc.gender of
+          genMALE   : pc.name := GenerateName(FALSE);
+          genFEMALE : pc.name := GenerateName(TRUE);
+        end;
+      end else
+        pc.name := InputString;
+      GameState := gsHEROATR;
+      MainForm.OnPaint(NIL);
+    end;
+  end;
+end;
+
+{ Сделать рандомного }
+procedure TPc.HeroRandom;
+const
+  s1 = 'Создашь персонаж сам или доверишься воле случая?';
+begin
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 15*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 15*CharY, 'Создам сам');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 16*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 16*CharY, 'Рандомный герой');
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
+{ Окно выбора пола }
+procedure TPc.HeroGender;
+const
+  s1 = 'Какого пола будет твой персонаж?';
+begin
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 15*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 15*CharY, 'Мужского');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 16*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 16*CharY, 'Женского');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 17*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 17*CharY, 'Без разницы');
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
+{ Расстановка приоритетов }
+procedure TPc.HeroAtributes;
+var
+  s1, s2 : string;
+begin
+  s1 := Format('Выбери атрибут, в котором %s больше всего преуспел{/a}:', [pc.name]); //'Выбери атрибут, в котором '+pc.name+' больше всего преуспел{/a}:';
+  s2 := Format('А теперь выбери атрибут, которому %s тоже уделял{/a} внимание:', [pc.name]); //'А теперь выбери атрибут, которому '+pc.name+' тоже уделял{/a} внимание:';
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    case MenuSelected2 of
+      1 :
+      TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(S1,gender));
+      2 :
+      TextOut(((WindowX-length(s2)) div 2) * CharX, 13*CharY, GetMsg(S2,gender));
+    end;
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 15*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 15*CharY, 'Сила');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 16*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 16*CharY, 'Ловкость');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 17*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 17*CharY, 'Интеллект');
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
 { Создать список навыков ближнего боя }
 procedure TPc.CreateClWList;
 var
@@ -1504,6 +1566,41 @@ begin
       wlist[k] := i;
     end;
   wlistsize := k;
+end;
+
+{ Окно выбора типа оружия ближнего боя }
+procedure TPc.HeroCloseWeapon;
+var
+  s1  : string;
+  i   : byte;
+begin
+  CreateClWList;
+  s1 := Format('Выбери оружие ближнего боя, с которым %s тренировал{ся/ась} больше всего:', [PC.Name]);
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
+    for i:=1 to CLOSEFIGHTAMOUNT-1 do
+      if wlist[i] > 0 then
+        if pc.closefight[wlist[i]] > 0 then
+        begin
+          Font.Color := cBROWN;
+          TextOut(40*CharX, (14+i)*CharY, '[ ]');
+          if OneOfTheBestWPNCL(wlist[i]) then
+            Font.Color := cWHITE else
+              Font.Color := cGRAY;
+          case wlist[i] of
+            2 : TextOut(44*CharX, (14+i)*CharY, 'Меч');
+            3 : TextOut(44*CharX, (14+i)*CharY, 'Дубина');
+            4 : TextOut(44*CharX, (14+i)*CharY, 'Посох');
+            5 : TextOut(44*CharX, (14+i)*CharY, 'Топор');
+            6 : TextOut(44*CharX, (14+i)*CharY, 'Рукопашный бой');
+          end;
+        end;
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
 end;
 
 { Создать список навыков дальнего боя }
@@ -1523,21 +1620,92 @@ begin
   wlistsize := k;
 end;
 
+{ Окно выбора пола }
+procedure TPc.HeroFarWeapon;
+var
+  S1     : string;
+  I      : byte;
+begin
+  CreateFrWList;
+  S1 := Format('Какое оружие дальнего боя %s осваивал{/a} во время тренировок?', [PC.Name]);
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, GetMsg(s1,gender));
+    for i:=1 to FARFIGHTAMOUNT do
+      if wlist[i] > 0 then
+        if pc.farfight[wlist[i]] > 0 then
+        begin
+          Font.Color := cBROWN;
+          TextOut(40*CharX, (14+i)*CharY, '[ ]');
+          if OneOfTheBestWPNFR(wlist[i]) then
+            Font.Color := cWHITE else
+              Font.Color := cGRAY;
+          case wlist[i] of
+            2 : TextOut(44*CharX, (14+i)*CharY, 'Лук');
+            3 : TextOut(44*CharX, (14+i)*CharY, 'Праща');
+            4 : TextOut(44*CharX, (14+i)*CharY, 'Духовая трубка');
+            5 : TextOut(44*CharX, (14+i)*CharY, 'Арбалет');
+          end;
+      end;
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
+{ Подтвердить }
+procedure Tpc.HeroCreateResult;
+const
+  s1 = 'ENTER - продожить, ESC - создать заново';
+var
+  R, H, S : string;
+begin
+  StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
+  Script.Run('CreatePC.pas');
+  S := Format(V.GetStr('CreatePCStr'), [CLName(1), PC.Name]);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, GetMsg(S,gender));
+    Font.Color := cYELLOW;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
+  end;
+end;
+
+{ Выбрать режим игры }
+procedure TPc.ChooseMode;
+const
+  s1 = 'В каком режиме игры ты хочешь играть?';
+begin
+  StartDecorating('<-ВЫБОР РЕЖИМА ИГРЫ->', TRUE);
+  with Screen.Canvas do
+  begin
+    Font.Color := cWHITE;
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 13*CharY, s1);
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 15*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 15*CharY, 'Приключение');
+    Font.Color := cBROWN;
+    TextOut(40*CharX, 16*CharY, '[ ]');
+    Font.Color := cCYAN;
+    TextOut(44*CharX, 16*CharY, 'Подземелье');
+    Font.Color := cYELLOW;
+    TextOut(41*CharX, (14+MenuSelected)*CharY, '>');
+  end;
+end;
+
 { Показать массу всего инвентаря и макс. переносимую ГГ }
 procedure Tpc.WriteAboutInvMass;
 var
   weight : string;
-  tx, ty : word;
 begin
-  weight :=  'Масса всех предметов: '+FloatToStr(invmass)+' Максимальная масса: '+FloatToStr(maxmass);
-  tx := (15 + ((70 - length(weight)) div 2));
-  ty := 35;
-  MainForm.DrawString(tx, ty, cLIGHTGRAY, weight);
-
-  if (ShowBars = 1) then begin
-    MainForm.DrawBar(tx, ty+1, (length(weight)-1)*CharX, cGray, cGray);
-    if (invmass > 0) then
-      MainForm.DrawBar(tx, ty+1, BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), cBrown, cBrown);
+  with Screen.Canvas do
+  begin
+    Font.Color := cLIGHTGRAY;
+    weight :=  'Масса всех предметов: '+FloatToStr(pc.invmass)+' Максимальная масса: '+FloatToStr(pc.maxmass);
+    TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
   end;
 end;
 

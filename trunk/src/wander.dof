@@ -100,7 +100,7 @@ Conditionals=
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
-RunParams=-dev
+RunParams=
 HostApplication=
 Launcher=
 UseLauncher=0
@@ -114,11 +114,11 @@ IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=0
 MinorVer=1
-Release=6
-Build=1
+Release=7
+Build=0
 Debug=0
 PreRelease=0
-Special=1
+Special=0
 Private=0
 DLL=0
 Locale=1049
@@ -126,7 +126,7 @@ CodePage=1251
 [Version Info Keys]
 CompanyName=Wander Team
 FileDescription=WanderRL
-FileVersion=0.1.6.1
+FileVersion=0.1.7.0
 InternalName=WanderRL
 LegalCopyright=GPL
 LegalTrademarks=
@@ -134,7 +134,6 @@ OriginalFilename=
 ProductName=WanderRL
 ProductVersion=1.0.0.0
 Comments=
-SpecialBuild=
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
