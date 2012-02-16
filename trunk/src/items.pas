@@ -21,19 +21,6 @@ type
     liquidid         : byte;         // ID напитка
   end;
 
-  TItemData = record
-    name1, name2, name3        : string[40];      // Название (1ед.число,2мн.число,3кого)
-    descr                      : string[100];     // Короткое описание
-    vid                        : byte;            // Вид предмета
-    color                      : byte;            // Цвет
-    mass                       : real;
-    attack, defense            : word;
-    chance                     : byte;            // Шанс появления
-    kind                       : byte;            // Вид оружия или брони
-    dmgtype                    : byte;            // Тип урона
-    flags                      : longword;        // Флажки:)
-  end;
-
 const
   { Кол-во типов предметов}
   ItemTypeAmount = 21;
@@ -62,10 +49,24 @@ const
     (name: 'Инструмент'; symbol: '{'; chance:5;maxamount:1),
     (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1)
   );
+  
+type
+  TItemData = record
+    name1, name2, name3        : string[40];      // Название (1ед.число,2мн.число,3кого)
+    descr                      : string[100];     // Короткое описание
+    vid                        : byte;            // Вид предмета
+    color                      : byte;            // Цвет
+    mass                       : real;
+    attack, defense            : word;
+    chance                     : byte;            // Шанс появления
+    kind                       : byte;            // Вид оружия или брони
+    dmgtype                    : byte;            // Тип урона
+    flags                      : longword;        // Флажки:)
+  end;
 
-  { Кол-во предметов }
+const
+ { Кол-во предметов }
   ItemsAmount = 35;
-
   {  Описание предметов }
   ItemsData : array[1..ItemsAmount] of TItemData =
   (
@@ -245,45 +246,9 @@ const
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
     )
-  );
+  );  
 
-  { Уникальные идентификаторы предметов }
-  idCOIN           = 1;
-  idKITCHENKNIFE   = 2;
-  idPITCHFORK      = 3;
-  idKEKS           = 4;
-  idJACKSONSHAT    = 5;
-  idLAPTI          = 6;
-  idCORPSE         = 7;
-  idHELMET         = 8;
-  idMANTIA         = 9;
-  idJACKET         = 10;
-  idCHAINARMOR     = 11;
-  idSTAFF          = 12;
-  idDAGGER         = 13;
-  idDUBINA         = 14;
-  idSHORTSWORD     = 15;
-  idPALICA         = 16;
-  idLONGSWORD      = 17;
-  idSHIELD         = 18;
-  idBOOTS          = 19;
-  idLAVASH         = 20;
-  idGREENAPPLE     = 21;
-  idMEAT           = 22;
-  idHEAD           = 23;
-  idGATESKEY       = 24;
-  idAXE            = 25;
-  idBOW            = 26;
-  idCROSSBOW       = 27;
-  idSLING          = 28;
-  idBLOWPIPE       = 29;
-  idARROW          = 30;
-  idBOLT           = 31;
-  idLITTLEROCK     = 32;
-  idIGLA           = 33;
-  idCAPE           = 34;
-  idBOTTLE         = 35;
-
+{$include ../Data/Scripts/Items.pas}
 
 function HaveItemTypeInDB(wtype : byte) : boolean;            // Есть ли предмет данного типа в базе (убрать функцию, после добавления всех типов предметов)
 function GenerateItem(wtype : byte) : TItem;                  // Генерировать случайный предмет определенного вида
@@ -291,7 +256,7 @@ function CreateItem(n : byte; am : integer;
                             OwnerId : byte) : TItem;          // Создать предмет
 function PutItem(px,py : byte; Item : TItem;
                            amount : integer) : boolean;       // Положить предмет
-procedure WriteSomeAboutItem(Item : TItem);                   // Вывести некоторые хар-ки предмета
+procedure WriteSomeAboutItem(Item : TItem; compare: boolean = false); // Вывести некоторые хар-ки предмета
 procedure ExamineItem(Item : TItem);                          // Внимательно осмотреть предмет
 procedure ItemOnOff(Item : TItem; PutOn : boolean);           // Применить эффект предмета или убрать
 function ItemName(Item : TItem; skl : byte;
@@ -365,7 +330,7 @@ begin
     owner := OwnerId;
     // Меняем массу трупа, на массу убитого монстра (-20%)
     if id = idCORPSE then
-      mass := MonstersData[owner].mass - Round(MonstersData[owner].mass * 0.20);
+      mass := Round(MonstersData[owner].mass * 0.8);
     // Меняем массу головы, на массу 15% веса трупа
     if id = idHEAD then
       mass := Round(MonstersData[owner].mass * 0.15);
@@ -434,9 +399,11 @@ begin
 end;
 
 { Вывести некоторые хар-ки предмета }
-procedure WriteSomeAboutItem(Item : TItem);
+procedure WriteSomeAboutItem(Item : TItem; compare: boolean = false);
 var
   s : string;
+  cell: byte;
+  t : shortint;
 begin
   if Item.id > 0 then
     with Screen.Canvas do
@@ -444,13 +411,31 @@ begin
       DrawBorder(15,31,70,4,crLIGHTGRAY);
       // Начать описание предмета
       s := '';
-      {Атака - выводить только если это - оружие (ближнего боя и стрела}
       case ItemsData[Item.id].vid of
-        6,13 : s := s + 'Атака: '+IntToStr(ItemsData[Item.id].attack)+' ';
-      end;
       {Защита - если это броня (шлем, плащ, броня на тело, перчатки, обувь}
-      case ItemsData[Item.id].vid of
-        1,3,4,11,12 : s := s + 'Защита: '+IntToStr(ItemsData[Item.id].defense)+' ';
+        1,3,4,11,12 : begin
+          t := ItemsData[Item.id].defense;
+          s := s + 'Защита: '+IntToStr(t)+' ';
+          if compare then begin
+            s := s + '(';
+            cell := Vid2Eq(ItemsData[Item.id].vid);
+            if (pc.eq[cell].id<>0) then dec(t,ItemsData[pc.eq[cell].id].defense);
+            if t > 0 then s:= s + '+';
+            s := s + inttostr(t)+') ';
+          end;
+        end;
+      {Атака - выводить только если это - оружие (ближнего боя и стрела}
+        6,13 : begin
+          t := ItemsData[Item.id].attack;
+          s := s + 'Атака: '+IntToStr(t)+' ';
+          if compare then begin
+            s := s + '(';          
+            cell := Vid2Eq(ItemsData[Item.id].vid);
+            if (pc.eq[cell].id<>0) then dec(t,ItemsData[pc.eq[cell].id].attack);
+            if t > 0 then s:= s + '+';
+            s := s + inttostr(t)+') ';
+          end;
+        end;
       end;
       // Масса предмета
       s := s + 'Масса: '+FloatToStr(Item.mass);

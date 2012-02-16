@@ -6,10 +6,6 @@ const
   { Общие константы игры }
   MapEditorVersion         = '0.7.0.0';
 
-  { Константы режимов игры }
-  AdventureMode            = 1;
-  DungeonMode              = 2;
-
   { Константы  окна }
   WindowX                  = 100;
   WindowY                  = 42;
@@ -126,6 +122,8 @@ const
 
   { Сколько действий в списке использования предмета }
   HOWMANYVARIANTS          = 5;       //1-Использовать,2-Рассмотреть повнимательнее,3-Бросить,4-Отдать,5-Выкинуть
+
+{$include ../Data/Scripts/Const.pas}
 
 implementation
 

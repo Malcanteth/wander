@@ -30,6 +30,7 @@ procedure ShowMsgs;
 function Ask(s: string): char;
 function Input(sx, sy: integer; ss: string): string;
 procedure ShowInput;
+procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
 
 implementation
 
@@ -248,7 +249,10 @@ begin
   AddDrawMsg(s,0);
   Answer := ' ';
   while Answer = ' ' do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   Result := Answer[1];
   Answer := '';
 end;
@@ -264,7 +268,10 @@ begin
   Inputing := TRUE;
   MainForm.OnPaint(NIL);  
   while WaitENTER = True do
+  begin
+    Sleep(10);
     MainForm.ProcessMsg;
+  end;
   Inputing := FALSE;
   Result := InputString;
 end;
@@ -287,6 +294,34 @@ begin
       Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
       Brush.Style := OldStyle;
     end;
+  end;
+end;
+
+// Цветная строка
+procedure AddTextLine(X, Y: Word; Msg: string);
+var
+  C, I, T: Integer;
+begin
+  T := X;
+  C := 0;
+  with Screen.Canvas do
+  for I := 1 to Length(Msg) do
+  begin
+    // Маркер в тексте (не показывается)
+    case Msg[I] of
+      '$': begin if C = 0 then C := 1 else C := 0; Continue; end;
+      '#': begin if C = 0 then C := 2 else C := 0; Continue; end;
+      '*': begin if C = 0 then C := 3 else C := 0; Continue; end;
+    end;
+    // Текущий цвет
+    case C of
+      0 : Font.Color := cLIGHTGRAY;
+      1 : Font.Color := cORANGE;
+      2 : Font.Color := cGREEN;
+      3 : Font.Color := cGRAY;
+    end;
+    Textout(T*CharX, Y*CharY, Msg[I]);
+    Inc(T);
   end;
 end;
 

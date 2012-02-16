@@ -63,6 +63,7 @@ type
     procedure WriteAboutInvMass;                       // Показать массу всего инвентаря и макс. переносимую ГГ
     procedure PrepareShooting(B,A : TItem;Mode : byte);// Войти в режим прицеливания
     function getGold(): word;                          // Узнать количество монет в инвентаре
+    function removeGold(amount: word): boolean;        // Отобрать у игрока amount монет. Возвращает false и не отбирает деньги, если их не хватает.
   end;
 
 var
@@ -584,7 +585,7 @@ begin
   end else
     if M.Tile[pc.x,pc.y] = tdUSTAIRS then
     begin
-      dunname := M.name;
+      //dunname := M.name;
       // Убрать указатель на героя
       M.MonP[pc.x,pc.y] := 0;
       // Сохранить уровень
@@ -605,7 +606,7 @@ begin
         AskForQuit := FALSE;
         MainForm.Close;
       end;
-      if SpecialMaps[M.Special].name = '' then M.name := DunName else M.name := SpecialMaps[M.Special].name;
+      if (M.Special<>0)and(SpecialMaps[M.Special].name <> '') then M.name := SpecialMaps[M.Special].name;
       if M.Special > 0 then
         pc.level := M.Special;
       // Поместить героя
@@ -920,9 +921,9 @@ begin
     // Золото
     Font.Color := cLIGHTGRAY;
     TextOut(82*CharX, HLine*CharY, 'ЗОЛОТО   :'+inttostr(getGold));
+    Inc(HLine); 
+    Inc(HLine);
     Font.Color := cBROWN;
-    Inc(HLine);
-    Inc(HLine);
     TextOut(81*CharX, HLine*CharY, '-------------------');
     Inc(HLine);
     Inc(HLine);
@@ -1219,7 +1220,7 @@ begin
         TextOut(6*CharX, (2+MenuSelected)*CharY,'*');
       end else
         break;
-    WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]]);
+    WriteSomeAboutItem(pc.Inv[InvList[MenuSelected]], true);
     WriteAboutInvMass;
   end;
 end;
@@ -1394,6 +1395,22 @@ begin
     Result := 0
   else
     Result:=inv[slot].amount;
+end;
+
+function TPc.removeGold(amount: word) : boolean;
+var slot:byte;
+begin
+  slot := findCoins();
+  if (slot = 0) then
+    Result := false
+  else if (inv[slot].amount>=amount) then
+  begin
+    dec(inv[slot].amount, amount);
+    Result := true;
+    RefreshInventory;
+  end
+  else
+    Result := false;
 end;
 
 { Искать }
@@ -1700,12 +1717,28 @@ end;
 procedure Tpc.WriteAboutInvMass;
 var
   weight : string;
+  tx, ty : word;
 begin
   with Screen.Canvas do
   begin
     Font.Color := cLIGHTGRAY;
-    weight :=  'Масса всех предметов: '+FloatToStr(pc.invmass)+' Максимальная масса: '+FloatToStr(pc.maxmass);
-    TextOut((15 + ((70 - length(weight)) div 2))*CharX, 35*CharY, weight);
+    weight :=  'Масса всех предметов: '+FloatToStr(invmass)+' Максимальная масса: '+FloatToStr(maxmass);
+    tx := (15 + ((70 - length(weight)) div 2))*CharX;
+    ty := 35*CharY;
+    TextOut(tx, ty, weight);
+    if (ShowBars = 1) then begin
+      Pen.Color := cGRAY;
+      Pen.Width := 9;
+      inc(ty, CharY);
+      MoveTo(tx + 4, ty + CharY div 2);
+      LineTo(tx + 4 + (length(weight)-1)*CharX,ty + CharY div 2);
+      if (invmass > 0) then
+      begin
+        Pen.Color := cBrown;
+        MoveTo(tx + 4, ty + CharY div 2);
+        LineTo(tx + 4 + BarWidth(round(invmass), round(maxmass), (length(weight)-1)*CharX), ty + CharY div 2);
+      end;
+    end;
   end;
 end;
 
