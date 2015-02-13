@@ -8,7 +8,8 @@ uses
   tile in 'tile.pas',
   monsters in 'monsters.pas',
   player in 'player.pas',
-  utils in 'utils.pas';
+  utils in 'utils.pas',
+  items in 'items.pas';
 
 {$R *.res}
 

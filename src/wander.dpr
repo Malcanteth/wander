@@ -8,7 +8,8 @@
 program wander;
 
 uses
-  Forms, sysutils,
+  Forms,
+  sysutils,
   main in 'main.pas' {MainForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
@@ -19,7 +20,6 @@ uses
   monsters in 'monsters.pas',
   flags in 'flags.pas',
   items in 'items.pas',
-  help in 'help.pas',
   ability in 'ability.pas',
   mapeditor in 'mapeditor.pas' {MainEdForm},
   conf in 'conf.pas',
@@ -37,16 +37,16 @@ uses
 {$R *.res}
 {.$DEFINE DEBUG}
 
-var Count: byte;
+var Count: Byte;
 
 begin
   Randomize;
-  {$IFDEF DEBUG} Debug := True; {$ELSE} Debug := false; {$ENDIF}
+  {$IFDEF DEBUG} Debug := True; {$ELSE} Debug := False; {$ENDIF}
   Application.Initialize;
   Application.Title := 'WANDER';
   for Count := 1 to ParamCount do
   begin
-    if ParamStr(Count) = '-dev' then Debug := true;
+    if ParamStr(Count) = '-dev' then Debug := True;
   end;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TMainEdForm, MainEdForm);

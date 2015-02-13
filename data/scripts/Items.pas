@@ -24,7 +24,7 @@ idGREENAPPLE = 21;
 idMEAT = 22;
 idHEAD = 23;
 idGATESKEY = 24;
-idAXE = 25;
+idAXE = 25;                            
 idBOW = 26;
 idCROSSBOW = 27;
 idSLING = 28;
@@ -35,7 +35,8 @@ idLITTLEROCK = 32;
 idIGLA = 33;
 idCAPE = 34;
 idBOTTLE = 35;
-{ ”никальные идентификаторы жидкостей } 
+idROOT = 36;
+{ ”никальные идентификаторы жидкостей }
 lqCURE = 1;
 lqHEAL = 2;
 lqCHEAPBEER = 3;

@@ -5,6 +5,15 @@ interface
 uses
   SysUtils, Main, Cons, Windows, Graphics, JPEG, Classes;
 
+var
+  IsMenu: Boolean = False;
+
+const
+  GMChooseAmount = 3;
+  gmNEWGAME      = 1;
+  gmHELP         = 2;
+  gmEXIT         = 3;
+
 function MyRGB(R,G,B : byte) : LongWord;         // Цвет
 function RealColor(c : byte) : longword;
 function Darker(Color:TColor; Percent:Byte):TColor;
@@ -35,11 +44,15 @@ procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 function GetDungeonModeMapName : string;         // Генерировать название подземелья
 procedure ChangeGameState(NewState : byte);      // Поменять состояние игры
 procedure StartGameMenu;                         // Отобразить игровое меню
+procedure ShowHelp;                              // Показать список команд
+procedure ShowHistory;                           // Показать историю сообщений
+procedure DrawGameMenu;                          // Игровое меню
+
 
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
+  Player, Monsters, Map, Items, Msg, Conf, SUtils, Vars, Script, PNGImage;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -52,6 +65,8 @@ begin
   Result := 255;
   case c of
     crRANDOM : Result := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100);
+    crRANDOMRED : Result := MyRGB(Random(155)+100, 40, 40);
+    crRANDOMBLUE : Result := MyRGB(40, 40, Random(155)+100);
     crBLACK  : Result := cBLACK;
     crBLUE   : Result := cBLUE;
     crGREEN  : Result := cGREEN;
@@ -310,6 +325,7 @@ begin
     18: Result := 'Взмахнуть'; // Волшебная палочка
     19: Result := 'Выпить'; // Зелье
     20: Result := 'Использовать'; // Инструмент
+    22: Result := 'Съесть'; // Растения
   end;
 end;
 
@@ -407,14 +423,13 @@ begin
     TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
     // Версия
     Font.Color := cBLUEGREEN;
-    TextOut(34*CharY, (up+1)*CharY, GameVersion);
+    TextOut(Length(s0)*CharY, (up+6)*CharY, GameVersion);
   end;
 end;
 
 { Случайное целое число из диапазона }
 function Rand(A, B: Integer): Integer;
 begin
-  Randomize;
   Result := Round(Random(B - A + 1) + A);
 end;
 
@@ -485,6 +500,7 @@ begin
   V.SetBool('GenName.Female', Female);
   Script.Run('GenName.pas');
   Result := Trim(V.GetStr('GenName.Name'));
+  Script.Run('CreatePC.pas');  
 end;
 
 procedure BlackWhite(var AnImage: TBitMap);
@@ -549,10 +565,118 @@ begin
   MenuSelected := 1;
 end;
 
+{ Показать список команд }
+procedure ShowHelp;
+begin
+  StartDecorating('<-ПОМОЩЬ->', FALSE);
+  with Screen.Canvas do
+  begin
+    AddTextLine(3, 2, 'Все просто - передвигайте своего героя, используя стрелки управления и используйте команды:');
+
+    AddTextLine(3, 5,  '$ESC$   - Выйти из игры в меню                      $S$      - Стрелять');
+    AddTextLine(3, 6,  '$C$     - Закрыть дверь                             $O$      - Открыть');
+    AddTextLine(3, 7,  '$L$     - Смотреть                                  $X$      - Навыки и способности');
+    AddTextLine(3, 8,  '$T$     - Разговаривать                             $M$      - История сообщений');
+    AddTextLine(3, 9,  '$Q$     - Список квестов                            $TAB$    - Изменить тактику боя');
+    AddTextLine(3, 10, '$E$     - Экипировка                                $F$      - Есть');
+    AddTextLine(3, 11, '$I$     - Инвентарь                                 $D$      - Пить');
+    AddTextLine(3, 12, '$A$     - Атаковать                                 $ПРОБЕЛ$ - Выйти\Ждать *(в игре)*');
+    AddTextLine(3, 13, '$ENTER$ - Спуститься\Подняться по лестнице');
+    AddTextLine(3, 14, '$G$     - Поднять вещи ($Shift + G$ - определенное количество)');
+
+    AddTextLine(3, 20, '#F1#    - Помощь *(эта страничка)*');
+    AddTextLine(3, 21, '#F2#    - Сохранить игру и выйти *{Пока не работает}*');
+    AddTextLine(3, 22, '#F5#    - Сделать скриншот');
+
+    AddTextLine(3, 29, 'Команды не чувствительны к регистру и языку.');
+    AddTextLine(3, 30, 'С помощью *цифровой клавиатуры* можно двигаться во всех направлениях (цифра $5$ - ждать).');
+    AddTextLine(3, 31, 'Двигаться по диагонали так же можно зажав *ALT + стрелки*.');
+
+    AddTextLine(3, 38, 'Игру разработал Павел Дивненко aka BreakMeThunder *breakmt@mail.ru*');
+    AddTextLine(3, 39, 'Благодарность: Харука-тян, Apromix *apromix@mail.ru*');
+  end;
+end;
+
+{ Показать историю сообщений }
+procedure ShowHistory;
+var
+  x,y,c,t : byte;
+begin
+  StartDecorating('<-ИСТОРИЯ ПОСЛЕДНИХ СООБЩЕНИЙ->', FALSE);
+  with Screen.Canvas do
+  begin
+    Brush.Color := 0;
+    for y:=1 to MaxHistory do
+      if History[y].Msg <> '' then
+      begin
+        c := 0;
+        t := 1;
+        for x:=1 to Length(History[y].msg) do
+        begin
+          //Символы начала и конца цвета
+          if History[y].msg[x] = '$' then  // желтый
+          begin
+            if c = 0 then c := 1 else c := 0;
+          end else
+          if History[y].msg[x] = '*' then  // красный
+          begin
+            if c= 0 then c := 2 else c := 0;
+          end else
+          if History[y].msg[x] = '#' then  // зеленый
+          begin
+            if c= 0 then c := 3 else c := 0;
+          end else
+            begin
+              //Цвет букв
+              case c of
+                0 : Font.Color := MyRGB(160,160,160);  //Серый
+                1 : Font.Color := MyRGB(255,255,0);    //Желтый
+                2 : Font.Color := MyRGB(200,0,0);      //Красный
+                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
+              end;
+              Textout((t-1)*CharX, (2*CharY)+((y-1)*CharY), History[y].msg[x]);
+              inc(t);
+            end;
+        end;
+        if History[y].amount > 1 then
+        begin
+          Font.Color := MyRGB(200,255,255);
+          Textout((Length(History[y].msg)+1)*CharX, (2*CharY)+((y-1)*CharY), IntToStr(History[y].amount)+' раза.');
+        end;
+      end;
+  end;
+end;
+
+{ Игровое меню }
+procedure DrawGameMenu;
+const
+  TableX = 39;
+  TableW = 20;
+  MenuNames : array[1..GMChooseAmount] of string =
+  ('Новая игра', 'Помощь', 'Выход');
+var
+  i: Byte;
+begin
+  DrawBorder(TableX, Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2, TableW,(GMChooseAmount+2)+1,crBLUEGREEN);
+  with Screen.Canvas do
+  begin
+    for i := 1 to GMChooseAmount do
+    begin
+      Font.Color := cBROWN;
+      TextOut((TableX+2)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, '[ ]');
+      Font.Color := cCYAN;
+      TextOut((TableX+6)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+i))*CharY, MenuNames[i]);
+    end;
+    Font.Color := cYELLOW;
+    TextOut((TableX+3)*CharX, (Round(WindowY/2)-Round((GMChooseAmount+2)/2)-2+(1+MenuSelected))*CharY, '*');
+  end;
+end;    
+
 var
   EX: TExplodeResult;
 
 initialization
+  Randomize;
   // Версия игры
   EX := Explode('.', FileVersion(Paramstr(0)));
   GameVersion := EX[0] + '.' + EX[1] + EX[2];

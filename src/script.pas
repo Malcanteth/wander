@@ -248,7 +248,7 @@ begin
   finally
     Compiler.Free;
   end;
-end;
+end;          
 
 function RunCompiledScript(Bytecode: AnsiString; out RuntimeErrors: AnsiString): Boolean;
 var
@@ -358,22 +358,22 @@ initialization
   H := TStringList.Create;
   Z := TStringList.Create;
   // Заголовочный скрипт
-  if FileExists('Const.pas') then begin
+  if FileExists(Path + 'Const.pas') then begin
   Z.LoadFromFile(Path + 'Const.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
-  if FileExists('Monsters.pas') then begin
+  if FileExists(Path + 'Monsters.pas') then begin
   Z.LoadFromFile(Path + 'Monsters.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
-  if FileExists('Items.pas') then begin
+  if FileExists(Path + 'Items.pas') then begin
   Z.LoadFromFile(Path + 'Items.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
-  if FileExists('Tiles.pas') then begin
+  if FileExists(Path + 'Tiles.pas') then begin
   Z.LoadFromFile(Path + 'Tiles.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
-  if FileExists('Init.pas') then begin
+  if FileExists(Path + 'Init.pas') then begin
   Z.LoadFromFile(Path + 'Init.pas');
   for i:= 0 to Z.Count-1 do H.Add(Z[i]); Z.Clear; end;
-  if FileExists('Final.pas') then Z.LoadFromFile(Path + 'Final.pas');
+  if FileExists(Path + 'Final.pas') then Z.LoadFromFile(Path + 'Final.pas');
 
 finalization
   // Осв. ресурсы

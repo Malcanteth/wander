@@ -1101,6 +1101,7 @@ begin
           case i of
             1 : TextOut(4*CharX,(4+i)*CharY,'Исследовать хранилище и освободить людей от зла, таящегося в нем (Старейшина)');
             2 : TextOut(4*CharX,(4+i)*CharY,'Найти ключ от восточных врат деревни (Старейшина)');
+            3 : TextOut(4*CharX,(4+i)*CharY,'Отыскать таинственный Корень Мандрагоры (Стражник)');
           end;
           case pc.quest[i] of
             1 :
@@ -1679,7 +1680,6 @@ var
   R, H, S : string;
 begin
   StartDecorating('<-СОЗДАНИЕ НОВОГО ПЕРСОНАЖА->', TRUE);
-  Script.Run('CreatePC.pas');
   S := Format(V.GetStr('CreatePCStr'), [CLName(1), PC.Name]);
   with Screen.Canvas do
   begin

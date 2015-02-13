@@ -23,7 +23,7 @@ type
 
 const
   { Кол-во типов предметов}
-  ItemTypeAmount = 21;
+  ItemTypeAmount = 22;
 
   ItemTypeData : array[1..ItemTypeAmount] of TItemType =
   (
@@ -47,7 +47,8 @@ const
     (name: 'Волшебная палочка'; symbol: '\'; chance:9;maxamount:1),
     (name: 'Зелье'; symbol: '!'; chance:25;maxamount:1),
     (name: 'Инструмент'; symbol: '{'; chance:5;maxamount:1),
-    (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1)
+    (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1),
+    (name: 'Растение'; symbol: '^'; chance:10;maxamount:1)
   );
   
 type
@@ -66,7 +67,7 @@ type
 
 const
  { Кол-во предметов }
-  ItemsAmount = 35;
+  ItemsAmount = 36;
   {  Описание предметов }
   ItemsData : array[1..ItemsAmount] of TItemData =
   (
@@ -245,8 +246,13 @@ const
       vid:19; color: crCYAN; mass: 0.1;
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
+    ),
+    ( name1: 'Корень Мандрагоры'; name2: 'Корни Мандрагоры'; name3: 'Корень Мандрагоры';
+      vid:22; color: crBROWN; mass: 4;
+      attack: 0; defense: 0; chance: 5;
+      flags : NOF;
     )
-  );  
+  );
 
 {$include ../Data/Scripts/Items.pas}
 
@@ -552,7 +558,7 @@ begin
         ChangeGameState(gsEQUIPMENT);
       end;
       // Съесть
-      14:
+      14, 22:
       begin
         if pc.status[stHUNGRY] >= 0 then
         begin
