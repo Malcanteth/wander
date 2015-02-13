@@ -23,3 +23,4 @@ mdSELLER = 20;
 mdFANATIK = 21;
 mdKEYWIFE = 22;
 mdKEYMAN = 23;
+mdSENTINEL = 24;

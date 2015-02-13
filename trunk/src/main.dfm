@@ -26,4 +26,9 @@ object MainForm: TMainForm
     Interval = 200
     OnTimer = GameTimerTimer
   end
+  object Timer1: TTimer
+    Interval = 200
+    OnTimer = Timer1Timer
+    Left = 136
+  end
 end

@@ -96,6 +96,9 @@ type
     SpeedButton2: TSpeedButton;
     DungeonName: TEdit;
     RandomName: TCheckBox;
+    Timer1: TTimer;
+    SetItems: TSpeedButton;
+    N5: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FillClick(Sender: TObject);
@@ -126,6 +129,9 @@ type
     procedure Button3Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
     procedure RandomNameClick(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
+    procedure SetItemsClick(Sender: TObject);
+    procedure N5Click(Sender: TObject);
   private
   public
   end;
@@ -143,14 +149,14 @@ type
   end;
 
   TLadder = record
-    name   : string[17];                    // Название подзмелья
-    x, y   : byte;                          // Расположение лестницы
+    Name   : string[17];                    // Название подзмелья
+    X, Y   : byte;                          // Расположение лестницы
     Levels : array[1..MaxDepth] of TLevel;  // Характеристики каждого уровня
   end;
 
   TMaps = record
     name : string[40];         // Название карты
-    ShowName : boolean;                         // Отображать название спец. карты
+    ShowName : boolean;        // Отображать название спец. карты
     Map : TMap;                // Сама карта
     Loc : array[1..4] of byte; // Окружающие ее карты (1-Вверх,2-Вниз,3-Влево,4-Вправо)
     Ladders : array[1..MaxLadders] of TLadder;  // Свойства лестниц вниз
@@ -159,20 +165,20 @@ type
 
 var
   MainEdForm: TMainEdForm;
-  EdScreen : TBitMap;
-  SpecialMaps : array[1..MaxMaps] of TMaps;
-  NowMap, NowElement, N : byte;
-  CurX, CurY : integer;
+  EdScreen: TBitmap;
+  SpecialMaps: array[1..MaxMaps] of TMaps;
+  NowMap, NowElement, N: byte;
+  CurX, CurY: integer;
   WaitForLadderClick,
-  WaitForMonsterClick : boolean;
-  NowLadder : byte;
+  WaitForMonsterClick: boolean;
+  NowLadder: byte;
 
 implementation
 
 {$R *.dfm}
 
 uses
-  Tile, Player, Utils, Monsters, conf, mbox;
+  Tile, Player, Utils, Monsters, conf, mbox, items;
 
 procedure TMainEdForm.FormCreate(Sender: TObject);
 const
@@ -191,9 +197,19 @@ begin
   ClientHeight := MapY * CharY;
   // Создаем картинку
   EdScreen := TBitMap.Create;
-  EdScreen.Width := MapX * CharX;
-  EdScreen.Height := MapY * CharY;
-  EdScreen.Canvas.Font.Name := FontMsg;
+  with EdScreen do
+  begin
+    Width := MapX * CharX;
+    Height := MapY * CharY;
+    Canvas.Font.Name := FontMsg;
+    Canvas.Font.Size := FontSize;
+    case FontStyle of
+      1:   Canvas.Font.Style := [fsBold];
+      2:   Canvas.Font.Style := [fsItalic];
+      3:   Canvas.Font.Style := [fsBold, fsItalic];
+      else Canvas.Font.Style := [];
+    end;
+  end;
   // Компоненты
   GroupBox2.Top := 0;
   GroupBox2.Left := MapX * CharX + 10;
@@ -214,14 +230,14 @@ begin
   EdScreen.Canvas.FillRect(Rect(0, 0, MapX * CharX, MapY * CharY));
   // Выводим карту
   DrawMap;
-  // Отобразить
+  // Отобразить    
   Canvas.StretchDraw(Rect(0, 0, MapX * CharX, MapY * CharY), EdScreen);
 end;
 
 { Залить }
 procedure TMainEdForm.FillClick(Sender: TObject);
 var
-  x, y : byte;
+  x, y: Byte;
 begin
   if NowElement = 1 then
   begin
@@ -254,10 +270,16 @@ begin
         end;
         char := TilesData[M.Tile[x,y]].char;
         back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
+        // Предметы
+        if M.Item[x,y].id > 0 then
+        begin
+          color := RealColor(ItemsData[M.Item[x,y].id].color);
+          char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
+        end;
         // Монстры
         if M.MonP[x,y] > 0 then
         begin
-            if M.MonP[x,y] = 1 then
+          if M.MonP[x,y] = 1 then
             begin
               color := cLIGHTBLUE;
               char := '@';
@@ -266,15 +288,18 @@ begin
               begin
                 color := RealColor(MonstersData[M.MonL[M.MonP[x,y]].id].color);
                 if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
-                if M.MonP[x,y] = ListBox1.ItemIndex+1 then
-                  back := MyRGB(150,0,0);
+                if M.MonP[x,y] = ListBox1.ItemIndex+1 then back := MyRGB(150,0,0);
                 char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
               end;
         end;
         // Вывести символ
         Brush.Color := back;
         Font.Color := color;
-        TextOut((x-1)*CharX, (y-1)*CharY, char);
+        TextOut((x-1)*CharX, (y-1)*CharY, char);  
+
+        Pen.Color := clYellow;
+        Brush.Style := bsClear;
+        Rectangle((CurX - 1) * CharX - 1, (CurY - 1) * CharY - 1, CurX * CharX + 1, CurY * CharY + 1);
       end;
 end;
 
@@ -334,10 +359,10 @@ begin
   {$I-}
   Reset(f,1);
   {$I+}
-  if IOResult = 0 then
+  if IOResult = 0 then  
   begin
     Result := TRUE;
-    BlockRead(f, kol, SizeOf(kol));
+    BlockRead(f, kol, SizeOf(kol));  
     for i:=1 to kol do
     begin
       // Номер и название карты
@@ -524,8 +549,8 @@ procedure TMainEdForm.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 begin
   // Изменить координаты
-  CurX := (X div 8) + 1;
-  CurY := (Y div 16) + 1;
+  CurX := (X div CharX) + 1;
+  CurY := (Y div CharY) + 1;
   coord.Caption := IntToStr(CurX)+':'+IntToStr(CurY);
   if M.MonP[CurX, CurY] > 0 then
     Label3.Caption := IntToStr(M.MonL[M.MonP[CurX, CurY]].id);
@@ -544,6 +569,10 @@ begin
               M.Tile[CurX, CurY] := ItemsBox.ItemIndex+1;
               2 : //Монстр
               CreateMonster(ItemsBox.ItemIndex+1,CurX,CurY);
+              3: // Предмет
+              begin
+                PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex+1, 1, 0), 1);
+              end;
             end;
       end;
       // Удалить? (ПКМ)
@@ -554,11 +583,17 @@ begin
           M.Blood[CurX, CurY] := 0 else
             case NowElement of
               1 : //Тайл
-              M.Tile[CurX, CurY] := 0;
+              begin
+                M.Tile[CurX, CurY] := 0;
+              end;
               2 : //Монстр
               begin
                 FillMemory(@M.MonL[M.MonP[CurX, CurY]], SizeOf(M.MonL[M.MonP[CurX, CurY]]), 0);
                 M.MonP[CurX, CurY] := 0;
+              end;
+              3: // Предмет
+              begin
+                M.Item[CurX, CurY].id := 0;
               end;
             end;
       end;
@@ -805,6 +840,10 @@ begin
               M.Tile[CurX, CurY] := ItemsBox.ItemIndex+1;
               2 : //Монстр
               CreateMonster(ItemsBox.ItemIndex+1,CurX,CurY);
+              3: // Предмет
+              begin
+                PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex+1, 1, 0), 1);
+              end;
             end;
     end;
     // Удалить? (ПКМ)
@@ -820,6 +859,10 @@ begin
             begin
                 FillMemory(@M.MonL[M.MonP[CurX, CurY]], SizeOf(M.MonL[M.MonP[CurX, CurY]]), 0);
                 M.MonP[CurX, CurY] := 0;
+            end;
+            3: // Предмет
+            begin
+              M.Item[CurX, CurY].id := 0;
             end;
           end;
     end;
@@ -840,7 +883,7 @@ begin
       ItemsBox.Items.Clear;
       for i:=1 to LevelTilesAmount do
         ItemsBox.Items.Add(TilesData[i].name);
-      SetTiles.Font.Style := [fsBold];
+      
     end;
     2 : //Монстры
     begin
@@ -848,9 +891,18 @@ begin
       ItemsBox.Items.Clear;
       for i:=1 to MonstersAmount do
         ItemsBox.Items.Add(MonstersData[i].name1);
-      SetMonsters.Font.Style := [fsBold];
+    end;
+    3 : //Предметы
+    begin
+      GroupBox1.Caption := 'Предметы';
+      ItemsBox.Items.Clear;
+      for i:=1 to ItemsAmount do
+        ItemsBox.Items.Add(ItemsData[i].name1);
     end;
   end;
+  if (NowElement = 1) then SetTiles.Font.Style := [fsBold] else SetTiles.Font.Style := [];
+  if (NowElement = 2) then SetMonsters.Font.Style := [fsBold] else SetMonsters.Font.Style := [];
+  if (NowElement = 3) then SetItems.Font.Style := [fsBold] else SetItems.Font.Style := [];
 end;
 
 { Выбрал тайлы }
@@ -864,6 +916,12 @@ end;
 procedure TMainEdForm.SetMonstersClick(Sender: TObject);
 begin
   NowElement := 2;
+  RefreshItemList;
+end;
+
+procedure TMainEdForm.SetItemsClick(Sender: TObject);
+begin
+  NowElement := 3;
   RefreshItemList;
 end;
 
@@ -1058,6 +1116,16 @@ end;
 procedure TMainEdForm.RandomNameClick(Sender: TObject);
 begin
   if RandomName.Checked then DungeonName.Enabled := FALSE else DungeonName.Enabled := TRUE;
+end;
+
+procedure TMainEdForm.Timer1Timer(Sender: TObject);
+begin
+  FormPaint(Sender);
+end;
+
+procedure TMainEdForm.N5Click(Sender: TObject);
+begin
+  Close
 end;
 
 end.

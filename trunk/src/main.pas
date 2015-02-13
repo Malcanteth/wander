@@ -9,6 +9,7 @@ uses
 type
   TMainForm = class(TForm)
     GameTimer: TTimer;
+    Timer1: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -21,6 +22,7 @@ type
     procedure GameTimerTimer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure AnimFly(x1,y1,x2,y2:integer;symbol:string; color:byte);
+    procedure Timer1Timer(Sender: TObject);
   private
     procedure CMDialogKey( Var msg: TCMDialogKey );
     message CM_DIALOGKEY;
@@ -54,7 +56,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
+  Cons, Utils, Msg, Player, Map, Tile, Items, Ability, MapEditor, Liquid,
   Conf, SUtils, Script, MBox, Vars, Monsters;
 
 { Инициализация }
@@ -236,6 +238,12 @@ begin
               begin
                 if MenuSelected = GMChooseAmount then MenuSelected := 1 else inc(MenuSelected);
               end;
+              63, 112:
+              begin
+                IsMenu := True;
+                GameMenu := False;
+                ChangeGameState(gsHELP);
+              end;
               // Ok...
               13 :
               begin
@@ -256,6 +264,12 @@ begin
                             end;
                           ChangeGameState(gsHERORANDOM);
                         end;
+                  end;
+                  gmHELP:
+                  begin
+                    IsMenu := True;
+                    GameMenu := False;
+                    ChangeGameState(gsHELP);
                   end;
                   gmEXIT    :
                   begin
@@ -593,7 +607,7 @@ begin
                   AddMsg('Твой инвентарь пуст!',0);
               end;
               // Помощь '?'
-              112       :
+              63, 112       :
               begin
                 ChangeGameState(gsHELP);
               end;
@@ -865,13 +879,21 @@ begin
           gsUSEMENU, gsWPNSKILLS:
           begin
             // Выход в игру или в другое место
+            if IsMenu and ((Key = 27) or (Key = 32)) and (GameState = gsHELP) then
+            begin
+              IsMenu := False;
+              GameMenu := TRUE;
+              ChangeGameState(LastGameState);
+              OnPaint(SENDER);
+              Exit;
+            end;
             if GameState = gsUSEMENU then
             begin
               if Key = 27 then
                 ChangeGameState(LastGameState);
             end else
               if (Key = 27) or (Key = 32) then ChangeGameState(gsPLAY);
-              
+
             // Чит в навыках
             if GameState = gsWPNSKILLS then
             begin
@@ -1343,6 +1365,11 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   ReleaseDC(MainForm.Handle, DC);
   DeleteDC(DC);
+end;
+
+procedure TMainForm.Timer1Timer(Sender: TObject);
+begin
+  FormPaint(Sender);
 end;
 
 initialization

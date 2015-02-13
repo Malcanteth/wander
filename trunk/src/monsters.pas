@@ -3,7 +3,7 @@ unit monsters;
 interface
 
 uses
-  Utils, Cons, Tile, Flags, Msg, Items, SysUtils, Ability, Windows, Main, Conf;
+  Dialogs, Utils, Cons, Tile, Flags, Msg, Items, SysUtils, Ability, Windows, Main, Conf;
 
 type
   TMonster = object
@@ -124,7 +124,7 @@ type
 
 const
   { Константы количества монстров }
-  MonstersAmount = 23;
+  MonstersAmount = 24;
 
   {  Описание монстров }
   MonstersData : array[1..MonstersAmount] of TMonData =
@@ -264,8 +264,14 @@ const
       hp : 35; speed : 100; los : 6; str : 6; dex : 6; int : 3;  at : 6; def : 9;
       exp : 12; mass : 60.0;
       flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
+    ),
+    ( name1 : 'Стражник'; name2 : 'Стражника'; name3 : 'Стражнику'; name4 : 'Стражником'; name5 : 'Стражника'; name6 : 'Стражников';
+      char : 's'; color : crYELLOW; gender : genMALE;
+      hp : 45; speed : 100; los : 6; str : 6; dex : 6; int : 2;  at : 7; def : 10;
+      exp : 15; mass : 75.0;
+      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;
     )
-  );  
+  );
 
 {$I ../data/scripts/Monsters.pas}
 
@@ -824,11 +830,14 @@ var
 begin
   if relation = 0 then
   begin
+//    ShowMessage(ItemsData[eq[6].id].name1);
     // Переменные для работы скрипта
     for i := 1 to QuestsAmount do V.SetInt('PCQuest'+IntToStr(I)+'State', pc.quest[I]); // Состояние квестов
-    V.SetStr('NPCWeaponName', ItemsData[eq[6].id].name1);
+    S := Trim(ItemsData[eq[6].id].name1);
+    if (S = '') then S := 'оружие';
+    V.SetStr('NPCWeaponName', S);
     V.SetStr('NPCName', Name);    // Имя монстра
-    V.SetStr('TalkStr', FullName(1, TRUE) + ' говорит: ');    
+    V.SetStr('TalkStr', FullName(1, TRUE) + ' говорит: ');
     V.SetInt('NPCID', ID);        // Идентификатор монстра
     Run('NPCTalk.pas');
   end else
@@ -1138,7 +1147,7 @@ begin
       pc.quest[1] := 2;
       More;
     end;
-    if M.MonL[Victim].id = mdKEYMAN then
+    if M.MonL[Victim].id = mdKEYMAN then 
     begin
       if pc.quest[2] = 1 then pc.quest[2] := 2;
       More;
@@ -1170,14 +1179,14 @@ begin
           end;
       end;
   // Выкинуть вещи
-  for i:=1 to EqAmount do
+  for i := 1 to EqAmount do
     if Eq[i].id > 0 then
       PutItem(x,y, Eq[i], Eq[i].amount);
   for i:=1 to MaxHandle do
     if Inv[i].id > 0 then
       PutItem(x,y, Inv[i], Inv[i].amount);
   // Если это герой, то
-  if idinlist = 1 then pc.AfterDeath;
+  if (IdInList = 1) then pc.AfterDeath;
   // Всё.
   id := 0;
   idinlist := 0;
@@ -1189,7 +1198,7 @@ var
   GivenItem : TItem;
 begin
   case FromWhere of
-    1 : GivenItem := Inv[ItemId];
+    1 : GivenItem := Inv[ItemID];
     2 : GivenItem := Eq[ItemID];
   end;
   if ((Victim.relation = 0) and (id = 1)) or (id > 1) then
@@ -1197,18 +1206,22 @@ begin
     if Ask('Точно отдать '+ItemName(GivenItem, 1, TRUE)+' '+Victim.FullName(3, TRUE)+'? #(Y/n)#') = 'Y' then
     begin
       // 0-успешно,1-ничего нет,2-нет места,3-перегружен
-      case Victim.PickUp(GivenItem, FALSE,GivenItem.amount) of
+      case Victim.PickUp(GivenItem, FALSE, GivenItem.Amount) of
         0 :
         begin // Успешно отдал
           AddMsg(FullName(1, TRUE)+' отдал{/а} '+Victim.FullName(3, TRUE)+' '+ItemName(GivenItem, 1, TRUE)+'.',id);
           // Отдал башку старейшине
           if (GivenItem.id = idHEAD) and (GivenItem.owner = mdBLINDBEAST) then
-            if pc.quest[1] > 1 then
-              pc.quest[1] := 3;
+            if pc.quest[1] > 1 then pc.quest[1] := 3;
           // Отдал ключ старейшине
           if GivenItem.id = idGATESKEY then
-            if pc.quest[2] > 1 then
-              pc.quest[2] := 3;
+            if pc.quest[2] > 1 then pc.quest[2] := 3;
+          // Отдал корень стражнику
+          if (GivenItem.id = idROOT) then
+          begin
+            AddMsg('#Ты выполнил{/a} квест!!!#',0);
+            pc.quest[3] := 3;
+          end;
           case FromWhere of
             1 : DeleteItemInv(ItemId, Inv[ItemID].amount, 1);
             2 : DeleteItemInv(ItemId, Eq[ItemID].amount, 2);

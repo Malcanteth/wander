@@ -4,7 +4,7 @@ interface
 
 const
   { Общие константы игры }
-  MapEditorVersion         = '0.7.0.0';
+  MapEditorVersion         = '0.17.0.0';
 
   { Константы  окна }
   WindowX                  = 100;
@@ -41,7 +41,7 @@ const
 
   { Константы основных цветов }
 
-  crAmount                 = 16;
+  crAmount                 = 18;
 
   crBLACK                  = 0;
   crRANDOM                 = 1;
@@ -60,6 +60,8 @@ const
   crLIGHTBLUE              = 14;
   crORANGE                 = 15;
   crBLUEGREEN              = 16;
+  crRANDOMBLUE             = 17;
+  crRANDOMRED              = 18;
 
   cBLACK                   = 0;
   cBLUE                    = 9830400;
@@ -114,7 +116,7 @@ const
   genFEMALE                = 2;
 
   { Квесты }
-  QuestsAmount             = 3;       // 1-Хранилище,2-Ключ,3-Ключник
+  QuestsAmount             = 3;       // 1-Хранилище,2-Ключ и Ключник,3-Стражник
 
   { Герой }
   MaxHandle                = 27;      // Максимальное количество предметов
