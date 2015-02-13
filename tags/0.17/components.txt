@@ -1,0 +1,2 @@
+Компонент RemObjects Pascal Script for Delphi брать отсюда:
+http://www.remobjects.com/ps.aspx
