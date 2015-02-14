@@ -66,7 +66,7 @@ type
 
 const
  { Кол-во предметов }
-  ItemsAmount = 35;
+  ItemsAmount = 36;
   {  Описание предметов }
   ItemsData : array[1..ItemsAmount] of TItemData =
   (
@@ -245,6 +245,11 @@ const
       vid:19; color: crCYAN; mass: 0.1;
       attack: 1; defense: 0; chance: 40;
       flags : NOF;
+    ),
+    ( name1: 'Корень Мандрагоры'; name2: 'Корни Мандрагоры'; name3: 'Корень Мандрагоры';
+      vid:22; color: crBROWN; mass: 4;
+      attack: 0; defense: 0; chance: 5;
+      flags : NOF;
     )
   );  
 
@@ -284,6 +289,7 @@ const
   idIGLA = 33;
   idCAPE = 34;
   idBOTTLE = 35;
+  idMANDAGORAROOT = 36;
   
   { Уникальные идентификаторы жидкостей }
   lqCURE = 1;
