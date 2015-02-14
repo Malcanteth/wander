@@ -52,7 +52,8 @@ type
     function MoveToAim(obstacle : boolean) : boolean; // Сделать шаг к цели
     procedure MoveRandom;                             // Двинуться рандомно
     function Move(dx,dy : integer) : boolean;         // Переместить монстра
-    function WoundDescription : string;               // Вернуть описание состояния здоровья
+    function WoundDescription(firstIsCapital : boolean)
+                              : string;               // Вернуть описание состояния здоровья
     procedure TalkToMe;                               // Поговорить с кем-нибудь
     procedure Fight(var Victim : TMonster; CA : byte);// Драться (CA: 1 - контратака, 2 - второй удар!)
     procedure Fire(var Victim : TMonster);            // Стрелять
@@ -757,7 +758,7 @@ begin
 end;
 
 { Вернуть описание состояния здоровья }
-function TMonster.WoundDescription : string;
+function TMonster.WoundDescription(firstIsCapital : boolean) : string;
 var
   r : string;
 begin
@@ -788,6 +789,11 @@ begin
               r := 'легко ранен{/a}';
             end else
               r :=  'влегкую задет{/a}';
+  if (firstIsCapital) then
+  begin
+    r := AnsiUpperCase(r[1]) + Copy(r, 2, Length(r));
+  end;
+
   Result := GetMsg(r,MonstersData[id].gender);
 end;
 
@@ -1104,7 +1110,7 @@ begin
                   // Ранил
                   if Victim.hp > 0 then
                   begin
-                    if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription+'.',Victim.id);
+                    if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription(False)+'.',Victim.id);
                   end else
                     // Убил
                     begin
@@ -1223,7 +1229,7 @@ begin
                 if Victim.hp > 0 then
                 begin
                   AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+'! (*'+IntToStr(Dam)+'*)',id);
-                  if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription+'.',Victim.id);
+                  if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription(False)+'.',Victim.id);
                 end else
                   // Убил
                   begin

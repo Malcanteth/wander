@@ -423,13 +423,14 @@ begin
     if M.MonP[px,py] > 0 then
     begin
       if M.MonP[px,py] = 1 then
-        AddMsg(Format('Это ты - %s. Ты %s.', [pc.name, pc.WoundDescription]),0) else
+        AddMsg(Format('Это ты - %s. Ты %s.', [pc.name, pc.WoundDescription(False)]),0) else
           begin
+            s := M.MonL[M.MonP[px,py]].FullName(1, TRUE) + '.';
+            // Лежит
             if M.MonL[M.MonP[px,py]].felldown then
-              s := Format('Здесь лежит %s.', [M.MonL[M.MonP[px,py]].FullName(1, TRUE)]) else
-                s := M.MonL[M.MonP[px,py]].FullName(1, TRUE);
+              s := s + ' Лежит.';
             // Состояние
-            s := s + Format(' %s.', [M.MonL[M.MonP[px,py]].WoundDescription]);
+            s := s + ' ' + M.MonL[M.MonP[px,py]].WoundDescription(True) + '.';
             // Тактика
             if M.MonL[M.MonP[px,py]].tactic = 1 then
               s := s + ' Настроен{/a} весьма агрессивно.';
