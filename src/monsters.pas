@@ -124,7 +124,7 @@ type
 
 const
   { Константы количества монстров }
-  MonstersAmount = 23;
+  MonstersAmount = 24;
 
   {  Описание монстров }
   MonstersData : array[1..MonstersAmount] of TMonData =
@@ -264,6 +264,12 @@ const
       hp : 35; speed : 100; los : 6; str : 6; dex : 6; int : 3;  at : 6; def : 9;
       exp : 12; mass : 60.0;
       flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
+    ),
+    ( name1 : 'Стражник'; name2 : 'Стражника'; name3 : 'Стражнику'; name4 : 'Стражником'; name5 : 'Стражника'; name6 : 'Стражников';
+      char : 's'; color : crYELLOW; gender : genMALE;
+      hp : 45; speed : 100; los : 6; str : 6; dex : 6; int : 2;  at : 7; def : 10;
+      exp : 15; mass : 75.0;
+      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;
     )
   );  
 
@@ -291,6 +297,7 @@ const
   mdFANATIK = 21;
   mdKEYWIFE = 22;
   mdKEYMAN = 23;
+  mdSENTINEL = 24;
 
   {Названия классов}
   MonsterClassNameAmount = 9;
