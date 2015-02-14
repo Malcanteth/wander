@@ -30,12 +30,12 @@ type
 
 var
   MainForm             : TMainForm;
-  Screen,GrayScreen    : TBitMap;              // Картинка для двойной-буфферизации
+  GScreen, GrayGScreen : TBitMap;              // Картинка для двойной-буфферизации
   WaitMore,                                    // --Далее--
   WaitEnter,                                   // Ждем нажатия Enter
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
-  Inputing, Debug      : boolean;              // Режим ввода
+  Inputing             : boolean;              // Режим ввода
   GameState,                                   // Состояние игры
   MenuSelected2,                               // Выбранный элемент в меню
   VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
@@ -43,7 +43,6 @@ var
   LastGameState,                               // Последнее состояние игры
   WasEqOrInv,                                  // Была открыта экипировка или инвентарь
   PlayMode             : byte;                 // Выбранный режим игры
-  GameVersion          : string;               // Версия игры
   Answer               : string[1];            // Ожидается ответ
   MenuSelected,
   a                    : integer;
@@ -55,20 +54,11 @@ implementation
 
 uses
   Cons, Utils, Msg, Player, Map, Tile, Help, Items, Ability, MapEditor, Liquid,
-  Conf, SUtils, Script, MBox, Vars, Monsters;
+  Conf, SUtils, MBox, Vars, Monsters, Intro;
 
 { Инициализация }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  if Debug then
-  begin
-    Caption := '[Debug] '+Caption;
-    Run('CreatePC.pas', true);
-    Run('GenDungeon.pas', true);
-    Run('GenName.pas', true);
-    Run('InitStory.pas', true);
-    Run('NPCTalk.pas', true);
-  end;
   // контекст главной формы
   DC := GetDC(MainForm.Handle);
   // Прячем главное меню
@@ -76,12 +66,12 @@ begin
   // Рамеры окна
   ClientWidth := WindowX * CharX;
   ClientHeight := WindowY * CharY;
-  with Screen do
+  with GScreen do
   begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
-  with GrayScreen do
+  with GrayGScreen do
   begin
     Width := ClientWidth;
     Height := ClientHeight;
@@ -96,8 +86,8 @@ end;
 procedure TMainForm.FormPaint(Sender: TObject);
 begin
   // Заполняем картинку черным цветом
-  Screen.Canvas.Brush.Color := 0;
-  Screen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
+  GScreen.Canvas.Brush.Color := 0;
+  GScreen.Canvas.FillRect(Rect(0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom));
   // Выводим
   case GameState of
     gsPLAY, gsCLOSE, gsLOOK, gsCHOOSEMONSTER, gsOPEN, gsAIM:
@@ -109,24 +99,25 @@ begin
       // Вывести информацию о герое
       pc.WriteInfo;
     end;
+    gsINTRO        : IntroWindow; // Заставка
     gsQUESTLIST    : pc.QuestList;
     gsEQUIPMENT    : pc.Equipment;
     gsINVENTORY    : pc.Inventory;
     gsHELP         : ShowHelp;
     gsUSEMENU      : begin if LastGameState = gsEQUIPMENT then pc.Equipment else pc.Inventory; pc.UseMenu; end;
-    gsCHOOSEMODE   : pc.ChooseMode;
-    gsHERONAME     : pc.HeroName;
-    gsHEROATR      : pc.HeroAtributes;
-    gsHERORANDOM   : pc.HeroRandom;
-    gsHEROGENDER   : pc.HeroGender;
-    gsHEROCRRESULT : pc.HeroCreateResult;
-    gsHEROCLWPN    : pc.HeroCloseWeapon;
-    gsHEROFRWPN    : pc.HeroFarWeapon;
+    gsCHOOSEMODE   : ChooseModeWindow;
+    gsHERONAME     : HeroNameWindow;
+    gsHEROATR      : HeroAtributesWindow;
+    gsHERORANDOM   : HeroRandomWindow;
+    gsHEROGENDER   : HeroGenderWindow;
+    gsHEROCRRESULT : HeroCreateResultWindow;
+    gsHEROCLWPN    : HeroCloseWeaponWindow;
+    gsHEROFRWPN    : HeroFarWeaponWindow;
     gsABILITYS     : ShowAbilitys;
     gsHISTORY      : ShowHistory;
-    gsINTRO        : Intro;
     gsSKILLSMENU   : SkillsAndAbilitys;
     gsWPNSKILLS    : WpnSkills;
+    gsABOUTHERO    : pc.HeroInfoWindow;    
   end;
   // Ввод
   if Inputing then
@@ -141,16 +132,16 @@ begin
     // Сделать заднюю картинку серой
     if GameState <> gsINTRO then
     begin
-      BlackWhite(Screen);
-      GrayScreen := Screen;
+      BlackWhite(GScreen);
+      GrayGScreen := GScreen;
     end;
     // Вывести меню
     DrawGameMenu;
   end;
   // Отображаем растягиваемый буфер
-  SetStretchBltMode(Screen.Canvas.Handle, STRETCH_DELETESCANS);
+  SetStretchBltMode(GScreen.Canvas.Handle, STRETCH_DELETESCANS);
   StretchBlt(DC, 0, 0, MainForm.ClientRect.Right, MainForm.ClientRect.Bottom,
-  Screen.Canvas.Handle, 0, 0, Screen.Width, Screen.Height, SRCCopy);
+  GScreen.Canvas.Handle, 0, 0, GScreen.Width, GScreen.Height, SRCCopy);
 end;
 
 { Нажатие на клавиши }
@@ -276,7 +267,7 @@ begin
           // Выбор режима игры
           gsCHOOSEMODE:
           begin
-            pc.ChooseMode;
+            ChooseModeWindow;
             case Key of
               // Вверх/Вниз
               38,104,56,40,98,50 :
@@ -370,7 +361,7 @@ begin
                 if MenuSelected < 3 then pc.gender := MenuSelected else pc.gender := Rand(1, 2);
                 MenuSelected := 1;
                 MenuSelected2 := 1;
-                pc.startheroname;
+                StartHeroName;
                 OnPaint(Sender);
               end;
             end;
@@ -592,10 +583,15 @@ begin
                 end else
                   AddMsg('Твой инвентарь пуст!',0);
               end;
-              // Помощь '?'
+              // Помощь 'F1'
               112       :
               begin
                 ChangeGameState(gsHELP);
+              end;
+              // О герое 'F9'
+              120       :
+              begin
+                ChangeGameState(gsABOUTHERO);
               end;
               // Атаковать 'a'
               65        : pc.SearchForAlive(1);
@@ -862,7 +858,7 @@ begin
           end;
           // Список квестов, экипировка, помощь
           gsQUESTLIST, gsEQUIPMENT, gsINVENTORY, gsHELP, gsABILITYS, gsHISTORY, gsSKILLSMENU,
-          gsUSEMENU, gsWPNSKILLS:
+          gsUSEMENU, gsWPNSKILLS, gsABOUTHERO:
           begin
             // Выход в игру или в другое место
             if GameState = gsUSEMENU then
@@ -1237,22 +1233,23 @@ begin
   AskForQuit := TRUE;
   // Цвета и состояния напитков
   GenerateColorAndStateOfLiquids;
+  // Начало истории
+  AddMsg('Очень теплый и ясный день.', 0);
   // Выбор режима приключения
-  V.SetInt('PlayMode', PlayMode);
   case PlayMode of
     AdventureMode:  // Деревушка Эвилиар
     begin
       pc.level := 1;
       M.MakeSpMap(pc.level);
       pc.PlaceHere(6,18);
-      Run('InitStory.pas');
+      AddMsg('После нескольких недель странствия, ты, наконец, прибыл{/a} в деревушку Эвилиар. Ходят слухи, что здесь творятся странные вещи. Ты хочешь разобраться в этом...', 0);
     end;
     DungeonMode:    // Вход в подземелье
     begin
       pc.level := 7;
       M.MakeSpMap(pc.level);
       pc.PlaceHere(42,16);
-      Run('InitStory.pas');
+      AddMsg('Поиски увенчались успехом - ты стоишь перед входом в пещеру, которая, согласно легендам, хранит в себе множество сокровищ и артефактов. Но опасность рядом - говорят, в ней обитают злые силы...', 0);
     end;
   end;
   pc.FOV;
@@ -1330,8 +1327,7 @@ begin
     2:;
   else
     Result := '';
-end;
-
+  end;
 end;
 
 procedure TMainForm.GameTimerTimer(Sender: TObject);
@@ -1346,30 +1342,41 @@ begin
 end;
 
 initialization
-  Randomize;
   // Создаем картинку (буфер)
-  Screen := TBitMap.Create;
-  GrayScreen := TBitMap.Create;
+  GScreen := TBitMap.Create;
+  GrayGScreen := TBitMap.Create;
+  // Если размер шрифта = 0, автоопределяем
+  if FontSize = 0 then
+  begin
+    case Screen.Height of
+      1080 : FontSize := 16;
+      1050 : FontSize := 15;
+      1024 : FontSize := 14;
+      960  : FontSize := 13;
+      900, 864 : FontSize := 12;
+      800 : FontSize := 11;
+      768 : FontSize := 10;
+      720 : FontSize := 9;
+      600 : FontSize := 8;      {плохое}
+        else
+          // Не определили разрешение
+          FontSize := 10;
+    end;
+  end;
   // Разумные границы
   if (FontSize < 8 ) then FontSize := 8;
   if (FontSize > 20) then FontSize := 20;
   // Свойства шрифта
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Font.Name := FontMsg;
     Font.Size := FontSize;
-    case FontStyle of
-      1:   Font.Style := [fsBold];
-      2:   Font.Style := [fsItalic];
-      3:   Font.Style := [fsBold, fsItalic];
-      else Font.Style := [];
-    end;
     CharX := TextWidth('W');
     CharY := TextHeight('W');
   end;
 
 finalization
   // Освобождаем картинку (буфер)
-  Screen.Free;
+  GScreen.Free;
 
 end.

@@ -194,7 +194,7 @@ begin
   WaitENTER := True;
   while WaitENTER = True do
     MainForm.ProcessMsg;
-  ClearMsg
+  ClearMsg;
 end;
 
 { Показать сообщения }
@@ -203,7 +203,7 @@ var
   x,y,c,t : byte;
 begin
   //Сообщения
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Font.Name := FontMsg;
     Brush.Color := 0;
@@ -281,7 +281,7 @@ procedure ShowInput;
 var OldStyle : TBrushStyle;
 begin
   //Сообщения
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Brush.Color := 0;
     Font.Color := MyRGB(160,160,160);
@@ -304,7 +304,7 @@ var
 begin
   T := X;
   C := 0;
-  with Screen.Canvas do
+  with GScreen.Canvas do
   for I := 1 to Length(Msg) do
   begin
     // Маркер в тексте (не показывается)

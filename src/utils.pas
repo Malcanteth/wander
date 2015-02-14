@@ -27,7 +27,6 @@ function WhatToDo(vid : integer) : string;       // Слово 'использовать' для раз
 procedure TakeScreenShot;                        // Сделать скриншот
 function Eq2Vid(cur : byte) : byte;              // Вид вещи соответствующий выбранной ячейки экипировки
 function Vid2Eq(vid : byte) : byte;              // Номер ячейки в экипировки для этого вида предмета
-procedure Intro;                                 // Заставка
 function Rand(A, B: Integer): Integer;           // Случайное целое число из диапазона
 function GenerateName(female : boolean) : string;// Генерация имени
 function BarWidth(Cx, Mx, Wd: Integer): Integer; // Ширина бара
@@ -39,7 +38,7 @@ procedure StartGameMenu;                         // Отобразить игровое меню
 implementation
 
 uses
-  Player, Monsters, Map, Items, Msg, conf, sutils, vars, script, pngimage;
+  Player, Monsters, Map, Items, Msg, conf, sutils, vars, pngimage;
 
 { Цвет }
 function MyRGB(R,G,B : byte) : LongWord;
@@ -47,6 +46,7 @@ begin
   Result := (r or (g shl 8) or (b shl 16));
 end;
 
+{ Вернуть цвет }
 function RealColor(c : byte) : longword;
 begin
   Result := 255;
@@ -71,18 +71,19 @@ begin
   end;
 end;
 
+{ Сделать цвет темнее }
 function Darker(Color:TColor; Percent:Byte):TColor;
 var
   r,g,b:Byte;
 begin
-Color:=ColorToRGB(Color);
-r:=GetRValue(Color);
-g:=GetGValue(Color);
-b:=GetBValue(Color);
-r:=r-muldiv(r,Percent,100);  //процент% уменьшения яркости
-g:=g-muldiv(g,Percent,100);
-b:=b-muldiv(b,Percent,100);
-result:=RGB(r,g,b);
+  Color:=ColorToRGB(Color);
+  r:=GetRValue(Color);
+  g:=GetGValue(Color);
+  b:=GetBValue(Color);
+  r:=r-muldiv(r,Percent,100);  //процент% уменьшения яркости
+  g:=g-muldiv(g,Percent,100);
+  b:=b-muldiv(b,Percent,100);
+  result:=RGB(r,g,b);
 end;
 
 { Достать красный цвет }
@@ -108,12 +109,7 @@ function InFov(x1,y1,x2,y2,los : byte) : boolean;
 begin
   if (x1>0)and(x1<=MapX)and(y1>0)and(y1<=MapY)and(x2>0)and(x2<=MapX)and(y2>0)and(y2<=MapY)
     then Result := Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) < los
-{  begin
-    if Round(SQRT(SQR(x1-x2)+SQR(y1-y2))) >= los then
-      Result := false else
-        Result := true;
-  end  }
-    else Result := false;
+      else Result := false;
 end;
 
 { Удалить файлы сохранения }
@@ -153,7 +149,7 @@ const
 var
   i : byte;
 begin
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     For i:=1 to Round(WindowX/2) do
     begin
@@ -182,7 +178,7 @@ procedure DrawBorder(x,y,w,h,color : byte);
 var
   i : byte;
 begin
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Font.Color := RealColor(color);
     TextOut(x*CharX,y*CharY,'.');
@@ -328,7 +324,7 @@ begin
   // PNG
   P := TPNGObject.Create;
   try
-    P.Assign(Screen);
+    P.Assign(GScreen);
     P.SaveToFile(Path + 'screens/' + fname + '.png');
   finally
     P.Free;
@@ -379,92 +375,10 @@ begin
   end;
 end;
 
-{ Заставка }
-procedure Intro;
-const
-  up = 5;
-  s0 = '#       #   #   #          #### #     ';
-  s1 = ' #  #  #   ##   ##  # ###  #    ###   ';
-  s2 = ' ## # ##  #  #  # # # #  # #### #  #  ';
-  s3 = '  # # #   ####  #  ## #  # #    ###   ';
-  s4 = '   ###   #    # #   # #  # #### #  #  ';
-  s5 = '        #           # ###           # ';
-begin
-  with Screen.Canvas do
-  begin
-    // WANDER
-    Font.Color := cLIGHTGRAY;
-    TextOut(((WindowX-length(s0)) div 2) * CharX, up*CharY, s0);
-    Font.Color := cLIGHTBLUE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, (up+1)*CharY, s1);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (up+2)*CharY, s2);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (up+3)*CharY, s3);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s4)) div 2) * CharX, (up+4)*CharY, s4);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
-    // Версия
-    Font.Color := cBLUEGREEN;
-    TextOut(34*CharY, (up+1)*CharY, GameVersion);
-  end;
-end;
-
 { Случайное целое число из диапазона }
 function Rand(A, B: Integer): Integer;
 begin
-  Randomize;
   Result := Round(Random(B - A + 1) + A);
-end;
-
-function FileVersion(AFileName:string): string;
-var
-  szName: array[0..255] of Char;
-  P: Pointer;
-  Value: Pointer;
-  Len: UINT;
-  GetTranslationString:string;
-  FFileName: PChar;
-  FValid:boolean;
-  FSize: DWORD;
-  FHandle: DWORD;
-  FBuffer: PChar;
-begin
-  try
-   FFileName := StrPCopy(StrAlloc(Length(AFileName) + 1), AFileName);
-   FValid := False;
-   FSize := GetFileVersionInfoSize(FFileName, FHandle);
-   if FSize > 0 then
-     try
-       GetMem(FBuffer, FSize);
-       FValid := GetFileVersionInfo(FFileName, FHandle, FSize, FBuffer);
-     except
-       FValid := False;
-       raise;
-     end;
-   Result := '';
-   if FValid then
-     VerQueryValue(FBuffer, '\VarFileInfo\Translation', p, Len)
-   else p := nil;
-   if P <> nil then
-     GetTranslationString := IntToHex(MakeLong(HiWord(Longint(P^)), LoWord(Longint(P^))), 8);
-   if FValid then
-     begin
-       StrPCopy(szName, '\StringFileInfo\' + GetTranslationString + '\FileVersion');
-       if VerQueryValue(FBuffer, szName, Value, Len) then
-         Result := StrPas(PChar(Value));
-     end;
-  finally
-   try
-     if FBuffer <> nil then FreeMem(FBuffer, FSize);
-   except
-   end;
-   try
-     StrDispose(FFileName);
-   except
-   end;
-  end;
 end;
 
 // Ширина бара
@@ -481,12 +395,70 @@ end;
 
 { Генерация случайного имени }
 function GenerateName(female : boolean) : string;
+var
+  s : string;
+  procedure Add2; // Второй слог
+  begin
+    case Rand(1, 10) of
+       1: S := S + 'ид';
+       2: S := S + 'ар';
+       3: S := S + 'ор';
+       4: S := S + 'ур';
+       5: S := S + 'ов';
+       6: S := S + 'ик';
+       7: S := S + 'ом';
+       8: S := S + 'аб';
+       9: S := S + 'из';
+      10: S := S + 'ок';
+    end;
+  end;
+  procedure Add3; // Третий слог
+  begin
+    case Rand(1, 8) of
+       1: S := S + 'эн';
+       2: S := S + 'е';
+       3: S := S + 'и';
+       4: S := S + 'о';
+       5: S := S + 'д';
+       6: S := S + 'ес';
+       7: S := S + 'ер';
+       8: S := S + 'ес';
+    end;
+  end;
 begin
-  V.SetBool('GenName.Female', Female);
-  Script.Run('GenName.pas');
-  Result := Trim(V.GetStr('GenName.Name'));
+  case Rand(1, 11) of
+     1: S := 'Гр';
+     2: S := 'Ад';
+     3: S := 'Вил';
+     4: S := 'Кен';
+     5: S := 'Лур';
+     6: S := 'Тил';
+     7: S := 'Гэл';
+     8: S := 'Тор';
+     9: S := 'Тас';
+    10: S := 'Ат';
+    11: S := 'Сэл';
+  end;
+  case Rand(1, 3) of
+    1 : Add2;
+    2 :
+    begin
+      Add2;
+      Add3;
+    end;
+    3 : Add3;
+  end;
+  // Женское имя
+  if Female then
+  case Rand(1, 3) of
+     1: S := S + 'оя';
+     2: S := S + 'ия';
+     3: S := S + 'еа';
+  end;
+  Result := S;
 end;
 
+{ Сделать картинку в оттенках серого }
 procedure BlackWhite(var AnImage: TBitMap);
 var
   JPGImage: TJPEGImage;
@@ -496,25 +468,19 @@ begin
   BMPImage := TBitmap.Create; 
   try 
     BMPImage.Width  := AnImage.Width;
-    BMPImage.Height := AnImage.Height; 
-
+    BMPImage.Height := AnImage.Height;
     JPGImage := TJPEGImage.Create;
-    try 
-      JPGImage.Assign(AnImage); 
+    try
+      JPGImage.Assign(AnImage);
       JPGImage.CompressionQuality := 100;
       JPGImage.Compress;
       JPGImage.Grayscale := True;
-
-      BMPImage.Canvas.Draw(0, 0, JPGImage); 
-
-      MemStream := TMemoryStream.Create; 
-      try 
-        BMPImage.SaveToStream(MemStream); 
-        //you need to reset the position of the MemoryStream to 0 
-        MemStream.Position := 0; 
-
-        AnImage.LoadFromStream(MemStream); 
-        //AnImage.Refresh; 
+      BMPImage.Canvas.Draw(0, 0, JPGImage);
+      MemStream := TMemoryStream.Create;
+      try
+        BMPImage.SaveToStream(MemStream);
+        MemStream.Position := 0;
+        AnImage.LoadFromStream(MemStream);
       finally
         MemStream.Free;
       end;
@@ -528,11 +494,45 @@ end;
 
 { Генерировать название подземелья }
 function GetDungeonModeMapName : string;
+var
+  S : string;
 begin
-  V.SetInt('GenDungeon.Depth', PC.Depth);
-  V.SetStr('GenDungeon.Name', '');
-  Script.Run('GenDungeon.pas');
-  Result := Trim(V.GetStr('GenDungeon.Name'));
+  // От глубины подземелья зависит его название (7 символов)
+  case pc.depth of
+     1: S := 'Обитель';
+     2: S := 'Крипт';
+     3: S := 'Грот';
+     4: S := 'Нора';
+     5: S := 'Залы';
+     else
+        S := 'Пещера';
+  end;
+  // Разновидность (длина слова - 10 знаков (включ. пробел спереди))
+  case Rand(1, 22) of
+     1: S := S + ' Снов';
+     2: S := S + ' Страха';
+     3: S := S + ' Ужасов';
+     4: S := S + ' Усталости';
+     5: S := S + ' Горя';
+     6: S := S + ' Печали';
+     7: S := S + ' Ненависти';
+     8: S := S + ' Страданий';
+     9: S := S + ' Тьмы';
+    10: S := S + ' Жалости';
+    11: S := S + ' Крови';
+    12: S := S + ' Холода';
+    13: S := S + ' Кошмаров';
+    14: S := S + ' Ночи';
+    15: S := S + ' Троллей';
+    16: S := S + ' Гномов';
+    17: S := S + ' Гулей';
+    18: S := S + ' Эльфов';
+    19: S := S + ' Тварей';
+    20: S := S + ' Насекомых';
+    21: S := S + ' Стражей';
+    22: S := S + ' Безумия';
+  end;
+  Result := S;
 end;
 
 { Поменять состояние игры }
@@ -549,12 +549,6 @@ begin
   MenuSelected := 1;
 end;
 
-var
-  EX: TExplodeResult;
 
-initialization
-  // Версия игры
-  EX := Explode('.', FileVersion(Paramstr(0)));
-  GameVersion := EX[0] + '.' + EX[1] + EX[2];
-  if (strtoint(Ex[3]) in [1..27]) then GameVersion := GameVersion + chr(96+strtoint(Ex[3]));
+
 end.

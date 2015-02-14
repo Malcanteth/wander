@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 514
-  Top = 208
+  Left = 530
+  Top = 223
   BorderStyle = bsSingle
   Caption = 'WANDER'
   ClientHeight = 206

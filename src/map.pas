@@ -59,7 +59,7 @@ var
   dx,dy,sx,sy,check,e:integer;
   onway      : boolean;
 begin
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Font.Name := FontMap;
     for x:=1 to MapX do

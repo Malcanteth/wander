@@ -6,15 +6,14 @@ interface
 var
   // Свойства шрифтов
   FontMap: String = 'FixedSys'; 
-  FontMsg: String = 'FixedSys';
-  FontSize: Byte = 10;
-  FontStyle: Byte = 0;
+  FontMsg: String = 'Courier New';
+  FontSize: Byte = 0;
   // Размер символа
   CharX: Byte = 8;
   CharY: Byte = 16;
   // Скорость анимации полета
   FlySpeed: Byte = 70;
-  // Скорость анимации брызг крови
+  // Скорость мигания красным при ударе
   UnderHitSpeed: Byte = 10;
   // Путь
   Path: String;
@@ -24,6 +23,10 @@ var
   ShowPCBar: Byte = 1;
   // Информ. полоски на правой панели
   ShowBars: Byte = 1;
+  // Далее
+  MoreKey: Byte = 0;
+  // Имя героя по умолчанию
+  YourName: String = '';
 
 implementation
 
@@ -39,15 +42,16 @@ initialization
   // Читаем настройки из Wander.ini
   Ini:= TINIFile.Create(Path + 'wander.ini');
   try
-    FontMap   := Ini.ReadString('FONT', 'NameMap', 'FixedSys');
-    FontMsg   := Ini.ReadString('FONT', 'NameMsg', 'FixedSys');
-    FontSize  := Ini.ReadInteger('FONT', 'Size', 10);
-    FontStyle := Ini.ReadInteger('FONT', 'Style', 0);
+    FontMap   := Ini.ReadString('FONT', 'NameMap', 'Courier New');
+    FontMsg   := Ini.ReadString('FONT', 'NameMsg', 'Courier New');
+    FontSize  := Ini.ReadInteger('FONT', 'Size', 0);
     Mode      := Ini.ReadInteger('GAME', 'Mode', AdventureMode);
     FlySpeed  := Ini.ReadInteger('GAME', 'FlySpeed', 70);
     UnderHitSpeed  := Ini.ReadInteger('GAME', 'UnderHitSpeed', 10);
     ShowPCBar := Ini.ReadInteger('GAME', 'ShowPCBar', 1);
     ShowBars  := Ini.ReadInteger('GAME', 'ShowBars', 1);
+    MoreKey   := Ini.ReadInteger('GAME', 'MoreKey', 0);
+    YourName  := Ini.ReadString('HERO', 'YourName', '');
   finally
     Ini.Free;
   end;

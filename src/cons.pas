@@ -4,6 +4,7 @@ interface
 
 const
   { Общие константы игры }
+  GameVersion              = '0.1.6b';
   MapEditorVersion         = '0.7.0.0';
 
   { Константы  окна }
@@ -103,6 +104,7 @@ const
   gsAIM                    = 22;
   gsHERORANDOM             = 23;
   gsCHOOSEMODE             = 24;
+  gsABOUTHERO              = 25;  
 
   { Статусы героя}
   stHUNGRY                 = 1;
@@ -123,7 +125,10 @@ const
   { Сколько действий в списке использования предмета }
   HOWMANYVARIANTS          = 5;       //1-Использовать,2-Рассмотреть повнимательнее,3-Бросить,4-Отдать,5-Выкинуть
 
-{$include ../Data/Scripts/Const.pas}
+  { Константы режимов игры}
+  AdventureMode            = 1;
+  DungeonMode              = 2;
+
 
 implementation
 

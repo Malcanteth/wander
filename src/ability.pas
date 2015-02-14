@@ -128,7 +128,7 @@ uses
 procedure SkillsAndAbilitys;
 begin
   StartDecorating('<-ÍÀÂÛÊÈ È ÑÏÎÑÎÁÍÎÑÒÈ->', FALSE);
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     Font.Color := cBROWN;
     TextOut(38*CharX, 15*CharY, '[ ]');
@@ -164,7 +164,7 @@ procedure DrawStyleLine(y:integer);
 var
   i : byte;
 begin
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     For i:=1 to Round(WindowX/2) do
     begin
@@ -191,7 +191,7 @@ begin
     if pc.magicfight[i] > 0 then
       m := 1;
   // Âûâåñòè íàâûêè
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     // Áëèæíèé áîé
     DrawStyleLine(top*CharY);
@@ -328,7 +328,7 @@ begin
       FullAbilitys[a] := i;
       inc(a);
     end;      
-  with Screen.Canvas do
+  with GScreen.Canvas do
   begin
     // Åñëè ñïîñîáíîñòè åñòü
     if FullAbilitys[1] > 0 then

@@ -110,12 +110,12 @@ ActiveLang=
 ProjectLang=
 RootDir=
 [Version Info]
-IncludeVerInfo=1
+IncludeVerInfo=0
 AutoIncBuild=0
 MajorVer=0
 MinorVer=1
-Release=6
-Build=1
+Release=7
+Build=0
 Debug=0
 PreRelease=0
 Special=1
@@ -126,7 +126,7 @@ CodePage=1251
 [Version Info Keys]
 CompanyName=Wander Team
 FileDescription=WanderRL
-FileVersion=0.1.6.1
+FileVersion=0.1.7.0
 InternalName=WanderRL
 LegalCopyright=GPL
 LegalTrademarks=

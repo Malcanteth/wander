@@ -8,7 +8,7 @@
 program wander;
 
 uses
-  Forms, sysutils,
+  Forms,
   main in 'main.pas' {MainForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
@@ -26,28 +26,20 @@ uses
   sutils in 'sutils.pas',
   wlog in 'wlog.pas',
   vars in 'vars.pas',
-  script in 'script.pas',
   mbox in 'mbox.pas',
   liquid in 'liquid.pas',
   pngimage in 'PNGImage\PNGImage.pas',
   zlibpas in 'PNGImage\ZLibPas.pas',
   pnglang in 'PNGImage\PNGLang.pas',
-  pngextra in 'PNGImage\PNGExtra.pas';
+  pngextra in 'PNGImage\PNGExtra.pas',
+  intro in 'intro.pas';
 
 {$R *.res}
-{.$DEFINE DEBUG}
-
-var Count: byte;
 
 begin
   Randomize;
-  {$IFDEF DEBUG} Debug := True; {$ELSE} Debug := false; {$ENDIF}
   Application.Initialize;
   Application.Title := 'WANDER';
-  for Count := 1 to ParamCount do
-  begin
-    if ParamStr(Count) = '-dev' then Debug := true;
-  end;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TMainEdForm, MainEdForm);
   Application.Run;
