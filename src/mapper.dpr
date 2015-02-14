@@ -9,6 +9,8 @@ uses
   monsters in 'monsters.pas',
   player in 'player.pas',
   utils in 'utils.pas',
+  items in 'items.pas',
+  conf in 'conf.pas',
   pngimage in 'PNGImage\PNGImage.pas',
   zlibpas in 'PNGImage\ZLibPas.pas',
   pnglang in 'PNGImage\PNGLang.pas';
