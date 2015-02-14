@@ -203,12 +203,12 @@ begin
     Height := MapY * CharY;
     Canvas.Font.Name := FontMsg;
     Canvas.Font.Size := FontSize;
-//    case FontStyle of
-//      1:   Canvas.Font.Style := [fsBold];
-//      2:   Canvas.Font.Style := [fsItalic];
-//      3:   Canvas.Font.Style := [fsBold, fsItalic];
-//      else Canvas.Font.Style := [];
-//    end;
+    case FontStyle of
+      1:   Canvas.Font.Style := [fsBold];
+      2:   Canvas.Font.Style := [fsItalic];
+      3:   Canvas.Font.Style := [fsBold, fsItalic];
+      else Canvas.Font.Style := [];
+    end;
   end;
   // Компоненты
   GroupBox2.Top := 0;

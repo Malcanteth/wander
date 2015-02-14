@@ -8,6 +8,7 @@ var
   FontMap: String = 'FixedSys'; 
   FontMsg: String = 'Courier New';
   FontSize: Byte = 0;
+  FontStyle: Byte = 0;  
   // Размер символа
   CharX: Byte = 8;
   CharY: Byte = 16;
@@ -45,6 +46,7 @@ initialization
     FontMap   := Ini.ReadString('FONT', 'NameMap', 'Courier New');
     FontMsg   := Ini.ReadString('FONT', 'NameMsg', 'Courier New');
     FontSize  := Ini.ReadInteger('FONT', 'Size', 0);
+    FontStyle := Ini.ReadInteger('FONT', 'Style', 0);
     Mode      := Ini.ReadInteger('GAME', 'Mode', AdventureMode);
     FlySpeed  := Ini.ReadInteger('GAME', 'FlySpeed', 70);
     UnderHitSpeed  := Ini.ReadInteger('GAME', 'UnderHitSpeed', 10);

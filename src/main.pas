@@ -1371,6 +1371,12 @@ initialization
   begin
     Font.Name := FontMsg;
     Font.Size := FontSize;
+    case FontStyle of
+      1:   Font.Style := [fsBold];
+      2:   Font.Style := [fsItalic];
+      3:   Font.Style := [fsBold, fsItalic];
+      else Font.Style := [];
+    end;    
     CharX := TextWidth('W');
     CharY := TextHeight('W');
   end;
