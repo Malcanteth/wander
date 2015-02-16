@@ -313,11 +313,11 @@ end;
 procedure TakeScreenShot;
 var
   t : TSystemTime;
-  s, fname: string;
+  s, fname: string;    
   P: TPNGObject;
 begin
   GetSystemTime(t);
-  CreateDir(Path + 'screens');
+  CreateDir(Path + 'screens');   
   if pc.name = '' then s := 'unknown' else s := pc.name;
   fname := '<FAIL>';
   fname := s + '_'+IntToStr(t.wYear)+IntToStr(t.wMonth)+IntToStr(t.wDay)+IntToStr(t.wHour)+IntToStr(t.wMinute)+IntToStr(t.wSecond);
