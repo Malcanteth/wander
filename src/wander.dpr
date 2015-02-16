@@ -9,6 +9,12 @@ program wander;
 
 uses
   Forms,
+  {$IF COMPILERVERSION < 18}
+  PNGExtra in 'PNGImage\PNGExtra.pas',
+  PNGImage in 'PNGImage\PNGImage.pas',
+  PNGLang in 'PNGImage\PNGLang.pas',
+  ZLibPas in 'PNGImage\ZLibPas.pas',
+  {$IFEND}
   main in 'main.pas' {MainForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
@@ -28,16 +34,15 @@ uses
   vars in 'vars.pas',
   mbox in 'mbox.pas',
   liquid in 'liquid.pas',
-  pngimage in 'PNGImage\PNGImage.pas',
-  zlibpas in 'PNGImage\ZLibPas.pas',
-  pnglang in 'PNGImage\PNGLang.pas',
-  pngextra in 'PNGImage\PNGExtra.pas',
   intro in 'intro.pas';
 
 {$R *.res}
 
 begin
   Randomize;
+  {$IF COMPILERVERSION >= 18}
+  ReportMemoryLeaksOnShutdown := True;
+  {$IFEND}
   Application.Initialize;
   Application.Title := 'WANDER';
   Application.CreateForm(TMainForm, MainForm);

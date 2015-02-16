@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Classes, Graphics, Forms, SysUtils, ExtCtrls, Controls, StdCtrls, Dialogs, Math,
-  Menus;
+  Menus;  
 
 type
   TMainForm = class(TForm)

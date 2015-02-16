@@ -27,7 +27,7 @@ procedure ClearMsg;
 procedure More;
 procedure Apply;
 procedure ShowMsgs;
-function Ask(s: string): char;
+function Ask(s: string): AnsiChar;
 function Input(sx, sy: integer; ss: string): string;
 procedure ShowInput;
 procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
@@ -148,7 +148,7 @@ begin
       0: RX := RX + AString[I];
       1: SX := SX + AString[I];
       2: begin
-           S1 := GetStrKey('/',SX,);
+           S1 := GetStrKey('/',SX);
            S2 := GetStrValue('/',SX);
            SX := '';
            RF := 0;
@@ -244,7 +244,7 @@ begin
 end;
 
 { Задать вопрос }
-function Ask(s : string) : char;
+function Ask(s : string) : AnsiChar;
 begin
   AddDrawMsg(s,0);
   Answer := ' ';
