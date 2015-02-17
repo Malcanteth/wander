@@ -23,7 +23,7 @@ type
 
 const
   { Кол-во типов предметов}
-  ItemTypeAmount = 21;
+  ItemTypeAmount = 22;
 
   ItemTypeData : array[1..ItemTypeAmount] of TItemType =
   (
@@ -47,8 +47,9 @@ const
     (name: 'Волшебная палочка'; symbol: '\'; chance:9;maxamount:1),
     (name: 'Зелье'; symbol: '!'; chance:25;maxamount:1),
     (name: 'Инструмент'; symbol: '{'; chance:5;maxamount:1),
-    (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1)
-  );
+    (name: 'Барахло'; symbol: ';'; chance:40;maxamount:1),
+    (name: 'Растение'; symbol: '^'; chance:50;maxamount:1)
+  );  
   
 type
   TItemData = record
