@@ -20,6 +20,8 @@ var
   Path: String;
   // Режим игры
   Mode: Byte = 0;
+  // Режим игры
+  Timer: Byte = 0;
   // Полоска здоровья на @
   ShowPCBar: Byte = 1;
   // Информ. полоски на правой панели
@@ -53,6 +55,7 @@ initialization
     ShowPCBar := Ini.ReadInteger('GAME', 'ShowPCBar', 1);
     ShowBars  := Ini.ReadInteger('GAME', 'ShowBars', 1);
     MoreKey   := Ini.ReadInteger('GAME', 'MoreKey', 0);
+    Timer     := Ini.ReadInteger('GAME', 'Timer', 1);
     YourName  := Ini.ReadString('HERO', 'YourName', '');
   finally
     Ini.Free;

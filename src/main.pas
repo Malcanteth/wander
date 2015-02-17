@@ -76,7 +76,7 @@ begin
     Width := ClientWidth;
     Height := ClientHeight;
   end;
-  GameTimer.Enabled := False;
+  GameTimer.Enabled := Timer = 1;
   ChangeGameState(gsINTRO);
   MenuSelected := 1;
   GameMenu := TRUE;
@@ -123,7 +123,7 @@ begin
   if Inputing then
   begin
     GameTimer.Interval := 200;
-    GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
+    if (Timer = 0) then GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
     ShowInput;                  // Показываем поле для ввода имени персонажа
   end;
   // Игровое Меню
@@ -168,7 +168,7 @@ begin
         if Key = 13 then
         begin
           WaitENTER := False;          // Ввод имени закончен. Мигание курсора 
-          GameTimer.Enabled := False;  // больше не нужно, отключаем таймер
+          if (Timer = 0) then GameTimer.Enabled := False;  // больше не нужно, отключаем таймер
         end else
         // Ввод
         if Inputing then

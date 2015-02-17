@@ -22,7 +22,6 @@ object MainForm: TMainForm
   PixelsPerInch = 96
   TextHeight = 13
   object GameTimer: TTimer
-    Enabled = False
     Interval = 200
     OnTimer = GameTimerTimer
   end
