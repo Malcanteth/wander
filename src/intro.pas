@@ -27,32 +27,43 @@ uses
 { Заставка }
 procedure IntroWindow;
 const
-  up = 5;
-  s0 = '#       #   #   #          #### #     ';
-  s1 = ' #  #  #   ##   ##  # ###  #    ###   ';
-  s2 = ' ## # ##  #  #  # # # #  # #### #  #  ';
-  s3 = '  # # #   ####  #  ## #  # #    ###   ';
-  s4 = '   ###   #    # #   # #  # #### #  #  ';
-  s5 = '        #           # ###           # ';
+  Top = 5;
+  L: array [1..6] of string = (
+  ('#       #   #   #          #### #     '),
+  (' #  #  #   ##   ##  # ###  #    ###   '),
+  (' ## # ##  #  #  # # # #  # #### #  #  '),
+  ('  # # #   ####  #  ## #  # #    ###   '),
+  ('   ###   #    # #   # #  # #### #  #  '),
+  ('        #           # ###           # ')
+  );
+var
+  X, Y, Len: Byte;
+  Left: Word;
 begin
   with GScreen.Canvas do
   begin
-    // WANDER
+    DrawBG; // Фон
+
+    // Лого WANDER
     Font.Color := cLIGHTGRAY;
-    TextOut(((WindowX-length(s0)) div 2) * CharX, up*CharY, s0);
-    Font.Color := cLIGHTBLUE;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, (up+1)*CharY, s1);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s2)) div 2) * CharX, (up+2)*CharY, s2);
-    Font.Color := cBLUE;
-    TextOut(((WindowX-length(s3)) div 2) * CharX, (up+3)*CharY, s3);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s4)) div 2) * CharX, (up+4)*CharY, s4);
-    Font.Color := cBROWN;
-    TextOut(((WindowX-length(s5)) div 2) * CharX, (up+5)*CharY, s5);
+    Len := Length(L[1]);
+    Left := ((WindowX div 2) - (Len div 2)) * CharX;
+    for Y := 1 to High(L) do
+      for X := 1 to Len do
+      begin
+        if (L[Y][X] = ' ') then Continue;
+        case Y of
+             1: Font.Color := cLIGHTGRAY;
+             2: Font.Color := cLIGHTBLUE;
+          3..4: Font.Color := cBLUE;
+          else Font.Color := cBROWN;
+        end;
+        TextOut(Left + ((X - 2) * CharX), (Top + Y) * CharY, L[Y][X]);
+      end;
+
     // Версия
-    Font.Color := cBLUEGREEN;
-    TextOut((((WindowX-length(s5)) div 2) + Length(s5)) * CharX, (up+5)*CharY, GameVersion);
+    Font.Color := Darker(RealColor(crRANDOM), 80); 
+    TextOut(Len * CharY, (Top + High(L) + 1) * CharY, GameVersion);
   end;
 end;
 
@@ -261,7 +272,7 @@ begin
     s := GetMsg('Итак, в этом мире ты '+pc.CLName(1)+' по имени '+PC.Name+'. Соглас{ен/на}?', 0);
     TextOut(((WindowX-length(s)) div 2) * CharX, 13*CharY, s);
     Font.Color := cYELLOW;
-    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);
+    TextOut(((WindowX-length(s1)) div 2) * CharX, 15*CharY, s1);  
   end;
 end;
 

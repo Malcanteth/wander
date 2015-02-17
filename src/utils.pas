@@ -34,6 +34,7 @@ procedure BlackWhite(var AnImage: TBitMap);      // Преобразовать в ч/б
 function GetDungeonModeMapName : string;         // Генерировать название подземелья
 procedure ChangeGameState(NewState : byte);      // Поменять состояние игры
 procedure StartGameMenu;                         // Отобразить игровое меню
+procedure DrawBG;                                // Фон сцены
 
 implementation
 
@@ -51,23 +52,26 @@ function RealColor(c : byte) : longword;
 begin
   Result := 255;
   case c of
-    crRANDOM : Result := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100);
-    crBLACK  : Result := cBLACK;
-    crBLUE   : Result := cBLUE;
-    crGREEN  : Result := cGREEN;
-    crRED    : Result := cRED;
-    crCYAN   : Result := cCYAN;
-    crPURPLE : Result := cPURPLE;
-    crBROWN   : Result := cBROWN;
-    crWHITE   : Result := cWHITE;
-    crGRAY    : Result := cGRAY;
-    crYELLOW  : Result := cYELLOW;
-    crLIGHTGRAY : Result := cLIGHTGRAY;
-    crLIGHTRED   : Result := cLIGHTRED;
-    crLIGHTGREEN : Result := cLIGHTGREEN;
-    crLIGHTBLUE  : Result := cLIGHTBLUE;
-    crORANGE    : Result := cORANGE;
-    crBLUEGREEN : Result := cBLUEGREEN;
+    crRANDOM      : Result := MyRGB(Random(155)+100, Random(155)+100, Random(155)+100);
+    crBLACK       : Result := cBLACK;
+    crBLUE        : Result := cBLUE;
+    crGREEN       : Result := cGREEN;
+    crRED         : Result := cRED;
+    crCYAN        : Result := cCYAN;
+    crPURPLE      : Result := cPURPLE;
+    crBROWN       : Result := cBROWN;
+    crWHITE       : Result := cWHITE;
+    crGRAY        : Result := cGRAY;
+    crYELLOW      : Result := cYELLOW;
+    crLIGHTGRAY   : Result := cLIGHTGRAY;
+    crLIGHTRED    : Result := cLIGHTRED;
+    crLIGHTGREEN  : Result := cLIGHTGREEN;
+    crLIGHTBLUE   : Result := cLIGHTBLUE;
+    crORANGE      : Result := cORANGE;
+    crBLUEGREEN   : Result := cBLUEGREEN;
+    crRANDOMRED   : Result := MyRGB(Random(155)+100, 40, 40);
+    crRANDOMBLUE  : Result := MyRGB(40, 40, Random(155)+100);
+    crRANDOMGREEN : Result := MyRGB(40, Random(155)+100, 40);
   end;
 end;
 
@@ -149,6 +153,7 @@ const
 var
   i : byte;
 begin
+  DrawBG;
   with GScreen.Canvas do
   begin
     For i:=1 to Round(WindowX/2) do
@@ -549,6 +554,21 @@ begin
   MenuSelected := 1;
 end;
 
-
+{ Фон сцены }
+procedure DrawBG;
+var
+  X, Y: Byte;
+begin
+  with GScreen.Canvas do
+  begin
+    for X := 1 to WindowX do
+      for Y := 1 to WindowY do
+      begin
+        // Вывести символ
+        Brush.Color := Darker(RealColor(crRANDOMBLUE), 95);
+        TextOut((x - 1) * CharX, (y - 1) * CharY, ' ');
+      end;
+  end;
+end;
 
 end.

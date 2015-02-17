@@ -42,7 +42,7 @@ const
 
   { Константы основных цветов }
 
-  crAmount                 = 16;
+  crAmount                 = 19;
 
   crBLACK                  = 0;
   crRANDOM                 = 1;
@@ -61,6 +61,9 @@ const
   crLIGHTBLUE              = 14;
   crORANGE                 = 15;
   crBLUEGREEN              = 16;
+  crRANDOMBLUE             = 17;
+  crRANDOMRED              = 18;
+  crRANDOMGREEN            = 19;
 
   cBLACK                   = 0;
   cBLUE                    = 9830400;
