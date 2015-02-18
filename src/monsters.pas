@@ -1421,6 +1421,12 @@ begin
           if GivenItem.id = idGATESKEY then
             if pc.quest[2] > 1 then
               pc.quest[2] := 3;
+          // Отдал корень стражнику
+          if (GivenItem.id = idMANDAGORAROOT) then
+          begin
+            AddMsg('#Ты выполнил{/a} квест!!!#',0);
+            pc.quest[3] := 3;
+          end;
           case FromWhere of
             1 : DeleteItemInv(ItemId, Inv[ItemID].amount, 1);
             2 : DeleteItemInv(ItemId, Eq[ItemID].amount, 2);
