@@ -9,13 +9,9 @@ program wander;
 
 uses
   Forms,
-  {$IF COMPILERVERSION < 18}
-  PNGExtra in 'PNGImage\PNGExtra.pas',
-  PNGImage in 'PNGImage\PNGImage.pas',
-  PNGLang in 'PNGImage\PNGLang.pas',
-  ZLibPas in 'PNGImage\ZLibPas.pas',
-  {$IFEND}
+  {$I includes.inc}
   main in 'main.pas' {MainForm},
+  mapeditor in 'mapeditor.pas' {MainEdForm},
   cons in 'cons.pas',
   msg in 'msg.pas',
   utils in 'utils.pas',
@@ -27,7 +23,6 @@ uses
   items in 'items.pas',
   help in 'help.pas',
   ability in 'ability.pas',
-  mapeditor in 'mapeditor.pas' {MainEdForm},
   conf in 'conf.pas',
   sutils in 'sutils.pas',
   wlog in 'wlog.pas',

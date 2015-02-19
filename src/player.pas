@@ -1527,7 +1527,7 @@ begin
     CreateFrWList;
     f_choose := Wlist[Random(wlistsize)+1];
   end;
-end;
+end;    
 
 { Окно с информацией о герое (Имя, пол, раса и тд) }
 procedure TPc.HeroInfoWindow;

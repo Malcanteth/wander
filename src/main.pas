@@ -117,12 +117,12 @@ begin
     gsHISTORY      : ShowHistory;
     gsSKILLSMENU   : SkillsAndAbilitys;
     gsWPNSKILLS    : WpnSkills;
-    gsABOUTHERO    : pc.HeroInfoWindow;    
+    gsABOUTHERO    : pc.HeroInfoWindow;
   end;
   // Ввод
   if Inputing then
   begin
-    GameTimer.Interval := 200;
+    GameTimer.Interval := 250;
     if (Timer = 0) then GameTimer.Enabled := True;  // Запускаем таймер, чтобы мигал курсор
     ShowInput;                  // Показываем поле для ввода имени персонажа
   end;

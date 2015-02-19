@@ -1,5 +1,5 @@
 del *.~*
-del /s *.dcu
+del *.dcu
 del *.log
 del *.exe
 del *.dsk
@@ -12,5 +12,3 @@ rmdir /s /q screens
 del wander.exe
 del mapper.exe
 del wander.log
-cd Data\Scripts\
-del *.pcs
