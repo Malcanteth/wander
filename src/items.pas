@@ -227,7 +227,7 @@ const
       attack: 4; defense: 0;  chance: 35; kind: FAR_CROSS;
       flags : NOF;
     ),
-    ( name1: 'Маленький Камень'; name2: 'Маленькие Камни'; name3: 'Мальнький Камень';
+    ( name1: 'Маленький Камень'; name2: 'Маленькие Камни'; name3: 'Маленький Камень';
       vid:13; color: crLIGHTGRAY; mass: 0.35;
       attack: 3; defense: 0;  chance: 60; kind: FAR_SLING;
       flags : NOF;

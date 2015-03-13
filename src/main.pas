@@ -35,17 +35,17 @@ var
   WaitEnter,                                   // Ждем нажатия Enter
   GameMenu,                                    // Игровое меню
   AskForQuit,                                  // Подтверждение выхода
-  Inputing             : boolean;              // Режим ввода
+  Inputing             : Boolean;              // Режим ввода
   GameState,                                   // Состояние игры
   MenuSelected2,                               // Выбранный элемент в меню
   VidFilter,                                   // Предметы какого вида отоброжать в инвентаре (0-все)
   wtd,                                         // Что сделать при выборе монстра
   LastGameState,                               // Последнее состояние игры
   WasEqOrInv,                                  // Была открыта экипировка или инвентарь
-  PlayMode             : byte;                 // Выбранный режим игры
+  PlayMode             : Byte;                 // Выбранный режим игры
   Answer               : string[1];            // Ожидается ответ
   MenuSelected,
-  a                    : integer;
+  a                    : Integer;
   DC                   : HDC;                  // Контекст устройства
 
 implementation
