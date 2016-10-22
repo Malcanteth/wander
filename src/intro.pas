@@ -15,9 +15,10 @@ procedure ChooseModeWindow;                              // Выбрать режим игры
 procedure DrawGameMenu;                                  // Игровое меню
 
 const
-  GMChooseAmount = 2;
+  GMChooseAmount = 3;
   gmNEWGAME      = 1;
-  gmEXIT         = 2;
+  gmHELP         = 2;
+  gmEXIT         = 3;
 
 implementation
 
@@ -304,7 +305,7 @@ procedure DrawGameMenu;
 const
   TableX = 39;
   TableW = 20;
-  MenuNames : array[1..GMChooseAmount] of string = ('Новая игра', 'Выход');
+  MenuNames : array[1..GMChooseAmount] of string = ('Новая игра', 'Помощь', 'Выход');
 var
   i : byte;
 begin

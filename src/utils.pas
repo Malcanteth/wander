@@ -545,6 +545,7 @@ procedure ChangeGameState(NewState : byte);
 begin
   LastGameState := GameState;
   GameState := NewState;
+  if (NewState = gsINTRO) then StartGameMenu;
 end;
 
 { Отобразить игровое меню }

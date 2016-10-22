@@ -295,7 +295,6 @@ end;
 { Shift + Двигать героя }
 procedure Tpc.Run(dx,dy : shortint);
 var
-  a,b,count : byte;
   around    : array[1..3,1..3] of byte;
   stop      : boolean;
 begin
@@ -1307,7 +1306,6 @@ begin
   AddMsg('*Ты умер{/лa}!!!*',0);
   Apply;
   ChangeGameState(gsINTRO);
-  StartGameMenu;
 end;
 
 { Найти ячейку с монетами }
