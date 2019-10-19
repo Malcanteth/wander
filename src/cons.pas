@@ -4,7 +4,7 @@ interface
 
 const
   { Общие константы игры }
-  GameVersion              = '0.17';
+  GameVersion              = '0.18';
   MapEditorVersion         = '0.7.0.0';
 
   { Константы  окна }
