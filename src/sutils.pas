@@ -2,14 +2,14 @@
 unit sutils;
 
 interface
-                   
-type
-  TExplodeResult = array of string;               // Тип для разбивания строки на фрагменты
 
-function StrLeft(S: String; I: Integer): String;  // Копия строки слева
+type
+  TExplodeResult = array of string; // Тип для разбивания строки на фрагменты
+
+function StrLeft(S: String; I: Integer): String; // Копия строки слева
 function StrRight(S: String; I: Integer): String; // Копия строки справа
-function GetStrKey(Key, S: String): String;       // Ключ из строки
-function GetStrValue(Key, S: String): String;     // Знач. ключа из строки
+function GetStrKey(Key, S: String): String; // Ключ из строки
+function GetStrValue(Key, S: String): String; // Знач. ключа из строки
 function Explode(const cSeparator, vString: String): TExplodeResult; // Разбить строку на массив строк
 
 implementation
@@ -35,7 +35,7 @@ end;
 { Значение из строки с разделителем }
 function GetStrValue(Key, S: String): String;
 begin
-  Result :=Copy(S, Pos(Key, S) + 1, Length(S));
+  Result := Copy(S, Pos(Key, S) + 1, Length(S));
 end;
 
 { Разбить строку на массив строк }
@@ -57,5 +57,5 @@ begin
   SetLength(Result, Length(Result) + 1);
   Result[I] := Copy(S, 1, Length(S));
 end;
-end.
 
+end.

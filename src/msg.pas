@@ -7,22 +7,21 @@ uses
 
 type
   THistory = record
-    Msg : string;
-    Amount : integer;
+    msg: string;
+    Amount: integer;
   end;
 
 var
-  Msgs : array[1..MsgAmount] of string;
-  History : array[1..MaxHistory] of THistory;
-  InputX, InputY : integer;
-  InputString : string[13];
-  InputPos : byte;
-  LastMsgY, LastMsgL : byte;
+  Msgs: array [1 .. MsgAmount] of string;
+  History: array [1 .. MaxHistory] of THistory;
+  InputX, InputY: integer;
+  InputString: string[13];
+  InputPos: byte;
+  LastMsgY, LastMsgL: byte;
 
-
-procedure AddMsg(s : string; id : integer);
-function GetMsg(AString: String; gender : byte): string;
-procedure AddDrawMsg(s : string; id : integer);
+procedure AddMsg(s: string; id: integer);
+function GetMsg(AString: String; gender: byte): string;
+procedure AddDrawMsg(s: string; id: integer);
 procedure ClearMsg;
 procedure More;
 procedure Apply;
@@ -30,148 +29,164 @@ procedure ShowMsgs;
 function Ask(s: string): AnsiChar;
 function Input(sx, sy: integer; ss: string): string;
 procedure ShowInput;
-procedure AddTextLine(X, Y: Word; Msg: string); // Цветная строка
+procedure AddTextLine(X, Y: Word; msg: string); // Цветная строка
 
 implementation
 
 uses SysUtils, Conf, Player, Windows, Graphics, Monsters, wlog;
 
 // Добавить сообщение
-procedure AddMsg(s: string; id : integer);
+procedure AddMsg(s: string; id: integer);
 var
-  b : integer;
+  b: integer;
 
-// Подпрограмма рекурсивно добавляет сообщения
-procedure UseMsg(s: string; id : integer);
-var
-  a,i,j : byte;
-  w,o : string;
-begin
-  if id < 2 then
-    S := GetMsg(S, pc.gender) else
-      S := GetMsg(S, MonstersData[id].gender);
-  //Найти пустой слот
-  for a:=1 to MsgAmount do
-    if (Msgs[a] = '')and(a < MsgAmount) then
-    begin
-      w := s;
-      o := '';
-      //Длина сообщения слишком велика
-      if Length(s) > MsgLength then
+  // Подпрограмма рекурсивно добавляет сообщения
+  procedure UseMsg(s: string; id: integer);
+  var
+    a, i, j: byte;
+    w, o: string;
+  begin
+    if id < 2 then
+      s := GetMsg(s, pc.gender)
+    else
+      s := GetMsg(s, MonstersData[id].gender);
+    // Найти пустой слот
+    for a := 1 to MsgAmount do
+      if (Msgs[a] = '') and (a < MsgAmount) then
       begin
-        for i:=Length(w) downto 1 do
+        w := s;
+        o := '';
+        // Длина сообщения слишком велика
+        if Length(s) > MsgLength then
         begin
-          if (w[i] = ' ')and(i<=MsgLength)then
-            break;
-          delete(w,i,1);
-          o := Copy(s,i,Length(s)-i+1);
-        end;
-      end;
-      Msgs[a] := w;
-      LastMsgY := a;
-      LastMsgL := Length(w);
-      // Добавить в историю
-      if (w <> '') and (w <> ' ') then
-      begin
-        if History[MaxHistory].Msg = '' then
-        begin
-          for j:=1 to MaxHistory do
-            if History[j].Msg = '' then
-            begin
-              if History[j-1].Msg = w then
-                inc(History[j-1].Amount) else
-                  begin
-                    History[j].Msg := w;
-                    History[j].Amount := 1;
-                  end;
-              break;
-            end;
-        end else
+          for i := Length(w) downto 1 do
           begin
-            if History[MaxHistory].Msg = w then
-              inc(History[MaxHistory].Amount) else
-              begin
-                for j:=2 to MaxHistory do
-                  History[j-1] := History[j];
-                History[MaxHistory].Msg := w;
-                History[MaxHistory].Amount := 1;
-              end;
+            if (w[i] = ' ') and (i <= MsgLength) then
+              break;
+            delete(w, i, 1);
+            o := Copy(s, i, Length(s) - i + 1);
           end;
-      end;
-      if o <> '' then UseMsg(o,id);
-      break;
-    end else
-      if (Msgs[a] = '')and(a = MsgAmount) then    
+        end;
+        Msgs[a] := w;
+        LastMsgY := a;
+        LastMsgL := Length(w);
+        // Добавить в историю
+        if (w <> '') and (w <> ' ') then
+        begin
+          if History[MaxHistory].msg = '' then
+          begin
+            for j := 1 to MaxHistory do
+              if History[j].msg = '' then
+              begin
+                if History[j - 1].msg = w then
+                  inc(History[j - 1].Amount)
+                else
+                begin
+                  History[j].msg := w;
+                  History[j].Amount := 1;
+                end;
+                break;
+              end;
+          end
+          else
+          begin
+            if History[MaxHistory].msg = w then
+              inc(History[MaxHistory].Amount)
+            else
+            begin
+              for j := 2 to MaxHistory do
+                History[j - 1] := History[j];
+              History[MaxHistory].msg := w;
+              History[MaxHistory].Amount := 1;
+            end;
+          end;
+        end;
+        if o <> '' then
+          UseMsg(o, id);
+        break;
+      end
+      else if (Msgs[a] = '') and (a = MsgAmount) then
       begin
         More;
-        UseMsg(s,id);
+        UseMsg(s, id);
         break;
       end;
-end;
+  end;
 
 begin
   // Доб. сообщение
-  UseMsg(S, ID);
+  UseMsg(s, id);
   // Корректируем сообщение в зависимости от пола
   if id < 2 then
-    S := GetMsg(S, pc.gender) else
-      S := GetMsg(S, MonstersData[id].gender);
+    s := GetMsg(s, pc.gender)
+  else
+    s := GetMsg(s, MonstersData[id].gender);
   // Исключаем служебные символы
-  for b:=1 to Length(s) do
+  for b := 1 to Length(s) do
     if (s[b] = '*') or (s[b] = '$') or (s[b] = '#') then
-      Delete(s,b,1);  
+      delete(s, b, 1);
   // Добавляем в лог
-  if (S <> '') and (S <> ' ') then Log(S);
+  if (s <> '') and (s <> ' ') then
+    Log(s);
 end;
 
 (* Вернуть окончание в зависимости от пола героя {/Ж} или {М/Ж} *)
-function GetMsg(AString: String; gender : byte): string;
+function GetMsg(AString: String; gender: byte): string;
 var
-  I: Integer;
-  SX, RX, S1, S2: String;
-  RF: Byte;
+  i: integer;
+  sx, RX, S1, S2: String;
+  RF: byte;
 begin
-  if Gender = 10 then Gender := pc.gender;
-  SX := '';
+  if gender = 10 then
+    gender := pc.gender;
+  sx := '';
   RX := '';
   RF := 0;
-  for I := 1 to Length(AString) do
+  for i := 1 to Length(AString) do
   begin
-    case AString[I] of
-      '{': begin
-             RF := 1;
-             Continue;
-           end;
-      '}': RF := 2;
+    case AString[i] of
+      '{':
+        begin
+          RF := 1;
+          Continue;
+        end;
+      '}':
+        RF := 2;
     end;
     case RF of
-      0: RX := RX + AString[I];
-      1: SX := SX + AString[I];
-      2: begin
-           S1 := GetStrKey('/',SX);
-           S2 := GetStrValue('/',SX);
-           SX := '';
-           RF := 0;
-           if (Gender = genFEMALE) then RX := RX + S2 else RX := RX + S1;
-         end;
+      0:
+        RX := RX + AString[i];
+      1:
+        sx := sx + AString[i];
+      2:
+        begin
+          S1 := GetStrKey('/', sx);
+          S2 := GetStrValue('/', sx);
+          sx := '';
+          RF := 0;
+          if (gender = genFEMALE) then
+            RX := RX + S2
+          else
+            RX := RX + S1;
+        end;
     end;
   end;
   Result := RX;
 end;
 
-{ Добавить сообщение и отобразить}
-procedure AddDrawMsg(s: string; id : integer);
+{ Добавить сообщение и отобразить }
+procedure AddDrawMsg(s: string; id: integer);
 begin
-  AddMsg(s,id);
+  AddMsg(s, id);
   MainForm.OnPaint(NIL);
 end;
 
 { Очистить все сообщения }
 procedure ClearMsg;
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=1 to MsgAmount do
+  for i := 1 to MsgAmount do
     Msgs[i] := '';
 end;
 
@@ -200,53 +215,67 @@ end;
 { Показать сообщения }
 procedure ShowMsgs;
 var
-  x,y,c,t : byte;
+  X, Y, c, t: byte;
 begin
-  //Сообщения
+  // Сообщения
   with GScreen.Canvas do
   begin
     Font.Name := FontMsg;
     Brush.Color := 0;
     c := 0;
-    for y:=1 to MsgAmount do
-      if Msgs[y] <> '' then
+    for Y := 1 to MsgAmount do
+      if Msgs[Y] <> '' then
       begin
         t := 1;
-        for x:=1 to Length(Msgs[y]) do
+        for X := 1 to Length(Msgs[Y]) do
         begin
-          //Символы начала и конца цвета
-          if Msgs[y][x] = '$' then  // желтый
+          // Символы начала и конца цвета
+          if Msgs[Y][X] = '$' then // желтый
           begin
-            if c = 0 then c := 1 else c := 0;
-          end else
-          if Msgs[y][x] = '*' then  // красный
+            if c = 0 then
+              c := 1
+            else
+              c := 0;
+          end
+          else if Msgs[Y][X] = '*' then // красный
           begin
-            if c= 0 then c := 2 else c := 0;
-          end else
-          if Msgs[y][x] = '#' then  // зеленый
+            if c = 0 then
+              c := 2
+            else
+              c := 0;
+          end
+          else if Msgs[Y][X] = '#' then // зеленый
           begin
-            if c= 0 then c := 3 else c := 0;
-          end else
-            begin
-              //Цвет букв
-              case c of
-                0 : Font.Color := MyRGB(160,160,160);  //Серый
-                1 : Font.Color := MyRGB(255,255,0);    //Желтый
-                2 : Font.Color := MyRGB(200,0,0);      //Красный
-                3 : Font.Color := MyRGB(0,200,0);      //Зеленый
-              end;
-              Textout((t-1)*CharX, (MapY*CharY)+((y-1)*CharY), Msgs[y][x]);
-              inc(t);
+            if c = 0 then
+              c := 3
+            else
+              c := 0;
+          end
+          else
+          begin
+            // Цвет букв
+            case c of
+              0:
+                Font.Color := MyRGB(160, 160, 160); // Серый
+              1:
+                Font.Color := MyRGB(255, 255, 0); // Желтый
+              2:
+                Font.Color := MyRGB(200, 0, 0); // Красный
+              3:
+                Font.Color := MyRGB(0, 200, 0); // Зеленый
             end;
+            Textout((t - 1) * CharX, (MapY * CharY) + ((Y - 1) * CharY), Msgs[Y][X]);
+            inc(t);
+          end;
         end;
       end;
   end;
 end;
 
 { Задать вопрос }
-function Ask(s : string) : AnsiChar;
+function Ask(s: string): AnsiChar;
 begin
-  AddDrawMsg(s,0);
+  AddDrawMsg(s, 0);
   Answer := ' ';
   while Answer = ' ' do
   begin
@@ -258,15 +287,15 @@ begin
 end;
 
 { Функция ввода текста пльзователем }
-function Input(sx,sy : integer; ss : string) : string;
+function Input(sx, sy: integer; ss: string): string;
 begin
   InputString := ss;
   InputPos := Length(ss);
   InputX := sx;
   InputY := sy;
   WaitENTER := True;
-  Inputing := TRUE;
-  MainForm.OnPaint(NIL);  
+  Inputing := True;
+  MainForm.OnPaint(NIL);
   while WaitENTER = True do
   begin
     Sleep(10);
@@ -278,54 +307,77 @@ end;
 
 { Вывести то, что ввел пользователь }
 procedure ShowInput;
-var OldStyle : TBrushStyle;
+var
+  OldStyle: TBrushStyle;
 begin
-  //Сообщения
+  // Сообщения
   with GScreen.Canvas do
   begin
     Brush.Color := 0;
-    Font.Color := MyRGB(160,160,160);
-    Textout(InputX*CharX, InputY*CharY, InputString);
+    Font.Color := MyRGB(160, 160, 160);
+    Textout(InputX * CharX, InputY * CharY, InputString);
     if GetTickCount mod 1000 < 500 then
     begin
       OldStyle := Brush.Style;
       Brush.Style := bsClear;
       Font.Color := cLIGHTGREEN;
-      Textout((InputX+(InputPos))*CharX, InputY*CharY, '_');
+      Textout((InputX + (InputPos)) * CharX, InputY * CharY, '_');
       Brush.Style := OldStyle;
     end;
   end;
 end;
 
 // Цветная строка
-procedure AddTextLine(X, Y: Word; Msg: string);
+procedure AddTextLine(X, Y: Word; msg: string);
 var
-  C, I, T: Integer;
+  c, i, t: integer;
 begin
-  T := X;
-  C := 0;
+  t := X;
+  c := 0;
   with GScreen.Canvas do
-  for I := 1 to Length(Msg) do
-  begin
-    // Маркер в тексте (не показывается)
-    case Msg[I] of
-      '$': begin if C = 0 then C := 1 else C := 0; Continue; end;
-      '#': begin if C = 0 then C := 2 else C := 0; Continue; end;
-      '*': begin if C = 0 then C := 3 else C := 0; Continue; end;
+    for i := 1 to Length(msg) do
+    begin
+      // Маркер в тексте (не показывается)
+      case msg[i] of
+        '$':
+          begin
+            if c = 0 then
+              c := 1
+            else
+              c := 0;
+            Continue;
+          end;
+        '#':
+          begin
+            if c = 0 then
+              c := 2
+            else
+              c := 0;
+            Continue;
+          end;
+        '*':
+          begin
+            if c = 0 then
+              c := 3
+            else
+              c := 0;
+            Continue;
+          end;
+      end;
+      // Текущий цвет
+      case c of
+        0:
+          Font.Color := cLIGHTGRAY;
+        1:
+          Font.Color := cORANGE;
+        2:
+          Font.Color := cGREEN;
+        3:
+          Font.Color := cGRAY;
+      end;
+      Textout(t * CharX, Y * CharY, msg[i]);
+      inc(t);
     end;
-    // Текущий цвет
-    case C of
-      0 : Font.Color := cLIGHTGRAY;
-      1 : Font.Color := cORANGE;
-      2 : Font.Color := cGREEN;
-      3 : Font.Color := cGRAY;
-    end;
-    Textout(T*CharX, Y*CharY, Msg[I]);
-    Inc(T);
-  end;
 end;
 
 end.
-
-
-

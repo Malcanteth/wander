@@ -7,274 +7,218 @@ uses
 
 type
   TMonster = object
-    id              : byte;
-    idinlist        : byte;
-    name            : string[13];                  // Ну собственно имя
-    x, y,                                          // Координаты
-    aim, aimx, aimy : byte;                        // Цель, последние увиденные координаты
-    energy          : integer;                     // Энергия
-    Hp, RHp         : integer;                     // Здоровье
-    Ep, REp         : integer;                     // Энергия
-    speed, Rspeed   : word;                        // Скорость
-    los, Rlos       : byte;                        // Длина зрения
-    relation        : byte;                        // Отношение к герою (0Никак,1Агрессия)
-    eq              : array[1..14] of TItem;       // Экипировка
-    inv             : array[1..MaxHandle] of TItem;// Предметы монстра
-    invmass         : real;                        // Масса инвентаря и экипировки
-    //Атрибуты
-    Rstr,str,                                      //сила
-    Rdex,dex,                                      //ловкость
-    Rint,int        : byte;                        //интеллект
-    //Атака голыми руками, суммарная защита
-    attack, defense : integer;
-    //К атаке, к защите
-    todmg, todef    : integer;
-    //Упал
-    felldown        : boolean;
-    //Таланты
-    ability         : array[1..AbilitysAmount] of byte;// Способности
-    //Тактика (0-стандартная, 1-нападения, 2-защиты
-    tactic          : byte;
-    //Оружейные навыки
-    closefight      : array[1..CLOSEFIGHTAMOUNT] of real;
-    farfight        : array[1..FARFIGHTAMOUNT] of real;
-    magicfight      : array[1..MAGICSCHOOLAMOUNT] of real;
+    id: byte;
+    idinlist: byte;
+    name: string[13]; // Ну собственно имя
+    x, y, // Координаты
+    aim, aimx, aimy: byte; // Цель, последние увиденные координаты
+    energy: integer; // Энергия
+    Hp, RHp: integer; // Здоровье
+    Ep, REp: integer; // Энергия
+    speed, Rspeed: word; // Скорость
+    los, Rlos: byte; // Длина зрения
+    relation: byte; // Отношение к герою (0Никак,1Агрессия)
+    eq: array [1 .. 14] of TItem; // Экипировка
+    inv: array [1 .. MaxHandle] of TItem; // Предметы монстра
+    invmass: real; // Масса инвентаря и экипировки
+    // Атрибуты
+    Rstr, str, // сила
+    Rdex, dex, // ловкость
+    Rint, int: byte; // интеллект
+    // Атака голыми руками, суммарная защита
+    attack, defense: integer;
+    // К атаке, к защите
+    todmg, todef: integer;
+    // Упал
+    felldown: boolean;
+    // Таланты
+    Ability: array [1 .. AbilitysAmount] of byte; // Способности
+    // Тактика (0-стандартная, 1-нападения, 2-защиты
+    tactic: byte;
+    // Оружейные навыки
+    closefight: array [1 .. CLOSEFIGHTAMOUNT] of real;
+    farfight: array [1 .. FARFIGHTAMOUNT] of real;
+    magicfight: array [1 .. MAGICSCHOOLAMOUNT] of real;
     //
-    atr             : array[1..2] of byte;             // Приоритетные атрибуты
+    atr: array [1 .. 2] of byte; // Приоритетные атрибуты
     //
-    status          : array[1..2] of integer;         // Счетчики (1-Голод)
+    status: array [1 .. 2] of integer; // Счетчики (1-Голод)
     //
-    underhit        : boolean;
+    underhit: boolean;
 
-    procedure ClearMonster;                           // Очистить
-    function Replace(nx, ny : integer) : byte;        // Попытаться передвинуться
-    procedure DoTurn;                                 // AI
-    function MoveToAim(obstacle : boolean) : boolean; // Сделать шаг к цели
-    procedure MoveRandom;                             // Двинуться рандомно
-    function Move(dx,dy : integer) : boolean;         // Переместить монстра
-    function WoundDescription(firstIsCapital : boolean)
-                              : string;               // Вернуть описание состояния здоровья
-    procedure TalkToMe;                               // Поговорить с кем-нибудь
-    procedure Fight(var Victim : TMonster; CA : byte);// Драться (CA: 1 - контратака, 2 - второй удар!)
-    procedure Fire(var Victim : TMonster);            // Стрелять
-    procedure AttackNeutral(Victim : TMonster);       // Атаковать нейтрального
-    procedure KillSomeOne(Victim : byte);             // Действия после убийства
-    procedure Death;                                  // Умереть
-    procedure GiveItem(ItemId : integer; FromWhere : byte;
-                              var Victim : TMonster); // Отдать вещь
-    procedure BloodStream(dx,dy : shortint);
-    function PickUp(Item : TItem;FromEq : boolean;
-                             amount : integer) : byte;// Поместить вещь в инвентарь (0-успешно,1-ничего нет,2-нет места,3-перегружен
-    function MaxMass : real;                          // Максимальная масса переносимых предметов
-    procedure DeleteItemInv(i : byte; amount : integer;
-                                FromWhere : byte);    // Удалить предмет из инвентаря
-    procedure RefreshInventory;                       // Перебрать инвентарь
-    function ColorOfTactic: longword;                 // Вернуть цвет заднего фона монстра при использовании тактики
-    function TacticEffect(situation : byte) : real;   // Вернуть множитель (0.5, 1 или 2 - эффект от тактики)
-    function EquipItem(Item : TItem;
-                       FromInv : boolean) : byte;     // Снарядить предмет (0-успешно,1-ячейка занята)
-    function ExStatus(situation : byte) : string;     // Вернуть описание состояние монстра (одержимый, проклятый и тд)
-    function FullName(situation : byte;
-                   writename : boolean) : string;     // Вернуть полное имя монстра
-    procedure DecArrows;                              // Минус стрела
-    function WhatClass : byte;                        // Класс
-    function ClName(situation : byte) : string;       // Вернуть название класса
-    function RCName(situation : byte) : string;       // Вернуть название расы
-    procedure PrepareSkills;                          // Раставить очки умений и экипировать в зависимости от класса
-    procedure FavWPNSkill;                            // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
-    function BestWPNCL : byte;                        // Самый прокаченный навык в ближ. бою
-    function HowManyBestWPNCL : byte;                 // Сколько одинаковопрокаченных в ближ. бою
-    function OneOfTheBestWPNCL(i : byte): boolean;    // Один из лучше прок. навыков
-    function BestWPNFR : byte;                        // Самый прокаченный навык в дальнем бою
-    function HowManyBestWPNFR : byte;                 // Сколько одинаковопрокаченных в дальнем бою
-    function OneOfTheBestWPNFR(i : byte): boolean;    // Один из лучше прок. навыков
-    function ClassColor : byte;                       // Цвет класса
-    procedure DoDamage(damage : integer;
-                   var Victim : TMonster);            // Отнять жизни
-    procedure StartShooting(mode : byte);             // Стрельнуть / кинуть
-    function LOSLine(a, b: Integer) : boolean;        // Видно ли данный тайл 
+    procedure ClearMonster; // Очистить
+    function Replace(nx, ny: integer): byte; // Попытаться передвинуться
+    procedure DoTurn; // AI
+    function MoveToAim(obstacle: boolean): boolean; // Сделать шаг к цели
+    procedure MoveRandom; // Двинуться рандомно
+    function Move(dx, dy: integer): boolean; // Переместить монстра
+    function WoundDescription(firstIsCapital: boolean): string; // Вернуть описание состояния здоровья
+    procedure TalkToMe; // Поговорить с кем-нибудь
+    procedure Fight(var Victim: TMonster; CA: byte); // Драться (CA: 1 - контратака, 2 - второй удар!)
+    procedure Fire(var Victim: TMonster); // Стрелять
+    procedure AttackNeutral(Victim: TMonster); // Атаковать нейтрального
+    procedure KillSomeOne(Victim: byte); // Действия после убийства
+    procedure Death; // Умереть
+    procedure GiveItem(ItemId: integer; FromWhere: byte; var Victim: TMonster); // Отдать вещь
+    procedure BloodStream(dx, dy: shortint);
+    function PickUp(Item: TItem; FromEq: boolean; amount: integer): byte;
+    // Поместить вещь в инвентарь (0-успешно,1-ничего нет,2-нет места,3-перегружен
+    function MaxMass: real; // Максимальная масса переносимых предметов
+    procedure DeleteItemInv(i: byte; amount: integer; FromWhere: byte); // Удалить предмет из инвентаря
+    procedure RefreshInventory; // Перебрать инвентарь
+    function ColorOfTactic: longword; // Вернуть цвет заднего фона монстра при использовании тактики
+    function TacticEffect(situation: byte): real; // Вернуть множитель (0.5, 1 или 2 - эффект от тактики)
+    function EquipItem(Item: TItem; FromInv: boolean): byte; // Снарядить предмет (0-успешно,1-ячейка занята)
+    function ExStatus(situation: byte): string; // Вернуть описание состояние монстра (одержимый, проклятый и тд)
+    function FullName(situation: byte; writename: boolean): string; // Вернуть полное имя монстра
+    procedure DecArrows; // Минус стрела
+    function WhatClass: byte; // Класс
+    function ClName(situation: byte): string; // Вернуть название класса
+    function RCName(situation: byte): string; // Вернуть название расы
+    procedure PrepareSkills; // Раставить очки умений и экипировать в зависимости от класса
+    procedure FavWPNSkill; // Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие
+    function BestWPNCL: byte; // Самый прокаченный навык в ближ. бою
+    function HowManyBestWPNCL: byte; // Сколько одинаковопрокаченных в ближ. бою
+    function OneOfTheBestWPNCL(i: byte): boolean; // Один из лучше прок. навыков
+    function BestWPNFR: byte; // Самый прокаченный навык в дальнем бою
+    function HowManyBestWPNFR: byte; // Сколько одинаковопрокаченных в дальнем бою
+    function OneOfTheBestWPNFR(i: byte): boolean; // Один из лучше прок. навыков
+    function ClassColor: byte; // Цвет класса
+    procedure DoDamage(damage: integer; var Victim: TMonster); // Отнять жизни
+    procedure StartShooting(mode: byte); // Стрельнуть / кинуть
+    function LOSLine(a, b: integer): boolean; // Видно ли данный тайл
   end;
 
   TMonClass = record
-    name1m, name2m, name3m, name4m, name5m, name6m : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
-    name1f, name2f, name3f, name4f, name5f, name6f : string[40];  // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
+    name1m, name2m, name3m, name4m, name5m, name6m: string[40]; // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (муж.)
+    name1f, name2f, name3f, name4f, name5f, name6f: string[40]; // Названия класса (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) (жен.)
   end;
 
   TSpot = record
-    nx,ny : integer;
-    speedx, speedy : byte;
-    color : byte;
-    live : boolean;
+    nx, ny: integer;
+    speedx, speedy: byte;
+    color: byte;
+    live: boolean;
   end;
 
 type
   TMonData = record
-    name1, name2, name3, name4, name5, name6 : string[40];  // Названия (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи)
-    char                       : string[1];       // Символ
-    color                      : byte;            // Цвет
-    gender                     : byte;
-    hp                         : word;            // Здоровье
-    speed                      : word;            // Скорость
-    los                        : byte;            // Длина зрения
-    str, dex, int, at, def     : byte;
-    exp                        : byte;
-    mass                       : real;
-    coollevel                  : byte;
-    flags                      : longlong;        // Флажки
+    name1, name2, name3, name4, name5, name6: string[40]; // Названия (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи)
+    char: string[1]; // Символ
+    color: byte; // Цвет
+    gender: byte;
+    Hp: word; // Здоровье
+    speed: word; // Скорость
+    los: byte; // Длина зрения
+    str, dex, int, at, def: byte;
+    exp: byte;
+    mass: real;
+    coollevel: byte;
+    Flags: longlong; // Флажки
   end;
 
 const
   { Константы количества монстров }
   MonstersAmount = 24;
 
-  {  Описание монстров }
-  MonstersData : array[1..MonstersAmount] of TMonData =
-  (
-    ( name1 : 'Ты'; name2 : 'Тебя'; name3 : 'Тебе'; name4 : 'Тобой'; name5 : 'Тебя';
-      char : '@'; color : crLIGHTBLUE; gender : 10;
-      flags : NOF or M_NEUTRAL or M_CLASS;
-    ),
-    ( name1 : 'Житель'; name2 : 'Жителя'; name3 : 'Жителю'; name4 : 'Жителем'; name5 : 'Жителя'; name6 : 'Жителей';
-      char : 'h'; color : crBROWN; gender : genMALE;
-      hp : 30; speed : 100; los : 6; str : 5; dex : 5; int : 3; at : 7; def : 7;
-      exp : 5; mass : 60.4;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Жительница'; name2 : 'Жительницу'; name3 : 'Жительнице'; name4 : 'Жительницей'; name5 : 'Жительницы'; name6 : 'Жительниц';
-      char : 'h'; color : crLIGHTRED; gender : genFEMALE;
-      hp : 18; speed : 100; los : 6; str : 3; dex : 6; int : 4;  at : 4; def : 5;
-      exp : 3; mass : 40.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Старейшина'; name2 : 'Старейшину'; name3 : 'Старейшине'; name4 : 'Старейшиной'; name5 : 'Старейшины'; name6 : 'Старейшин';
-      char : 't'; color : crYELLOW; gender : genMALE;
-      hp : 45; speed : 110; los : 6; str : 7; dex : 5; int : 7; at : 19; def : 20;
-      exp : 15; mass : 55.3;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS  or M_TACTIC;
-    ),
-    ( name1 : 'Автор'; name2 : 'Автора'; name3 : 'Автору'; name4 : 'Автором'; name5 : 'Автора'; name6 : 'Авторов';
-      char : 'P'; color : crRANDOM; gender : genMALE;
-      hp : 666; speed : 200; los : 8; str : 99; dex : 99; int : 99;  at : 25; def : 50;
-      exp : 255; mass : 58.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Крыса'; name2 : 'Крысу'; name3 : 'Крысе'; name4 : 'Крысой'; name5 : 'Крысы'; name6 : 'Крыс';
-      char : 'r'; color : crBROWN; gender : genFEMALE;
-      hp : 8; speed : 160; los : 5; str : 2; dex : 6; int : 1;  at : 2; def : 1;
-      exp : 2; mass : 8.3; coollevel : 1;
-      flags : NOF;
-    ),
-    ( name1 : 'Летучая Мышь'; name2 : 'Летучую Мышь'; name3 : 'Летучей Мыши'; name4 : 'Летучей Мышью'; name5 : 'Летучей Мыши'; name6 : 'Летучих Мышей';
-      char : 'B'; color : crGRAY; gender : genFEMALE;
-      hp : 6; speed : 220; los : 7; str : 3; dex : 8; int : 1;  at : 1; def : 2;
-      exp : 4; mass : 6.8; coollevel : 1;
-      flags : NOF;
-    ),
-    ( name1 : 'Паук'; name2 : 'Паука'; name3 : 'Пауку'; name4 : 'Пауком'; name5 : 'Паука'; name6 : 'Пауков';
-      char : 's'; color : crWHITE; gender : genMALE;
-      hp : 7; speed : 180; los : 5; str : 2; dex : 8; int : 1;  at : 2; def : 1;
-      exp : 2; mass : 0.9; coollevel : 1;
-      flags : NOF;
-    ),
-    ( name1 : 'Гоблин'; name2 : 'Гоблина'; name3 : 'Гоблину'; name4 : 'Гоблином'; name5 : 'Гоблина'; name6 : 'Гоблинов';
-      char : 'g'; color : crGREEN; gender : genMALE;
-      hp : 13; speed : 115; los : 6; str : 5; dex : 7; int : 2;  at : 5; def : 5;
-      exp : 4; mass : 30.5; coollevel : 2;
-      flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
-    ),
-    ( name1 : 'Орк'; name2 : 'Орка'; name3 : 'Орку'; name4 : 'Орком'; name5 : 'Орка'; name6 : 'Орков';
-      char : 'o'; color : crLIGHTGREEN; gender : genMALE;
-      hp : 15; speed : 105; los : 6; str : 6; dex : 6; int : 3;  at : 7; def : 7;
-      exp : 5; mass : 55.0; coollevel : 3;
-      flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
-    ),
-    ( name1 : 'Огр'; name2 : 'Огра'; name3 : 'Огру'; name4 : 'Огром'; name5 : 'Огра'; name6 : 'Огров';
-      char : 'o'; color : crBROWN; gender : genMALE;
-      hp : 20; speed : 85; los : 5; str : 9; dex : 6; int : 2;  at : 10; def : 9;
-      exp : 6; mass : 70.9; coollevel : 4;
-      flags : NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;
-    ),
-    ( name1 : 'Слепая Зверюга'; name2 : 'Слепую Зверюгу'; name3 : 'Слепой Зверюге'; name4 : 'Слепой Зверюгой'; name5 : 'Слепой Зверюги'; name6 : 'Слепых Зверюг';
-      char : 'M'; color : crCYAN; gender : genFEMALE;
-      hp : 70; speed : 70; los : 2; str : 15; dex : 6; int : 3;  at : 15; def : 11;
-      exp : 14; mass : 85.0; coollevel : 5;
-      flags : NOF or M_ALWAYSANSWERED or M_TACTIC;
-    ),
-    ( name1 : 'Пьяница'; name2 : 'Пьяницу'; name3 : 'Пьянице'; name4 : 'Пьяницой'; name5 : 'Пьяницы'; name6 : 'Пьяниц';
-      char : 'h'; color : crBLUE; gender : genMALE;
-      hp : 17; speed : 40; los : 4; str : 5; dex : 4; int : 4;  at : 6; def : 4;
-      exp : 4; mass : 40.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Бармен'; name2 : 'Бармена'; name3 : 'Бармену'; name4 : 'Барменом'; name5 : 'Бармена'; name6 : 'Барменов';
-      char : 'b'; color : crRED; gender : genMALE;
-      hp : 40; speed : 100; los : 6; str : 5; dex : 5; int : 5;  at : 7; def : 7;
-      exp : 12; mass : 60.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Убийственно пьяный мужик'; name2 : 'Убийственно пьяного мужика'; name3 : 'Убийственно пьяному мужику'; name4 : 'Убийственно пьяным мужиком'; name5 : 'Убийственно пьяного мужика'; name6 : 'Убийственно пьяных мужиков';
-      char : 'h'; color : crBLUE; gender : genMALE;
-      hp : 5; speed : 20; los : 2; str : 3; dex : 2; int : 1; at : 1; def : 1;
-      exp : 0; mass : 35.7;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_DRUNK or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Целительница'; name2 : 'Целительницу'; name3 : 'Целительнице'; name4 : 'Целительницой'; name5 : 'Целительницы'; name6 : 'Целительниц';
-      char : 'h'; color : crLIGHTGREEN; gender : genFEMALE;
-      hp : 30; speed : 120; los : 6; str : 5; dex : 7; int : 9; at : 10; def : 10;
-      exp : 10; mass : 45.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Мясник'; name2 : 'Мясника'; name3 : 'Мяснику'; name4 : 'Мясником'; name5 : 'Мясника';  name6 : 'Мясников';
-      char : '@'; color : crRED; gender : genMALE;
-      hp : 35; speed : 100; los : 5; str : 9; dex : 5; int : 4; at : 20; def : 15;
-      exp : 20; mass : 67.2;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Таракан'; name2 : 'Таракана'; name3 : 'Таракану'; name4 : 'Тараканом'; name5 : 'Таракана'; name6 : 'Тараканов';
-      char : 'c'; color : crORANGE; gender : genMALE;
-      hp :7; speed : 130; los : 6; str : 1; dex : 7; int : 1;  at : 1; def : 2;
-      exp : 1; mass : 1; coollevel : 1;
-      flags : NOF;
-    ),
-    ( name1 : 'Мелкий червь'; name2 : 'Мелкого червя'; name3 : 'Мелкому червю'; name4 : 'Мелким червем'; name5 : 'Мелкого червя'; name6 : 'Мелких червей';
-      char : 'w'; color : crYELLOW; gender : genMALE;
-      hp : 8; speed : 90; los : 5; str : 2; dex : 7; int : 1;  at : 2; def : 3;
-      exp : 2; mass : 2.5; coollevel : 1;
-      flags : NOF;
-    ),
-    ( name1 : 'Торговец'; name2 : 'Торговца'; name3 : 'Торговцу'; name4 : 'Торговцем'; name5 : 'Тогровца';  name6 : 'Торговцев';
-      char : '@'; color : crORANGE; gender : genMALE;
-      hp : 30; speed : 110; los : 6; str : 7; dex : 7; int : 6; at : 15; def : 18;
-      exp : 18; mass : 63.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Фанатик'; name2 : 'Фанатика'; name3 : 'Фанатику'; name4 : 'Фанатиком'; name5 : 'Фанатика'; name6 : 'Фанатиков';
-      char : 'f'; color : crPURPLE; gender : genMALE;
-      hp : 30; speed : 115; los : 6; str : 6; dex : 6; int : 5; at : 8; def : 8;
-      exp : 8; mass : 55.0; coollevel : 4;
-      flags : NOF or M_OPEN or M_NAME or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Жена ключника'; name2 : 'Жену ключника'; name3 : 'Жене ключника'; name4 : 'Женой ключника'; name5 : 'Жены ключника'; name6 : 'Жён ключника';
-      char : 'f'; color : crWHITE; gender : genFEMALE;
-      hp : 20; speed : 90; los : 6; str : 3; dex : 6; int : 4;  at : 4; def : 5;
-      exp : 5; mass : 45.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;
-    ),
-    ( name1 : 'Ключник'; name2 : 'Ключника'; name3 : 'Ключнику'; name4 : 'Ключником'; name5 : 'Ключника'; name6 : 'Ключников';
-      char : 'k'; color : crRED; gender : genMALE;
-      hp : 35; speed : 100; los : 6; str : 6; dex : 6; int : 3;  at : 6; def : 9;
-      exp : 12; mass : 60.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;
-    ),
-    ( name1 : 'Стражник'; name2 : 'Стражника'; name3 : 'Стражнику'; name4 : 'Стражником'; name5 : 'Стражника'; name6 : 'Стражников';
-      char : 's'; color : crYELLOW; gender : genMALE;
-      hp : 45; speed : 100; los : 6; str : 6; dex : 6; int : 2;  at : 7; def : 10;
-      exp : 15; mass : 75.0;
-      flags : NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;
-    )
-  );  
+  { Описание монстров }
+  MonstersData: array [1 .. MonstersAmount] of TMonData = (
+    //
+    (name1: 'Ты'; name2: 'Тебя'; name3: 'Тебе'; name4: 'Тобой'; name5: 'Тебя'; char: '@'; color: crLIGHTBLUE; gender: 10;
+    Flags: NOF or M_NEUTRAL or M_CLASS;),
+    //
+    (name1: 'Житель'; name2: 'Жителя'; name3: 'Жителю'; name4: 'Жителем'; name5: 'Жителя'; name6: 'Жителей'; char: 'h'; color: crBROWN;
+    gender: genMALE; Hp: 30; speed: 100; los: 6; str: 5; dex: 5; int: 3; at: 7; def: 7; exp: 5; mass: 60.4;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Жительница'; name2: 'Жительницу'; name3: 'Жительнице'; name4: 'Жительницей'; name5: 'Жительницы'; name6: 'Жительниц'; char: 'h';
+    color: crLIGHTRED; gender: genFEMALE; Hp: 18; speed: 100; los: 6; str: 3; dex: 6; int: 4; at: 4; def: 5; exp: 3; mass: 40.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Старейшина'; name2: 'Старейшину'; name3: 'Старейшине'; name4: 'Старейшиной'; name5: 'Старейшины'; name6: 'Старейшин'; char: 't';
+    color: crYELLOW; gender: genMALE; Hp: 45; speed: 110; los: 6; str: 7; dex: 5; int: 7; at: 19; def: 20; exp: 15; mass: 55.3;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Автор'; name2: 'Автора'; name3: 'Автору'; name4: 'Автором'; name5: 'Автора'; name6: 'Авторов'; char: 'P'; color: crRANDOM;
+    gender: genMALE; Hp: 666; speed: 200; los: 8; str: 99; dex: 99; int: 99; at: 25; def: 50; exp: 255; mass: 58.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Крыса'; name2: 'Крысу'; name3: 'Крысе'; name4: 'Крысой'; name5: 'Крысы'; name6: 'Крыс'; char: 'r'; color: crBROWN; gender: genFEMALE;
+    Hp: 8; speed: 160; los: 5; str: 2; dex: 6; int: 1; at: 2; def: 1; exp: 2; mass: 8.3; coollevel: 1; Flags: NOF;),
+    //
+    (name1: 'Летучая Мышь'; name2: 'Летучую Мышь'; name3: 'Летучей Мыши'; name4: 'Летучей Мышью'; name5: 'Летучей Мыши'; name6: 'Летучих Мышей';
+    char: 'B'; color: crGRAY; gender: genFEMALE; Hp: 6; speed: 220; los: 7; str: 3; dex: 8; int: 1; at: 1; def: 2; exp: 4; mass: 6.8; coollevel: 1;
+    Flags: NOF;),
+    //
+    (name1: 'Паук'; name2: 'Паука'; name3: 'Пауку'; name4: 'Пауком'; name5: 'Паука'; name6: 'Пауков'; char: 's'; color: crWHITE; gender: genMALE;
+    Hp: 7; speed: 180; los: 5; str: 2; dex: 8; int: 1; at: 2; def: 1; exp: 2; mass: 0.9; coollevel: 1; Flags: NOF;),
+    //
+    (name1: 'Гоблин'; name2: 'Гоблина'; name3: 'Гоблину'; name4: 'Гоблином'; name5: 'Гоблина'; name6: 'Гоблинов'; char: 'g'; color: crGREEN;
+    gender: genMALE; Hp: 13; speed: 115; los: 6; str: 5; dex: 7; int: 2; at: 5; def: 5; exp: 4; mass: 30.5; coollevel: 2;
+    Flags: NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;),
+    //
+    (name1: 'Орк'; name2: 'Орка'; name3: 'Орку'; name4: 'Орком'; name5: 'Орка'; name6: 'Орков'; char: 'o'; color: crLIGHTGREEN; gender: genMALE;
+    Hp: 15; speed: 105; los: 6; str: 6; dex: 6; int: 3; at: 7; def: 7; exp: 5; mass: 55.0; coollevel: 3;
+    Flags: NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;),
+    //
+    (name1: 'Огр'; name2: 'Огра'; name3: 'Огру'; name4: 'Огром'; name5: 'Огра'; name6: 'Огров'; char: 'o'; color: crBROWN; gender: genMALE; Hp: 20;
+    speed: 85; los: 5; str: 9; dex: 6; int: 2; at: 10; def: 9; exp: 6; mass: 70.9; coollevel: 4;
+    Flags: NOF or M_HAVEITEMS or M_OPEN or M_TACTIC or M_CLASS;),
+    //
+    (name1: 'Слепая Зверюга'; name2: 'Слепую Зверюгу'; name3: 'Слепой Зверюге'; name4: 'Слепой Зверюгой'; name5: 'Слепой Зверюги';
+    name6: 'Слепых Зверюг'; char: 'M'; color: crCYAN; gender: genFEMALE; Hp: 70; speed: 70; los: 2; str: 15; dex: 6; int: 3; at: 15; def: 11; exp: 14;
+    mass: 85.0; coollevel: 5; Flags: NOF or M_ALWAYSANSWERED or M_TACTIC;),
+    //
+    (name1: 'Пьяница'; name2: 'Пьяницу'; name3: 'Пьянице'; name4: 'Пьяницой'; name5: 'Пьяницы'; name6: 'Пьяниц'; char: 'h'; color: crBLUE;
+    gender: genMALE; Hp: 17; speed: 40; los: 4; str: 5; dex: 4; int: 4; at: 6; def: 4; exp: 4; mass: 40.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Бармен'; name2: 'Бармена'; name3: 'Бармену'; name4: 'Барменом'; name5: 'Бармена'; name6: 'Барменов'; char: 'b'; color: crRED;
+    gender: genMALE; Hp: 40; speed: 100; los: 6; str: 5; dex: 5; int: 5; at: 7; def: 7; exp: 12; mass: 60.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Убийственно пьяный мужик'; name2: 'Убийственно пьяного мужика'; name3: 'Убийственно пьяному мужику'; name4: 'Убийственно пьяным мужиком';
+    name5: 'Убийственно пьяного мужика'; name6: 'Убийственно пьяных мужиков'; char: 'h'; color: crBLUE; gender: genMALE; Hp: 5; speed: 20; los: 2;
+    str: 3; dex: 2; int: 1; at: 1; def: 1; exp: 0; mass: 35.7; Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_DRUNK or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Целительница'; name2: 'Целительницу'; name3: 'Целительнице'; name4: 'Целительницой'; name5: 'Целительницы'; name6: 'Целительниц';
+    char: 'h'; color: crLIGHTGREEN; gender: genFEMALE; Hp: 30; speed: 120; los: 6; str: 5; dex: 7; int: 9; at: 10; def: 10; exp: 10; mass: 45.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Мясник'; name2: 'Мясника'; name3: 'Мяснику'; name4: 'Мясником'; name5: 'Мясника'; name6: 'Мясников'; char: '@'; color: crRED;
+    gender: genMALE; Hp: 35; speed: 100; los: 5; str: 9; dex: 5; int: 4; at: 20; def: 15; exp: 20; mass: 67.2;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Таракан'; name2: 'Таракана'; name3: 'Таракану'; name4: 'Тараканом'; name5: 'Таракана'; name6: 'Тараканов'; char: 'c'; color: crORANGE;
+    gender: genMALE; Hp: 7; speed: 130; los: 6; str: 1; dex: 7; int: 1; at: 1; def: 2; exp: 1; mass: 1; coollevel: 1; Flags: NOF;),
+    //
+    (name1: 'Мелкий червь'; name2: 'Мелкого червя'; name3: 'Мелкому червю'; name4: 'Мелким червем'; name5: 'Мелкого червя'; name6: 'Мелких червей';
+    char: 'w'; color: crYELLOW; gender: genMALE; Hp: 8; speed: 90; los: 5; str: 2; dex: 7; int: 1; at: 2; def: 3; exp: 2; mass: 2.5; coollevel: 1;
+    Flags: NOF;),
+    //
+    (name1: 'Торговец'; name2: 'Торговца'; name3: 'Торговцу'; name4: 'Торговцем'; name5: 'Тогровца'; name6: 'Торговцев'; char: '@'; color: crORANGE;
+    gender: genMALE; Hp: 30; speed: 110; los: 6; str: 7; dex: 7; int: 6; at: 15; def: 18; exp: 18; mass: 63.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_STAY or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Фанатик'; name2: 'Фанатика'; name3: 'Фанатику'; name4: 'Фанатиком'; name5: 'Фанатика'; name6: 'Фанатиков'; char: 'f'; color: crPURPLE;
+    gender: genMALE; Hp: 30; speed: 115; los: 6; str: 6; dex: 6; int: 5; at: 8; def: 8; exp: 8; mass: 55.0; coollevel: 4;
+    Flags: NOF or M_OPEN or M_NAME or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Жена ключника'; name2: 'Жену ключника'; name3: 'Жене ключника'; name4: 'Женой ключника'; name5: 'Жены ключника'; name6: 'Жён ключника';
+    char: 'f'; color: crWHITE; gender: genFEMALE; Hp: 20; speed: 90; los: 6; str: 3; dex: 6; int: 4; at: 4; def: 5; exp: 5; mass: 45.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;),
+    //
+    (name1: 'Ключник'; name2: 'Ключника'; name3: 'Ключнику'; name4: 'Ключником'; name5: 'Ключника'; name6: 'Ключников'; char: 'k'; color: crRED;
+    gender: genMALE; Hp: 35; speed: 100; los: 6; str: 6; dex: 6; int: 3; at: 6; def: 9; exp: 12; mass: 60.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_TACTIC;),
+    //
+    (name1: 'Стражник'; name2: 'Стражника'; name3: 'Стражнику'; name4: 'Стражником'; name5: 'Стражника'; name6: 'Стражников'; char: 's';
+    color: crYELLOW; gender: genMALE; Hp: 45; speed: 100; los: 6; str: 6; dex: 6; int: 2; at: 7; def: 10; exp: 15; mass: 75.0;
+    Flags: NOF or M_OPEN or M_NEUTRAL or M_NAME or M_HAVEITEMS or M_STAY or M_TACTIC;)
+    //
+    );
 
-{ Уникальные идентификаторы монстров }
+  { Уникальные идентификаторы монстров }
   mdHERO = 1;
   mdMALECITIZEN = 2;
   mdFEMALECITIZEN = 3;
@@ -300,44 +244,40 @@ const
   mdKEYMAN = 23;
   mdSENTINEL = 24;
 
-  {Названия классов}
+  { Названия классов }
   MonsterClassNameAmount = 9;
 
-  MonsterClassName : array[1..MonsterClassNameAmount] of TMonClass =
-  (
-    (name1m : 'Воин'; name2m : 'Воина'; name3m : 'Воину'; name4m : 'Воином'; name5m : 'Воина'; name6m : 'Воинов';
-     name1f : 'Воительница'; name2f : 'Воительницу'; name3f : 'Воительнице'; name4f : 'Воительницой'; name5f : 'Воительницы'; name6f : 'Воительниц'),
-    (name1m : 'Варвар'; name2m : 'Варвара'; name3m : 'Варвару'; name4m : 'Варваром'; name5m : 'Варвара'; name6m : 'Варваров';
-     name1f : 'Амазонка'; name2f : 'Амазонку'; name3f : 'Амазонке'; name4f : 'Амазонкой'; name5f : 'Амазонки'; name6f : 'Амазонок'),
-    (name1m : 'Паладин'; name2m : 'Паладина'; name3m : 'Паладину'; name4m : 'Паладином'; name5m : 'Паладина'; name6m : 'Паладинов';
-     name1f : 'Паладин'; name2f : 'Паладина'; name3f : 'Паладину'; name4f : 'Паладином'; name5f : 'Паладина'; name6f : 'Паладинов'),
-    (name1m : 'Странник'; name2m : 'Странника'; name3m : 'Страннику'; name4m : 'Странником'; name5m : 'Странника'; name6m : 'Странников';
-     name1f : 'Странница'; name2f : 'Странницу'; name3f : 'Страннице'; name4f : 'Странницой'; name5f : 'Странницы'; name6f : 'Странниц'),
-    (name1m : 'Воришка'; name2m : 'Воришку'; name3m : 'Воришке'; name4m : 'Воришкой'; name5m : 'Воришки'; name6m : 'Воришек';
-     name1f : 'Воришка'; name2f : 'Воришку'; name3f : 'Воришке'; name4f : 'Воришкой'; name5f : 'Воришки'; name6f : 'Воришек'),
-    (name1m : 'Монах'; name2m : 'Монаха'; name3m : 'Монаху'; name4m : 'Монахом'; name5m : 'Монаха'; name6m : 'Монахов';
-     name1f : 'Монахиня'; name2f : 'Монахиню'; name3f : 'Монахине'; name4f : 'Монахиней'; name5f : 'Монахини'; name6f : 'Монахинь'),
-    (name1m : 'Жрец'; name2m : 'Жреца'; name3m : 'Жрецу'; name4m : 'Жрецом'; name5m : 'Жреца'; name6m : 'Жрецов';
-     name1f : 'Жрица'; name2f : 'Жрицу'; name3f : 'Жрице'; name4f : 'Жрицей'; name5f : 'Жрицы'; name6f : 'Жриц'),
-    (name1m : 'Колдун'; name2m : 'Колдуна'; name3m : 'Колдуну'; name4m : 'Колдуном'; name5m : 'Колдуна'; name6m : 'Колдунов';
-     name1f : 'Колдунья'; name2f : 'Колдунью'; name3f : 'Колдунье'; name4f : 'Колдуньей'; name5f : 'Колдуньи'; name6f : 'Колдуний'),
-    (name1m : 'Мыслитель'; name2m : 'Мыслителя'; name3m : 'Мыслителю'; name4m : 'Мыслителем'; name5m : 'Мыслителя'; name6m : 'Мыслителей';
-     name1f : 'Мыслительница'; name2f : 'Мыслительницу'; name3f : 'Мыслительнице'; name4f : 'Мыслительницей'; name5f : 'Мыслительницы'; name6f : 'Мыслительниц')
-  );
+  MonsterClassName: array [1 .. MonsterClassNameAmount] of TMonClass = ((name1m: 'Воин'; name2m: 'Воина'; name3m: 'Воину'; name4m: 'Воином';
+    name5m: 'Воина'; name6m: 'Воинов'; name1f: 'Воительница'; name2f: 'Воительницу'; name3f: 'Воительнице'; name4f: 'Воительницой';
+    name5f: 'Воительницы'; name6f: 'Воительниц'), (name1m: 'Варвар'; name2m: 'Варвара'; name3m: 'Варвару'; name4m: 'Варваром'; name5m: 'Варвара';
+    name6m: 'Варваров'; name1f: 'Амазонка'; name2f: 'Амазонку'; name3f: 'Амазонке'; name4f: 'Амазонкой'; name5f: 'Амазонки'; name6f: 'Амазонок'),
+    (name1m: 'Паладин'; name2m: 'Паладина'; name3m: 'Паладину'; name4m: 'Паладином'; name5m: 'Паладина'; name6m: 'Паладинов'; name1f: 'Паладин';
+    name2f: 'Паладина'; name3f: 'Паладину'; name4f: 'Паладином'; name5f: 'Паладина'; name6f: 'Паладинов'), (name1m: 'Странник'; name2m: 'Странника';
+    name3m: 'Страннику'; name4m: 'Странником'; name5m: 'Странника'; name6m: 'Странников'; name1f: 'Странница'; name2f: 'Странницу';
+    name3f: 'Страннице'; name4f: 'Странницой'; name5f: 'Странницы'; name6f: 'Странниц'), (name1m: 'Воришка'; name2m: 'Воришку'; name3m: 'Воришке';
+    name4m: 'Воришкой'; name5m: 'Воришки'; name6m: 'Воришек'; name1f: 'Воришка'; name2f: 'Воришку'; name3f: 'Воришке'; name4f: 'Воришкой';
+    name5f: 'Воришки'; name6f: 'Воришек'), (name1m: 'Монах'; name2m: 'Монаха'; name3m: 'Монаху'; name4m: 'Монахом'; name5m: 'Монаха';
+    name6m: 'Монахов'; name1f: 'Монахиня'; name2f: 'Монахиню'; name3f: 'Монахине'; name4f: 'Монахиней'; name5f: 'Монахини'; name6f: 'Монахинь'),
+    (name1m: 'Жрец'; name2m: 'Жреца'; name3m: 'Жрецу'; name4m: 'Жрецом'; name5m: 'Жреца'; name6m: 'Жрецов'; name1f: 'Жрица'; name2f: 'Жрицу';
+    name3f: 'Жрице'; name4f: 'Жрицей'; name5f: 'Жрицы'; name6f: 'Жриц'), (name1m: 'Колдун'; name2m: 'Колдуна'; name3m: 'Колдуну'; name4m: 'Колдуном';
+    name5m: 'Колдуна'; name6m: 'Колдунов'; name1f: 'Колдунья'; name2f: 'Колдунью'; name3f: 'Колдунье'; name4f: 'Колдуньей'; name5f: 'Колдуньи';
+    name6f: 'Колдуний'), (name1m: 'Мыслитель'; name2m: 'Мыслителя'; name3m: 'Мыслителю'; name4m: 'Мыслителем'; name5m: 'Мыслителя';
+    name6m: 'Мыслителей'; name1f: 'Мыслительница'; name2f: 'Мыслительницу'; name3f: 'Мыслительнице'; name4f: 'Мыслительницей';
+    name5f: 'Мыслительницы'; name6f: 'Мыслительниц'));
 
   SpotAmount = 8;
 
 var
-  nx, ny     : byte;
-  blooded    : boolean;
-  Spot       : array[1..SpotAmount] of TSpot;
-  ShootingMode : byte;                         // 1-Выстрелить, 2-Швырнуть
-  Bow, Arrow : TItem;                          // Выбранные вещи для стрельбы / бросания
+  nx, ny: byte;
+  blooded: boolean;
+  Spot: array [1 .. SpotAmount] of TSpot;
+  ShootingMode: byte; // 1-Выстрелить, 2-Швырнуть
+  Bow, Arrow: TItem; // Выбранные вещи для стрельбы / бросания
 
-procedure CreateMonster(n,px,py : byte);   // Создать монстра
-procedure FillMonster(i,n,px,py : byte);
-function RandomMonster(x,y : byte) : byte; // Создать случайного монстра
-procedure MonstersTurn;                    // У каждого монстра есть право на ход
+procedure CreateMonster(n, px, py: byte); // Создать монстра
+procedure FillMonster(i, n, px, py: byte);
+function RandomMonster(x, y: byte): byte; // Создать случайного монстра
+procedure MonstersTurn; // У каждого монстра есть право на ход
 
 implementation
 
@@ -345,45 +285,49 @@ uses
   Map, Player, MapEditor, Vars, SUtils, MBox, Liquid;
 
 { Создать монстра }
-procedure CreateMonster(n,px,py : byte);
+procedure CreateMonster(n, px, py: byte);
 var
-  i : byte;
+  i: byte;
 begin
-  if M.MonP[px,py] = 0 then
+  if M.MonP[px, py] = 0 then
   begin
-    for i:=2 to 255 do
+    for i := 2 to 255 do
       if M.MonL[i].id = 0 then
         break;
-    if (i = 255) and (M.MonL[i].id > 0) then exit;
-    M.MonP[px,py] := i;
-    FillMonster(i,n,px,py);
+    if (i = 255) and (M.MonL[i].id > 0) then
+      exit;
+    M.MonP[px, py] := i;
+    FillMonster(i, n, px, py);
   end;
 end;
 
 // Наполнить монстра
-procedure FillMonster(i,n,px,py : byte);
+procedure FillMonster(i, n, px, py: byte);
 begin
   with M.MonL[i] do
   begin
     id := n;
     idinlist := i;
-    if IsFlag(MonstersData[id].flags, M_NAME) then
+    if IsFlag(MonstersData[id].Flags, M_NAME) then
       if MonstersData[id].gender = genMALE then
-        name := GenerateName(FALSE) else
-          name := GenerateName(TRUE) else
-            name := GenerateName(FALSE);
+        name := GenerateName(FALSE)
+      else
+        name := GenerateName(TRUE)
+    else
+      name := GenerateName(FALSE);
     x := px;
     y := py;
-    if not IsFlag(MonstersData[id].flags, M_NEUTRAL) then
+    if not IsFlag(MonstersData[id].Flags, M_NEUTRAL) then
     begin
       aim := 1;
       relation := 1;
     end;
-    if IsFlag(MonstersData[id].flags, M_DRUNK) then
-      felldown := TRUE else
-        felldown := FALSE;
-    Rhp := MonstersData[id].hp;
-    hp := Rhp;
+    if IsFlag(MonstersData[id].Flags, M_DRUNK) then
+      felldown := TRUE
+    else
+      felldown := FALSE;
+    RHp := MonstersData[id].Hp;
+    Hp := RHp;
     Rspeed := MonstersData[id].speed;
     speed := Rspeed;
     Rlos := MonstersData[id].los;
@@ -397,46 +341,50 @@ begin
     attack := MonstersData[id].at;
     defense := MonstersData[id].def;
     // Определить класс
-    if IsFlag(MonstersData[id].flags, M_CLASS) then
+    if IsFlag(MonstersData[id].Flags, M_CLASS) then
     begin
-      atr[1] := Rand(1,3);
-      atr[2] := Rand(1,3);
+      atr[1] := Rand(1, 3);
+      atr[2] := Rand(1, 3);
       PrepareSkills;
       FavWPNSkill;
-    end else
+    end
+    else
+    begin
+      // Оружейные навыки
+      if eq[6].id = 0 then
       begin
-        // Оружейные навыки
-        if eq[6].id = 0 then
-        begin
-          closefight[CLOSE_ARM] := (Rint*10) + Random(60);
-          if closefight[CLOSE_ARM] > 100 then closefight[CLOSE_ARM] := 100;
-        end else
-          begin
-            closefight[ItemsData[eq[6].id].kind] := (Rint*10) + Random(60);
-            if closefight[ItemsData[eq[6].id].kind] > 100 then closefight[CLOSE_ARM] := 100;
-          end;
+        closefight[CLOSE_ARM] := (Rint * 10) + Random(60);
+        if closefight[CLOSE_ARM] > 100 then
+          closefight[CLOSE_ARM] := 100;
+      end
+      else
+      begin
+        closefight[ItemsData[eq[6].id].kind] := (Rint * 10) + Random(60);
+        if closefight[ItemsData[eq[6].id].kind] > 100 then
+          closefight[CLOSE_ARM] := 100;
       end;
+    end;
     // Тактика
     tactic := 0;
-    if IsFlag(MonstersData[id].flags, M_TACTIC) then
-      if Random(5)+1 = 1 then
-        tactic := Random(2)+1;
+    if IsFlag(MonstersData[id].Flags, M_TACTIC) then
+      if Random(5) + 1 = 1 then
+        tactic := Random(2) + 1;
     // Какие-то уникальные вещи (не забывать, что некоторые генеряться при определении класса!
-    if IsFlag(MonstersData[id].flags, M_HAVEITEMS) then
+    if IsFlag(MonstersData[id].Flags, M_HAVEITEMS) then
     begin
       // Экипировка
       // Инвентарь
       if id = mdKEYMAN then
       begin
         // Дать ему ключ
-        PickUp(CreateItem(idGATESKEY, 1, 0), FALSE,1);
+        PickUp(CreateItem(idGATESKEY, 1, 0), FALSE, 1);
       end;
     end
   end;
 end;
 
 { Создать случайного монстра }
-function RandomMonster(x,y : byte) : byte;
+function RandomMonster(x, y: byte): byte;
 begin
   Result := 2;
 end;
@@ -453,17 +401,17 @@ begin
   aimx := 0;
   aimy := 0;
   energy := 0;
-  hp := 0;
-  Rhp := 0;
-  ep := 0;
-  Rep := 0;
+  Hp := 0;
+  RHp := 0;
+  Ep := 0;
+  REp := 0;
   speed := 0;
   Rspeed := 0;
   los := 0;
   Rlos := 0;
   relation := 0;
-  fillchar(eq,sizeof(eq),0);
-  fillchar(inv,sizeof(inv),0);
+  fillchar(eq, sizeof(eq), 0);
+  fillchar(inv, sizeof(inv), 0);
   invmass := 0;
   str := 0;
   Rstr := 0;
@@ -476,325 +424,357 @@ begin
   todmg := 0;
   todef := 0;
   felldown := FALSE;
-  fillchar(ability,sizeof(ability),0);
+  fillchar(Ability, sizeof(Ability), 0);
   tactic := 0;
-  fillchar(closefight,sizeof(closefight),0);
-  fillchar(farfight,sizeof(farfight),0);
-  fillchar(magicfight,sizeof(magicfight),0);
-  fillchar(atr,sizeof(atr),0);
+  fillchar(closefight, sizeof(closefight), 0);
+  fillchar(farfight, sizeof(farfight), 0);
+  fillchar(magicfight, sizeof(magicfight), 0);
+  fillchar(atr, sizeof(atr), 0);
 end;
 
-{ Попытаться передвинуться : 0Нет проблем, 1Вне границ,2Твердый тайл,3Монстр}
-function TMonster.Replace(nx, ny : integer) : byte;
+{ Попытаться передвинуться : 0Нет проблем, 1Вне границ,2Твердый тайл,3Монстр }
+function TMonster.Replace(nx, ny: integer): byte;
 begin
   Result := 0;
-  if not((x=nx)and(y=ny)) then
+  if not((x = nx) and (y = ny)) then
   begin
-    if not((nx>0)and(nx<=MapX)and(ny>0)and(ny<=MapY)) then Result := 1 else
-      if TilesData[M.Tile[nx,ny]].move = False then Result := 2 else
-        if M.MonP[nx,ny] > 0 then Result := 3;
+    if not((nx > 0) and (nx <= MapX) and (ny > 0) and (ny <= MapY)) then
+      Result := 1
+    else if TilesData[M.Tile[nx, ny]].Move = FALSE then
+      Result := 2
+    else if M.MonP[nx, ny] > 0 then
+      Result := 3;
   end;
 end;
 
 { У каждого монстра есть право на ход }
 procedure MonstersTurn;
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=2 to 255 do
+  for i := 2 to 255 do
     if M.MonL[i].id > 1 then
-      M.MonL[i].doturn;
+      M.MonL[i].DoTurn;
 end;
 
 { AI }
 procedure TMonster.DoTurn;
 var
-  a, b : integer;
+  a, b: integer;
 begin
   energy := energy + speed;
-  while energy >= speed  do
+  while energy >= speed do
   begin
     nx := x;
     ny := y;
     // Если упал, то встать
-    if FellDown then
+    if felldown then
     begin
-      if NOT IsFlag(MonstersData[id].flags, M_DRUNK) then
-        FellDown := False;
-    end else
+      if NOT IsFlag(MonstersData[id].Flags, M_DRUNK) then
+        felldown := FALSE;
+    end
+    else
       // Если есть цель
-      if Aim > 0 then
+      if aim > 0 then
       begin
         // Узнать новые координаты цели
-        for a:= nx - los to nx + los do
-          for b:= ny - los to ny + los do
-            if (a>0)and(a<=MapX)and(b>0)and(b<=MapY) then
-              if M.MonP[a,b] = Aim then
-                if (LOSLine(a,b)) then
+        for a := nx - los to nx + los do
+          for b := ny - los to ny + los do
+            if (a > 0) and (a <= MapX) and (b > 0) and (b <= MapY) then
+              if M.MonP[a, b] = aim then
+                if (LOSLine(a, b)) then
                 begin
-                  AimX := a;
-                  AimY := b;
+                  aimx := a;
+                  aimy := b;
                   break;
                 end;
-          if (AimX > 0) and (AimY > 0) then
-          begin
-           // if (M.MonL[M.MonP[AimX,AimY]].id > 0) then
-            begin
-              // Двигаться к цели
-              if MoveToAim(false) = false then
-                if MoveToAim(true) = false then
-                  if Random(10) <= 8 then
-                    MoveRandom;
-            end;
-          end else
-            MoveRandom;
-      end else
+        if (aimx > 0) and (aimy > 0) then
         begin
-          if relation = 1 then
-            Aim := 1 else
-              MoveRandom;
-        end;
-    energy := energy - speed + (speed - (pc.speed + Round(pc.ability[abENERGETIC] * AbilitysData[abENERGETIC].koef)));
+          // if (M.MonL[M.MonP[AimX,AimY]].id > 0) then
+          begin
+            // Двигаться к цели
+            if MoveToAim(FALSE) = FALSE then
+              if MoveToAim(TRUE) = FALSE then
+                if Random(10) <= 8 then
+                  MoveRandom;
+          end;
+        end
+        else
+          MoveRandom;
+      end
+      else
+      begin
+        if relation = 1 then
+          aim := 1
+        else
+          MoveRandom;
+      end;
+    energy := energy - speed + (speed - (pc.speed + Round(pc.Ability[abENERGETIC] * AbilitysData[abENERGETIC].koef)));
   end;
 end;
 
 { Сделать шаг к цели }
-function TMonster.MoveToAim(obstacle : boolean) : boolean;
+function TMonster.MoveToAim(obstacle: boolean): boolean;
 const
   NK = 100;
 var
-  nmap : array[1..MapX,1..MapY] of byte;
-  j,min : byte;
-  mx,my : shortint;
-  a,b : integer;
-  find : boolean;
+  nmap: array [1 .. MapX, 1 .. MapY] of byte;
+  j, min: byte;
+  mx, my: shortint;
+  a, b: integer;
+  find: boolean;
 begin
-  Result := true;
+  Result := TRUE;
   // Заполнить карту проходимости
-  for a:=nx-los to nx+los do
-    for b:=ny-los to ny+los do
-      if (a>0)and(a<=MapX)and(b>0)and(b<=MapY)then
+  for a := nx - los to nx + los do
+    for b := ny - los to ny + los do
+      if (a > 0) and (a <= MapX) and (b > 0) and (b <= MapY) then
       begin
-        if M.MonP[a,b] > 0 then
+        if M.MonP[a, b] > 0 then
         begin
           if obstacle then
-            nmap[a,b] := 254 else
-              nmap[a,b] := 255;
-        end else
-          if (TilesData[M.Tile[a,b]].move)or((M.Tile[a,b] = tdCDOOR)and(IsFlag(MonstersData[id].flags, M_OPEN)))then
-            nmap[a,b] := 254 else
-              nmap[a,b] := 255;
+            nmap[a, b] := 254
+          else
+            nmap[a, b] := 255;
+        end
+        else if (TilesData[M.Tile[a, b]].Move) or ((M.Tile[a, b] = tdCDOOR) and (IsFlag(MonstersData[id].Flags, M_OPEN))) then
+          nmap[a, b] := 254
+        else
+          nmap[a, b] := 255;
       end;
-  nmap[nx,ny] := 253;
-  nmap[aimx,aimy] := 0;
+  nmap[nx, ny] := 253;
+  nmap[aimx, aimy] := 0;
   // Проверка массива
   j := 0;
-  Find := False;
+  find := FALSE;
   repeat
-    for a:=nx-los to nx+los do
-      for b:=ny-los to ny+los do
-        if (a>0)and(a<=MapX)and(b>0)and(b<=MapY)then
-          if nmap[a,b] = j then
+    for a := nx - los to nx + los do
+      for b := ny - los to ny + los do
+        if (a > 0) and (a <= MapX) and (b > 0) and (b <= MapY) then
+          if nmap[a, b] = j then
           begin
-            if a-1 > 0 then
+            if a - 1 > 0 then
             begin
-              if nmap[a-1,b] = 253 then Find := True;
-              if nmap[a-1,b] = 254 then nmap[a-1,b] := j+1;
+              if nmap[a - 1, b] = 253 then
+                find := TRUE;
+              if nmap[a - 1, b] = 254 then
+                nmap[a - 1, b] := j + 1;
             end;
-            if a+1 <= MapX then
+            if a + 1 <= MapX then
             begin
-              if nmap[a+1,b] = 253 then Find := True;
-              if nmap[a+1,b] = 254 then nmap[a+1,b] := j+1;
+              if nmap[a + 1, b] = 253 then
+                find := TRUE;
+              if nmap[a + 1, b] = 254 then
+                nmap[a + 1, b] := j + 1;
             end;
-            if b-1 > 0 then
+            if b - 1 > 0 then
             begin
-              if nmap[a,b-1] = 253 then Find := True;
-              if nmap[a,b-1] = 254 then nmap[a,b-1] := j+1;
+              if nmap[a, b - 1] = 253 then
+                find := TRUE;
+              if nmap[a, b - 1] = 254 then
+                nmap[a, b - 1] := j + 1;
             end;
-            if b+1 <= MapY then
+            if b + 1 <= MapY then
             begin
-              if nmap[a,b+1] = 253 then Find := True;
-              if nmap[a,b+1] = 254 then nmap[a,b+1] := j+1;
+              if nmap[a, b + 1] = 253 then
+                find := TRUE;
+              if nmap[a, b + 1] = 254 then
+                nmap[a, b + 1] := j + 1;
             end;
-            if (b+1<MapY)and(a-1>1)then
+            if (b + 1 < MapY) and (a - 1 > 1) then
             begin
-              if nmap[a-1,b+1] = 253 then Find := True;
-              if nmap[a-1,b+1] = 254 then nmap[a-1,b+1] := j+1;
+              if nmap[a - 1, b + 1] = 253 then
+                find := TRUE;
+              if nmap[a - 1, b + 1] = 254 then
+                nmap[a - 1, b + 1] := j + 1;
             end;
-            if (b+1<MapY)and(a+1<MapX)then
+            if (b + 1 < MapY) and (a + 1 < MapX) then
             begin
-              if nmap[a+1,b+1] = 253 then Find := True;
-              if nmap[a+1,b+1] = 254 then nmap[a+1,b+1] := j+1;
+              if nmap[a + 1, b + 1] = 253 then
+                find := TRUE;
+              if nmap[a + 1, b + 1] = 254 then
+                nmap[a + 1, b + 1] := j + 1;
             end;
-            if (b-1>1)and(a-1>1)then
+            if (b - 1 > 1) and (a - 1 > 1) then
             begin
-              if nmap[a-1,b-1] = 253 then Find := True;
-              if nmap[a-1,b-1] = 254 then nmap[a-1,b-1] := j+1;
+              if nmap[a - 1, b - 1] = 253 then
+                find := TRUE;
+              if nmap[a - 1, b - 1] = 254 then
+                nmap[a - 1, b - 1] := j + 1;
             end;
-            if (b-1>1)and(a+1<MapX)then
+            if (b - 1 > 1) and (a + 1 < MapX) then
             begin
-              if nmap[a+1,b-1] = 253 then Find := True;
-              if nmap[a+1,b-1] = 254 then nmap[a+1,b-1] := j+1;
+              if nmap[a + 1, b - 1] = 253 then
+                find := TRUE;
+              if nmap[a + 1, b - 1] = 254 then
+                nmap[a + 1, b - 1] := j + 1;
             end;
           end;
     j := j + 1;
     if j > NK then
     begin
-      Result := false;
+      Result := FALSE;
       exit;
     end;
-  until
-    Find;
-  { Найти путь}
+  until find;
+  { Найти путь }
   min := 255;
   mx := 0;
   my := 0;
-  if nx-1 > 0 then
+  if nx - 1 > 0 then
   begin
-    min := nmap[nx-1,ny];
+    min := nmap[nx - 1, ny];
     mx := -1;
     my := 0;
   end;
-  if nx+1 <= MapX then
-    if nmap[nx+1,ny] < min then
+  if nx + 1 <= MapX then
+    if nmap[nx + 1, ny] < min then
     begin
-      min := nmap[nx+1,ny];
+      min := nmap[nx + 1, ny];
       mx := 1;
       my := 0;
     end;
-  if ny-1 > 0 then
-    if nmap[nx,ny-1] < min then
+  if ny - 1 > 0 then
+    if nmap[nx, ny - 1] < min then
     begin
-      min := nmap[nx,ny-1];
+      min := nmap[nx, ny - 1];
       mx := 0;
       my := -1;
     end;
-  if ny+1 <= MapY then
-    if nmap[nx,ny+1] < min then
+  if ny + 1 <= MapY then
+    if nmap[nx, ny + 1] < min then
     begin
-      min := nmap[nx,ny+1];
+      min := nmap[nx, ny + 1];
       mx := 0;
       my := 1;
     end;
-  if (nx-1 > 0)and(ny+1 <= MapY) then
-    if nmap[nx-1,ny+1] < min then
+  if (nx - 1 > 0) and (ny + 1 <= MapY) then
+    if nmap[nx - 1, ny + 1] < min then
     begin
-      min := nmap[nx-1,ny+1];
+      min := nmap[nx - 1, ny + 1];
       mx := -1;
       my := 1;
     end;
-  if (nx+1 <= MapX)and(ny+1 <= MapY) then
-    if nmap[nx+1,ny+1] < min then
+  if (nx + 1 <= MapX) and (ny + 1 <= MapY) then
+    if nmap[nx + 1, ny + 1] < min then
     begin
-      min := nmap[nx+1,ny+1];
+      min := nmap[nx + 1, ny + 1];
       mx := 1;
       my := 1;
     end;
-  if (nx-1 > 0)and(ny-1 > 0) then
-    if nmap[nx-1,ny-1] < min then
+  if (nx - 1 > 0) and (ny - 1 > 0) then
+    if nmap[nx - 1, ny - 1] < min then
     begin
-      min := nmap[nx-1,ny-1];
+      min := nmap[nx - 1, ny - 1];
       mx := -1;
       my := -1;
     end;
-  if (nx+1 <= MapX)and(ny-1 > 0) then
-    if nmap[nx+1,ny-1] < min then
+  if (nx + 1 <= MapX) and (ny - 1 > 0) then
+    if nmap[nx + 1, ny - 1] < min then
     begin
       mx := 1;
       my := -1;
     end;
-  Result :=  M.MonL[M.MonP[nx,ny]].Move(nx+mx,ny+my);
+  Result := M.MonL[M.MonP[nx, ny]].Move(nx + mx, ny + my);
 end;
 
 { Переместить монстра хаотично }
 procedure TMonster.MoveRandom;
 begin
-  Move(nx+((Random(3)-1)), ny+((Random(3)-1)));
+  Move(nx + ((Random(3) - 1)), ny + ((Random(3) - 1)));
 end;
 
 { Переместить монстра }
-function TMonster.Move(dx,dy : integer) : boolean;
+function TMonster.Move(dx, dy: integer): boolean;
 begin
-  Result := True;
-  if not M.MonL[M.MonP[nx,ny]].felldown then
-    case M.MonL[M.MonP[nx,ny]].Replace(dx,dy) of
-      0 : // Просто передвинуться
-      begin
-        if not ((IsFlag(MonstersData[id].flags, M_STAY)) and (aim = 0)) then
+  Result := TRUE;
+  if not M.MonL[M.MonP[nx, ny]].felldown then
+    case M.MonL[M.MonP[nx, ny]].Replace(dx, dy) of
+      0: // Просто передвинуться
         begin
-          if not((M.MonP[dx,dy] > 0) and (aim <> M.MonP[dx,dy])) then
+          if not((IsFlag(MonstersData[id].Flags, M_STAY)) and (aim = 0)) then
           begin
-            if not((dx=nx)and(dy=ny)) then
+            if not((M.MonP[dx, dy] > 0) and (aim <> M.MonP[dx, dy])) then
             begin
-              M.MonP[dx,dy] := M.MonP[nx,ny];
-              M.MonL[M.MonP[dx,dy]].x := dx;
-              M.MonL[M.MonP[dx,dy]].y := dy;
-              M.MonP[nx,ny] := 0;
-            end else
-              Result := False;
-          end else
-            Result := False;
-        end else
-          Result := False;
-      end;
-      2 : // Открыть дверь
-      begin
-        if IsFlag(MonstersData[id].flags, M_OPEN) then
-          if M.Tile[dx,dy] = tdCDOOR then
-            M.Tile[dx,dy] := tdODOOR;
-      end;
-      3 : // Атаковать
-      begin
-        if M.MonP[dx,dy] = Aim then
+              if not((dx = nx) and (dy = ny)) then
+              begin
+                M.MonP[dx, dy] := M.MonP[nx, ny];
+                M.MonL[M.MonP[dx, dy]].x := dx;
+                M.MonL[M.MonP[dx, dy]].y := dy;
+                M.MonP[nx, ny] := 0;
+              end
+              else
+                Result := FALSE;
+            end
+            else
+              Result := FALSE;
+          end
+          else
+            Result := FALSE;
+        end;
+      2: // Открыть дверь
         begin
-          if Aim = 1 then
-            Fight(pc, 0) else
+          if IsFlag(MonstersData[id].Flags, M_OPEN) then
+            if M.Tile[dx, dy] = tdCDOOR then
+              M.Tile[dx, dy] := tdODOOR;
+        end;
+      3: // Атаковать
+        begin
+          if M.MonP[dx, dy] = aim then
+          begin
+            if aim = 1 then
+              Fight(pc, 0)
+            else
               Fight(M.MonL[aim], 0);
-        end else
-          Result := False;
-      end else
-        Result := False
+          end
+          else
+            Result := FALSE;
+        end
+    else
+      Result := FALSE
     end;
 end;
 
 { Вернуть описание состояния здоровья }
-function TMonster.WoundDescription(firstIsCapital : boolean) : string;
+function TMonster.WoundDescription(firstIsCapital: boolean): string;
 var
-  r : string;
+  r: string;
 begin
-  if hp = Rhp then
+  if Hp = RHp then
   begin
     if id = 1 then
-      r := 'чувствуешь себя замечательно' else
-        r := 'чувствует себя замечательно';
-  end else
-    if hp <= Round(Rhp / 6) then
-    begin
-      r := 'почти труп';
-    end else
-      if hp <= Round(Rhp / 4) then
-      begin
-        r := 'ужасно ранен{/a}';
-      end else
-        if hp <= Round(Rhp / 3) then
-        begin
-          r := 'тяжело ранен{/a}';
-        end else
-          if hp <= Round(Rhp / 2) then
-          begin
-            r := 'полумертв{/a}';
-          end else
-            if hp <= Round(Rhp / 4)*3 then
-            begin
-              r := 'легко ранен{/a}';
-            end else
-              r :=  'влегкую задет{/a}';
+      r := 'чувствуешь себя замечательно'
+    else
+      r := 'чувствует себя замечательно';
+  end
+  else if Hp <= Round(RHp / 6) then
+  begin
+    r := 'почти труп';
+  end
+  else if Hp <= Round(RHp / 4) then
+  begin
+    r := 'ужасно ранен{/a}';
+  end
+  else if Hp <= Round(RHp / 3) then
+  begin
+    r := 'тяжело ранен{/a}';
+  end
+  else if Hp <= Round(RHp / 2) then
+  begin
+    r := 'полумертв{/a}';
+  end
+  else if Hp <= Round(RHp / 4) * 3 then
+  begin
+    r := 'легко ранен{/a}';
+  end
+  else
+    r := 'влегкую задет{/a}';
   if (firstIsCapital) then
   begin
     r := AnsiUpperCase(r[1]) + Copy(r, 2, Length(r));
   end;
 
-  Result := GetMsg(r,MonstersData[id].gender);
+  Result := GetMsg(r, MonstersData[id].gender);
 end;
 
 { Поговорить с кем-нибудь }
@@ -804,577 +784,650 @@ var
 begin
   if relation = 0 then
   begin
-      case id of
+    case id of
 
-        mdMALECITIZEN, mdFEMALECITIZEN: // Крестьяне в деревне
+      mdMALECITIZEN, mdFEMALECITIZEN: // Крестьяне в деревне
         begin
           AddMsg(FullName(1, TRUE) + ' говорит: "Оставьте меня в покое - мне нужно идти!"', 0);
         end;
 
-        mdELDER: // Старейшина
+      mdELDER: // Старейшина
         begin
           // Если оба квеста от старейшины выполнены
           if (pc.quest[1] = qsFinish) and (pc.quest[2] = qsFinish) then
-            AddMsg(FullName(1, TRUE) + ' говорит: "Ох... дела.. дела. Надеюсь все у тебя в порядке!"', 0) else
-          case pc.quest[1] of
-            qsNone : // Дает квест
-            begin
-              AddMsg(MonstersData[id].name1 + ' говорит: "Здравствуй, '+pc.name+'! Меня зовут '+name+'. Я старейшина Эвилиара и у меня есть к тебе просьба."', 0);
-              More;
-              AddMsg('"Понимаешь, в Эвилиаре есть хранилище в котором все наши жители держат свои запасы продовольствия. Оно находится в северо-восточной части деревни и представляет собой всего один этаж под землёй."', 0);
-              More;
-              AddMsg('"Две недели назад пара жителей спустилась в хранилище. Они хотели заменить старые несущие балки и раскинуть отраву для крыс. Но только спустившись вниз крысы ожесточились и начали кидаться на людей!"', 0);
-              More;
-              AddMsg('"Более того, сквозь мрак жители увидели нескольких тварей, которые были агрессивно на них настроены! Бедняги говорили, что видели гоблинов и кобольда, но... я не особо им верю."', 0);
-              More;
-              AddMsg('"Откуда им там взяться? В деревне их никто не видел... Уж не из под земли же они взялись! В любом случае - в хранилище теперь все боятся спускаться, запасы еды заканчиваются... Не знаю, что будет дальше!"', 0);
-              More;
-              AddMsg('"Я очень прошу тебя - спустись в хранилище и избавь нас от этого ужаса!"', 0);
-              pc.quest[1] := 1;
-            end;
-            qsQuest : // В процессе выполнения
-            begin
-              AddMsg(FullName(1, TRUE) + ' говорит: ""Ну как? Ты еще не исследовал{/а} хранилище? Как жаль!"', 0);
-            end;
-            qsDone : // Выполнил!
-            begin
-              AddMsg('Ты рассказал{/а} '+MonstersData[id].name3+' о своем приключении в хранилище.', 0);
-              More;
-              AddMsg('Он очень удивился твоему рассказу, но, кажется, не особо тебе поверил...', 0);
-              More;
-              AddMsg('Тебе нужно дать ему какие-нибудь доказательства!', 0);
-            end;
-            qsBonus : // Дал доказательство!
-            begin
-              AddMsg(MonstersData[id].name3+', пожав тебе руку, сказал:', 0);
-              More;
-              AddMsg('"Ты не представляешь, как я тебе благодарен! Ты избавил{/а} нас от этого кошмара!"', 0);
-              More;
-              AddMsg('"Вот, возьми эти деньги! Надеюсь, они тебе помогут!"', 0);
-              More;
-              AddMsg('Ты взял{/а} золотые монеты и положил{/а} их в карман.', 0);
-              pc.PickUp(CreateItem(idCOIN, 300, 0), FALSE,300);
-              pc.quest[1] := qsFinish;
-              More;
-              AddMsg('"Есть у меня еще одно дельце! Будешь заинтересован{/а} - обращайся!"', 0);
-              More;
-            end;
-            qsFinish : // Выполнен квест №1
-            begin
-              case pc.quest[2] of
-                qsNone : // Дает квест
+            AddMsg(FullName(1, TRUE) + ' говорит: "Ох... дела.. дела. Надеюсь все у тебя в порядке!"', 0)
+          else
+            case pc.quest[1] of
+              qsNone: // Дает квест
                 begin
-                  AddMsg(FullName(1, TRUE) + ' говорит: "Ну что, я вижу ты готов{/а} для нового задания. А дело вот в чем..."', 0);
+                  AddMsg(MonstersData[id].name1 + ' говорит: "Здравствуй, ' + pc.name + '! Меня зовут ' + name +
+                    '. Я старейшина Эвилиара и у меня есть к тебе просьба."', 0);
                   More;
-                  AddMsg('"Не знаю заметил{/а} ты или нет, но восточный выход из деревни закрыт. Там стоят врата, которые закрыты на тяжелый замок."', 0);
+                  AddMsg('"Понимаешь, в Эвилиаре есть хранилище в котором все наши жители держат свои запасы продовольствия. Оно находится в северо-восточной части деревни и представляет собой всего один этаж под землёй."',
+                    0);
                   More;
-                  AddMsg('"Сделано это было недавно по причине участившихся нападений и визитов нежеланных гостей..."', 0);
+                  AddMsg('"Две недели назад пара жителей спустилась в хранилище. Они хотели заменить старые несущие балки и раскинуть отраву для крыс. Но только спустившись вниз крысы ожесточились и начали кидаться на людей!"',
+                    0);
                   More;
-                  AddMsg('"Сейчас нам потребовалось открыть эти врата, что бы пустить торговцев с востока..."', 0);
+                  AddMsg('"Более того, сквозь мрак жители увидели нескольких тварей, которые были агрессивно на них настроены! Бедняги говорили, что видели гоблинов и кобольда, но... я не особо им верю."',
+                    0);
                   More;
-                  AddMsg('"Но, будь он проклят, этот ключник куда-то пропал!"', 0);
+                  AddMsg('"Откуда им там взяться? В деревне их никто не видел... Уж не из под земли же они взялись! В любом случае - в хранилище теперь все боятся спускаться, запасы еды заканчиваются... Не знаю, что будет дальше!"',
+                    0);
                   More;
-                  AddMsg('"Где искать ключ от врат - ума не приложу!"', 0);
-                  More;
-                  if Ask('"Ну что? Готов{/а} взяться за это дельце?"  [(Y/n)]') = 'Y' then
-                  begin
-                    AddMsg('"Отлично! Я рассчитываю на тебя!"', 0);
-                    pc.quest[2] := 1;
-                    More;
-                  end else
-                    begin
-                      AddMsg('"Очень жаль... Надеюсь ты передумаешь в ближайшее время!"', 0);
-                      More;
-                    end;
+                  AddMsg('"Я очень прошу тебя - спустись в хранилище и избавь нас от этого ужаса!"', 0);
+                  pc.quest[1] := 1;
                 end;
-                qsQuest : // В процессе
+              qsQuest: // В процессе выполнения
                 begin
-                  AddMsg(FullName(1, TRUE) + ' говорит: "Ты еше не наш{ел/ла} ключ? Очень жаль..."', 0);
+                  AddMsg(FullName(1, TRUE) + ' говорит: ""Ну как? Ты еще не исследовал{/а} хранилище? Как жаль!"', 0);
                 end;
-                qsDone : // Рассказал о ключнике
+              qsDone: // Выполнил!
                 begin
-                  AddMsg(FullName(1, TRUE) + ' говорит: "О, боже... Это невероятно... Какая трагедия...."', 0);
+                  AddMsg('Ты рассказал{/а} ' + MonstersData[id].name3 + ' о своем приключении в хранилище.', 0);
                   More;
-                  AddMsg('"Я уже давно заметил, что наш ключник... как бы... сам не свой..."', 0);
+                  AddMsg('Он очень удивился твоему рассказу, но, кажется, не особо тебе поверил...', 0);
                   More;
-                  AddMsg('"Невероятно..."', 0);
-                  More;
-                  AddMsg('"Но... Был ли при нём ключ?"', 0);
-                  More;
+                  AddMsg('Тебе нужно дать ему какие-нибудь доказательства!', 0);
                 end;
-                qsBonus : // Отдал ключ
+              qsBonus: // Дал доказательство!
                 begin
-                  AddMsg(MonstersData[id].name3+', пожав тебе руку, сказал:', 0);
+                  AddMsg(MonstersData[id].name3 + ', пожав тебе руку, сказал:', 0);
                   More;
-                  AddMsg('"И снова ты выручил{/а} всех жителей Эвилиара! Теперь можно наконец открыть восточные врата!"', 0);
+                  AddMsg('"Ты не представляешь, как я тебе благодарен! Ты избавил{/а} нас от этого кошмара!"', 0);
                   More;
-                  AddMsg('"Вот, возьми эти деньги! Ничего более оригинального я не придумал, но когда-нибудь я дам тебе что-то более весомое!"', 0);
+                  AddMsg('"Вот, возьми эти деньги! Надеюсь, они тебе помогут!"', 0);
                   More;
                   AddMsg('Ты взял{/а} золотые монеты и положил{/а} их в карман.', 0);
-                  pc.PickUp(CreateItem(idCOIN, 500, 0), FALSE,500);
-                  pc.quest[2] := 4;
-                  M.Tile[79,18] := tdROAD;
+                  pc.PickUp(CreateItem(idCOIN, 300, 0), FALSE, 300);
+                  pc.quest[1] := qsFinish;
+                  More;
+                  AddMsg('"Есть у меня еще одно дельце! Будешь заинтересован{/а} - обращайся!"', 0);
                   More;
                 end;
-              end;
+              qsFinish: // Выполнен квест №1
+                begin
+                  case pc.quest[2] of
+                    qsNone: // Дает квест
+                      begin
+                        AddMsg(FullName(1, TRUE) + ' говорит: "Ну что, я вижу ты готов{/а} для нового задания. А дело вот в чем..."', 0);
+                        More;
+                        AddMsg('"Не знаю заметил{/а} ты или нет, но восточный выход из деревни закрыт. Там стоят врата, которые закрыты на тяжелый замок."',
+                          0);
+                        More;
+                        AddMsg('"Сделано это было недавно по причине участившихся нападений и визитов нежеланных гостей..."', 0);
+                        More;
+                        AddMsg('"Сейчас нам потребовалось открыть эти врата, что бы пустить торговцев с востока..."', 0);
+                        More;
+                        AddMsg('"Но, будь он проклят, этот ключник куда-то пропал!"', 0);
+                        More;
+                        AddMsg('"Где искать ключ от врат - ума не приложу!"', 0);
+                        More;
+                        if Ask('"Ну что? Готов{/а} взяться за это дельце?"  [(Y/n)]') = 'Y' then
+                        begin
+                          AddMsg('"Отлично! Я рассчитываю на тебя!"', 0);
+                          pc.quest[2] := 1;
+                          More;
+                        end
+                        else
+                        begin
+                          AddMsg('"Очень жаль... Надеюсь ты передумаешь в ближайшее время!"', 0);
+                          More;
+                        end;
+                      end;
+                    qsQuest: // В процессе
+                      begin
+                        AddMsg(FullName(1, TRUE) + ' говорит: "Ты еше не наш{ел/ла} ключ? Очень жаль..."', 0);
+                      end;
+                    qsDone: // Рассказал о ключнике
+                      begin
+                        AddMsg(FullName(1, TRUE) + ' говорит: "О, боже... Это невероятно... Какая трагедия...."', 0);
+                        More;
+                        AddMsg('"Я уже давно заметил, что наш ключник... как бы... сам не свой..."', 0);
+                        More;
+                        AddMsg('"Невероятно..."', 0);
+                        More;
+                        AddMsg('"Но... Был ли при нём ключ?"', 0);
+                        More;
+                      end;
+                    qsBonus: // Отдал ключ
+                      begin
+                        AddMsg(MonstersData[id].name3 + ', пожав тебе руку, сказал:', 0);
+                        More;
+                        AddMsg('"И снова ты выручил{/а} всех жителей Эвилиара! Теперь можно наконец открыть восточные врата!"', 0);
+                        More;
+                        AddMsg('"Вот, возьми эти деньги! Ничего более оригинального я не придумал, но когда-нибудь я дам тебе что-то более весомое!"',
+                          0);
+                        More;
+                        AddMsg('Ты взял{/а} золотые монеты и положил{/а} их в карман.', 0);
+                        pc.PickUp(CreateItem(idCOIN, 500, 0), FALSE, 500);
+                        pc.quest[2] := 4;
+                        M.Tile[79, 18] := tdROAD;
+                        More;
+                      end;
+                  end;
+                end;
             end;
-          end;
         end;
 
-        mdBREAKMT: // Я
+      mdBREAKMT: // Я
         begin
           AddMsg(FullName(1, TRUE) + ' говорит: "Не советую меня бить... Впрочем... Можешь попробовать разок, если уж очень хочется!"', 0);
         end;
 
-        mdKEYWIFE: // Жена ключника
+      mdKEYWIFE: // Жена ключника
         begin
-          AddMsg(FullName(1, TRUE) + ' говорит: "Я места себе не нахожу... Мой муж пропал! Я очень за него беспокоюсь... Еще и эти звуки из подвала сводят меня с ума!"', 0);
+          AddMsg(FullName(1, TRUE) +
+            ' говорит: "Я места себе не нахожу... Мой муж пропал! Я очень за него беспокоюсь... Еще и эти звуки из подвала сводят меня с ума!"', 0);
         end;
 
-        // Бармен
-        mdBARTENDER:
+      // Бармен
+      mdBARTENDER:
         begin
           if (Ask(FullName(1, TRUE) + ' говорит: "Могу предложить бутылёк свежего пивасика всего за 15 золотых, хочешь?" [(Y/n)]')) = 'Y' then
           begin
             if pc.FindCoins = 0 then
-              AddMsg('К сожалению, у тебя совсем нет денег.', 0) else
-              if pc.inv[pc.FindCoins].amount < 15 then
-                AddMsg('У тебя недостаточно золотых монет для покупки.', 0) else
-                if pc.inv[pc.FindCoins].amount >= 15 then
-                begin
-                  AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.', 0);
-                  dec(pc.inv[pc.FindCoins].amount, 15);
-                  pc.RefreshInventory;
-                  More;
-                  AddMsg('Он их пересчитывает и протягивает бутылку холодного пива.', 0);
-                  if pc.PickUp(CreateItem(lqCHEAPBEER, 1, 0), FALSE,1) <> 0 then
-                  begin
-                    AddMsg('Оно упало на пол.', 0);
-                    PutItem(pc.x,pc.y, CreateItem(idMEAT, 1, 0),1);
-                  end;
-                  More;
-                  AddMsg('"Далеко не уходи - вдруг еще захочешь! Можешь посидеть с нашими постояльцами..."', 0);
-                end;
-            end else
-              AddMsg('"Ну что ж... Мое дело предложить!"', 0);
+              AddMsg('К сожалению, у тебя совсем нет денег.', 0)
+            else if pc.inv[pc.FindCoins].amount < 15 then
+              AddMsg('У тебя недостаточно золотых монет для покупки.', 0)
+            else if pc.inv[pc.FindCoins].amount >= 15 then
+            begin
+              AddMsg('Ты протягиваешь ' + FullName(3, FALSE) + ' деньги.', 0);
+              dec(pc.inv[pc.FindCoins].amount, 15);
+              pc.RefreshInventory;
+              More;
+              AddMsg('Он их пересчитывает и протягивает бутылку холодного пива.', 0);
+              if pc.PickUp(CreateItem(lqCHEAPBEER, 1, 0), FALSE, 1) <> 0 then
+              begin
+                AddMsg('Оно упало на пол.', 0);
+                PutItem(pc.x, pc.y, CreateItem(idMEAT, 1, 0), 1);
+              end;
+              More;
+              AddMsg('"Далеко не уходи - вдруг еще захочешь! Можешь посидеть с нашими постояльцами..."', 0);
+            end;
+          end
+          else
+            AddMsg('"Ну что ж... Мое дело предложить!"', 0);
         end;
 
-        mdDRUNK: // Пьяница
+      mdDRUNK: // Пьяница
         begin
           AddMsg(FullName(1, TRUE) + ' издает звуки: "Ик! ... Пфф... Ик!"', 0);
         end;
 
-        mdSENTINEL: // Влюбленный стражник и корень мандрагоры
+      mdSENTINEL: // Влюбленный стражник и корень мандрагоры
         begin
           case pc.quest[3] of
             qsNone:
-            begin
-              AddMsg('"Приветствую! Ты уже был{/a} у целительницы? Я ей очень доверяю. Замечательная женщина!"',0); More;
-              AddMsg('"Раньше я с ней часто ходил в соседние леса собирать целительные травы и корни. Затем из них целительница варила свои чудодейственные эликсиры."',0); More;
-              AddMsg('"Но сейчас, как ты успел{/а} заметить, врата закрыты. Целительница больше не может покидать деревню. Старейшина завалил меня работой и я тоже не могу отлучаться."',0); More;
-              AddMsg('"За много дней мы собрали почти все ингридиенты для зелий, но есть один ценный ингридиент, которого у целительницы нет - #Корень Мандрагоры#!"',0); More;
-              AddMsg('"Принеси мне этот корень, а я отдам его целительнице... Она сварит много зелий, которые спасут жизнь не одному жителю деревни."',0); More;
-              if Ask('"Ну так как? Окажешь мне услугу? Я очень люблю эту женщину! Выполни мое задание и проси в замен чего угодно!" #(Y/n)#') = 'Y' then
               begin
-                AddMsg('"Замечательно! Другого ответа я и не ждал!"',0); More;
-                pc.quest[3] := qsQuest;
-              end else
+                AddMsg('"Приветствую! Ты уже был{/a} у целительницы? Я ей очень доверяю. Замечательная женщина!"', 0);
+                More;
+                AddMsg('"Раньше я с ней часто ходил в соседние леса собирать целительные травы и корни. Затем из них целительница варила свои чудодейственные эликсиры."',
+                  0);
+                More;
+                AddMsg('"Но сейчас, как ты успел{/а} заметить, врата закрыты. Целительница больше не может покидать деревню. Старейшина завалил меня работой и я тоже не могу отлучаться."',
+                  0);
+                More;
+                AddMsg('"За много дней мы собрали почти все ингридиенты для зелий, но есть один ценный ингридиент, которого у целительницы нет - #Корень Мандрагоры#!"',
+                  0);
+                More;
+                AddMsg('"Принеси мне этот корень, а я отдам его целительнице... Она сварит много зелий, которые спасут жизнь не одному жителю деревни."',
+                  0);
+                More;
+                if Ask('"Ну так как? Окажешь мне услугу? Я очень люблю эту женщину! Выполни мое задание и проси в замен чего угодно!" #(Y/n)#') = 'Y'
+                then
                 begin
-                  AddMsg('"Надеюсь, ты передумаешь и вернешься помочь мне!"',0); More;
+                  AddMsg('"Замечательно! Другого ответа я и не ждал!"', 0);
+                  More;
+                  pc.quest[3] := qsQuest;
+                end
+                else
+                begin
+                  AddMsg('"Надеюсь, ты передумаешь и вернешься помочь мне!"', 0);
+                  More;
                 end;
-            end;
+              end;
             qsQuest:
-            begin
-              AddMsg(FullName(1, TRUE) + ' говорит: "Я слышал, ты ищешь корень... Но почему так долго?!"', 0);
-            end;
+              begin
+                AddMsg(FullName(1, TRUE) + ' говорит: "Я слышал, ты ищешь корень... Но почему так долго?!"', 0);
+              end;
             qsBonus:
-            begin
-              c := Rand(7, 9);
-              AddMsg('Стражник сказал: "Ты очень помог{/ла} мне, ' + pc.name + '! Теперь я выполняю свою часть уговора!"',0); More;
-              AddMsg('"Прежде чем закрыли врата, я хорошенько поохотился в окресностях Эвилиара. Вот, держи мясо."',0); More;
-              AddMsg('Ты поблагодарил{/a} Стражника, взял{/а} ' + IntToStr(c) + ' кусков мяса и положил{/а} их в свой заплечный мешок.',0);
-              pc.PickUp(CreateItem(idMEAT, c, 0), FALSE, c);
-              pc.quest[3] := qsFinish;
-              More;
-            end;
+              begin
+                c := Rand(7, 9);
+                AddMsg('Стражник сказал: "Ты очень помог{/ла} мне, ' + pc.name + '! Теперь я выполняю свою часть уговора!"', 0);
+                More;
+                AddMsg('"Прежде чем закрыли врата, я хорошенько поохотился в окресностях Эвилиара. Вот, держи мясо."', 0);
+                More;
+                AddMsg('Ты поблагодарил{/a} Стражника, взял{/а} ' + IntToStr(c) + ' кусков мяса и положил{/а} их в свой заплечный мешок.', 0);
+                pc.PickUp(CreateItem(idMEAT, c, 0), FALSE, c);
+                pc.quest[3] := qsFinish;
+                More;
+              end;
           end;
         end;
 
-        mdHEALER: // Целительница
+      mdHEALER: // Целительница
         begin
           if pc.Hp < pc.RHp then
           begin
             if (Ask(FullName(1, TRUE) + ' говорит: "Хочешь я подлечу тебя?" [(Y/n)]')) = 'Y' then
             begin
               p := Round((pc.RHp - pc.Hp) * 1.1);
-              if (Ask('"Твое полное исцеление будет стоить {'+IntToStr(p)+'} золотых. Идет?" [(Y/n)]')) = 'Y' then
+              if (Ask('"Твое полное исцеление будет стоить {' + IntToStr(p) + '} золотых. Идет?" [(Y/n)]')) = 'Y' then
               begin
                 if pc.FindCoins = 0 then
-                  AddMsg('К сожалению, у тебя совсем нет денег.', 0) else
-                  if pc.inv[pc.FindCoins].amount < p then
+                  AddMsg('К сожалению, у тебя совсем нет денег.', 0)
+                else if pc.inv[pc.FindCoins].amount < p then
+                begin
+                  p := Round(pc.inv[pc.FindCoins].amount / 1.1);
+                  if p > 0 then
                   begin
-                    p := Round(pc.inv[pc.FindCoins].amount / 1.1);
-                    if p > 0 then
+                    if (Ask('"Недостаточно монет... Но, если хочешь, могу немного подлечить тебя и за {' + IntToStr(pc.inv[pc.FindCoins].amount) +
+                      '} золотых. Идет?" [(Y/n)]')) = 'Y' then
                     begin
-                      if (Ask('"Недостаточно монет... Но, если хочешь, могу немного подлечить тебя и за {'+IntToStr(pc.inv[pc.FindCoins].amount)+'} золотых. Идет?" [(Y/n)]')) = 'Y' then
-                      begin
-                        AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.', 0);
-                        pc.inv[pc.FindCoins].amount := 0;
-                        pc.RefreshInventory;
-                        More;
-                        AddMsg('Она быстренько пересчитывает и прячет их. Затем достает фляжку с горячим отваром и дает тебе выпить... ', 0);
-                        More;
-                        AddMsg('[Сначала тебя немного затошнило, но несколько секунд спустя стало лучше!] ({+'+IntToStr(p)+'})', 0);
-                        inc(pc.Hp, p);
-                      end else
-                        AddMsg('"Тогда ищи более выгодные предложения!"', 0);
-                    end else
-                      AddMsg('К сожалению, у тебя недостаточно монет, что бы хоть чуть-чуть подлечиться.', 0);
-                  end else
-                    if pc.inv[pc.FindCoins].amount >= p then
-                    begin
-                      AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.', 0);
-                      dec(pc.inv[pc.FindCoins].amount, p);
+                      AddMsg('Ты протягиваешь ' + FullName(3, FALSE) + ' деньги.', 0);
+                      pc.inv[pc.FindCoins].amount := 0;
                       pc.RefreshInventory;
                       More;
-                      AddMsg('Она быстренько пересчитывает и прячет их. После этого она протягивает обе руки к твоей голове... ', 0);
+                      AddMsg('Она быстренько пересчитывает и прячет их. Затем достает фляжку с горячим отваром и дает тебе выпить... ', 0);
                       More;
-                      AddMsg('[На секунду ты теряешь сознание, но, когда приходишь в себя, чувствуешь себя великолепно!]', 0);
-                      pc.Hp := pc.RHp;
-                    end;
+                      AddMsg('[Сначала тебя немного затошнило, но несколько секунд спустя стало лучше!] ({+' + IntToStr(p) + '})', 0);
+                      inc(pc.Hp, p);
+                    end
+                    else
+                      AddMsg('"Тогда ищи более выгодные предложения!"', 0);
+                  end
+                  else
+                    AddMsg('К сожалению, у тебя недостаточно монет, что бы хоть чуть-чуть подлечиться.', 0);
+                end
+                else if pc.inv[pc.FindCoins].amount >= p then
+                begin
+                  AddMsg('Ты протягиваешь ' + FullName(3, FALSE) + ' деньги.', 0);
+                  dec(pc.inv[pc.FindCoins].amount, p);
+                  pc.RefreshInventory;
+                  More;
+                  AddMsg('Она быстренько пересчитывает и прячет их. После этого она протягивает обе руки к твоей голове... ', 0);
+                  More;
+                  AddMsg('[На секунду ты теряешь сознание, но, когда приходишь в себя, чувствуешь себя великолепно!]', 0);
+                  pc.Hp := pc.RHp;
+                end;
               end;
-            end else
+            end
+            else
               AddMsg('"Мое дело предложить - твое дело умирать... Шучу-шучу!.."', 0);
-          end else
-            AddMsg(FullName(1, TRUE) + ' говорит: "Здравствуй, '+pc.name+'! Меня зовут '+name+'. Если тебя ранят - заходи ко мне, я смогу тебе помочь."', 0);
+          end
+          else
+            AddMsg(FullName(1, TRUE) + ' говорит: "Здравствуй, ' + pc.name + '! Меня зовут ' + name +
+              '. Если тебя ранят - заходи ко мне, я смогу тебе помочь."', 0);
         end;
 
-        mdMEATMAN: // Мясник
+      mdMEATMAN: // Мясник
         begin
-          if (Ask(FullName(1, TRUE) + ' говорит: "Хочешь купить кусок отличного свежего мяса всего за 15 золотых?" [(Y/n)]')) ='Y' then
+          if (Ask(FullName(1, TRUE) + ' говорит: "Хочешь купить кусок отличного свежего мяса всего за 15 золотых?" [(Y/n)]')) = 'Y' then
           begin
             if pc.FindCoins = 0 then
-              AddMsg('К сожалению, у тебя совсем нет денег.', 0) else
-              if pc.inv[pc.FindCoins].amount < 15 then
-                AddMsg('У тебя недостаточно золотых монет для покупки.', 0) else
-                if pc.inv[pc.FindCoins].amount >= 15 then
-                begin
-                  AddMsg('Ты протягиваешь '+FullName(3, FALSE)+' деньги.', 0);
-                  dec(pc.inv[pc.FindCoins].amount, 15);
-                  RefreshInventory;
-                  More;
-                  AddMsg('Он их пересчитывает и отдает кусок мяса.', 0);
-                  if pc.PickUp(CreateItem(idMEAT, 1, 0), FALSE,1) <> 0 then
-                  begin
-                    AddMsg('Оно упало на пол.', 0);
-                    PutItem(pc.x,pc.y, CreateItem(idMEAT, 1, 0),1);
-                  end;
-                  More;
-                  AddMsg('"Возвращайся еще, когда захочешь кушать!"', 0);
-                end;
-            end else
-              AddMsg('"Если передумаешь - обязательно заходи ко мне!"', 0);
+              AddMsg('К сожалению, у тебя совсем нет денег.', 0)
+            else if pc.inv[pc.FindCoins].amount < 15 then
+              AddMsg('У тебя недостаточно золотых монет для покупки.', 0)
+            else if pc.inv[pc.FindCoins].amount >= 15 then
+            begin
+              AddMsg('Ты протягиваешь ' + FullName(3, FALSE) + ' деньги.', 0);
+              dec(pc.inv[pc.FindCoins].amount, 15);
+              RefreshInventory;
+              More;
+              AddMsg('Он их пересчитывает и отдает кусок мяса.', 0);
+              if pc.PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1) <> 0 then
+              begin
+                AddMsg('Оно упало на пол.', 0);
+                PutItem(pc.x, pc.y, CreateItem(idMEAT, 1, 0), 1);
+              end;
+              More;
+              AddMsg('"Возвращайся еще, когда захочешь кушать!"', 0);
+            end;
+          end
+          else
+            AddMsg('"Если передумаешь - обязательно заходи ко мне!"', 0);
         end;
 
-        ELSE AddMsg('Говорить впустую...', 0);
+    ELSE
+      AddMsg('Говорить впустую...', 0);
 
-      end;
-  end else
+    end;
+  end
+  else
     AddMsg('Ох! Вы не в таких отношениях, чтобы беседовать!', 0);
 end;
 
 { Драться }
-procedure TMonster.Fight(var Victim : TMonster; CA : byte);
+procedure TMonster.Fight(var Victim: TMonster; CA: byte);
 var
-  i,c : byte;
-  dam, tempdam : integer;
-  d : real;
+  i, c: byte;
+  dam, tempdam: integer;
+  d: real;
 begin
   // Если контратака
   if CA = 1 then
     if id = 1 then
-      AddMsg('#'+MonstersData[id].name1+' контратакуешь!#',id) else
-        AddMsg('*'+MonstersData[id].name1+' контратакует!*',id);
+      AddMsg('#' + MonstersData[id].name1 + ' контратакуешь!#', id)
+    else
+      AddMsg('*' + MonstersData[id].name1 + ' контратакует!*', id);
   // Если второй удар
   if CA = 2 then
     if id = 1 then
-      AddMsg('#'+MonstersData[id].name1+' успеваешь нанести еще один удар!#',id) else
-        AddMsg('*'+MonstersData[id].name1+' успевает нанести еще один удар!*',id);
-  if M.MonP[Victim.x, victim.y] > 0 then
+      AddMsg('#' + MonstersData[id].name1 + ' успеваешь нанести еще один удар!#', id)
+    else
+      AddMsg('*' + MonstersData[id].name1 + ' успевает нанести еще один удар!*', id);
+  if M.MonP[Victim.x, Victim.y] > 0 then
   begin
     { --Атаковать враждебного-- }
-    if ((Victim.relation = 1) and (id = 1)) or (id > 1)  then
+    if ((Victim.relation = 1) and (id = 1)) or (id > 1) then
     begin
       // Уклониться
-      if Random(Round(TacticEffect(2)*(dex+(ability[abACCURACY]*AbilitysData[abACCURACY].koef))))+1 > Random(Round(Victim.TacticEffect(1)*(Victim.dex+(Victim.ability[abDODGER]*AbilitysData[abDODGER].koef))))+1 then
+      if Random(Round(TacticEffect(2) * (dex + (Ability[abACCURACY] * AbilitysData[abACCURACY].koef)))) + 1 >
+        Random(Round(Victim.TacticEffect(1) * (Victim.dex + (Victim.Ability[abDODGER] * AbilitysData[abDODGER].koef)))) + 1 then
       begin
         // Отразить щитом
-        if (Victim.eq[8].id > 0) and (Random(Round(Victim.dex*Victim.TacticEffect(1)) * 2)+1 = 1) then
+        if (Victim.eq[8].id > 0) and (Random(Round(Victim.dex * Victim.TacticEffect(1)) * 2) + 1 = 1) then
           if Victim.id = 1 then
-            AddMsg('#'+Victim.FullName(1, FALSE)+' блокировал{/а} атаку своим щитом!#', Victim.id) else
-              AddMsg('*'+Victim.FullName(1, FALSE)+' блокировал{/а} атаку своим щитом!*', Victim.id)
+            AddMsg('#' + Victim.FullName(1, FALSE) + ' блокировал{/а} атаку своим щитом!#', Victim.id)
+          else
+            AddMsg('*' + Victim.FullName(1, FALSE) + ' блокировал{/а} атаку своим щитом!*', Victim.id)
         else
-          // Попал
-          begin
-            Dam := 0;
-            // Рассчитать дамаг
-            if Eq[6].id > 0 then
-            begin
-              if closefight[ItemsData[Eq[6].id].kind] > 0 then
-                Dam := Round((Random(Round(ItemsData[Eq[6].id].attack+(str/4)))+1) * (closefight[ItemsData[Eq[6].id].kind] /100));
-            end else
-              // Рукопашный
-              if closefight[CLOSE_ARM] > 0 then Dam := Round((Random(Round(attack+(str/4)))+1) * (closefight[CLOSE_ARM] / 100)) + 1;
-            TempDam := Dam;
-            // Уменьшение дамага за счет брони
-            Dam := (Round(Dam/(Random(Round(TacticEffect(1)*2))+1))) - Random(Round(Victim.defense/(Random(Round(Victim.TacticEffect(2)*2))+1)));
-            // Для контратаки дамаг уменьшается
-            if CA = 1 then Dam := Round(Dam / (1 + ((Random(Round(10*TacticEffect(2)))+1) / 10)));
-            // Попал, но не пробил  
-            if Dam <= 0 then
-              AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+', но не пробил{/а} броню.',id) else
-                begin
-                  if Dam > 1000 then
-                  begin
-                    AddMsg('*W*#H#$A$T $T$#H#*E* *FUCK*?! '+FloatToStr(closefight[CLOSE_ARM])+':'+IntToStr(attack)+':'+IntToStr(str)+':'+FloatToStr(TacticEffect(1)),id);
-                    More;
-                  end;
-                  // Отнять жизни
-                  DoDamage(Dam, Victim);
-                  Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
-                  AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+'! (*'+IntToStr(Dam)+'*)',id);
-                  // Ранил
-                  if Victim.hp > 0 then
-                  begin
-                    if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription(False)+'.',Victim.id);
-                  end else
-                    // Убил
-                    begin
-                      // Увеличить навык этого оружия
-                      d := (TempDam * 0.03) / Dam;
-                      if Eq[6].id > 0 then
-                        c := ItemsData[Eq[6].id].kind else
-                          c := CLOSE_ARM;
-                      if IsInNewAreaSkill(closefight[c], closefight[c] +  d) then
-                      begin
-                        closefight[c] := closefight[c] +  d;
-                        AddMsg('#Теперь ты лучше владеешь навыком "#$'+CLOSEWPNNAME[c]+'$#"!#',id);
-                        More;
-                      end else
-                        closefight[c] := closefight[c] +  d;
-                      // У рандомного навыка отнять столько же
-                      repeat
-                        i := Random(CLOSEFIGHTAMOUNT)+1;
-                      until
-                        (i <> c);
-                      if CloseFight[i] - d > 0 then
-                      begin
-                        if IsInNewAreaSkill(Closefight[i], closefight[i] -  d) then
-                        begin
-                          closefight[i] := closefight[i] -  d;
-                          AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренировок твой навык "*$'+CLOSEWPNNAME[c]+'$*" стал забываться.*',id);
-                          More;
-                        end else
-                          CloseFight[i] := CloseFight[i] - d;
-                      end else
-                          CloseFight[i] := 0;
-                      // Убить
-                      KillSomeOne(Victim.idinlist);
-                    end;
-                end;
-          end;
-      end else
+        // Попал
         begin
-          AddMsg(FullName(1, FALSE)+' промахнул{ся/ась} по '+Victim.FullName(3, FALSE)+'.', id);
+          dam := 0;
+          // Рассчитать дамаг
+          if eq[6].id > 0 then
+          begin
+            if closefight[ItemsData[eq[6].id].kind] > 0 then
+              dam := Round((Random(Round(ItemsData[eq[6].id].attack + (str / 4))) + 1) * (closefight[ItemsData[eq[6].id].kind] / 100));
+          end
+          else
+            // Рукопашный
+            if closefight[CLOSE_ARM] > 0 then
+              dam := Round((Random(Round(attack + (str / 4))) + 1) * (closefight[CLOSE_ARM] / 100)) + 1;
+          tempdam := dam;
+          // Уменьшение дамага за счет брони
+          dam := (Round(dam / (Random(Round(TacticEffect(1) * 2)) + 1))) -
+            Random(Round(Victim.defense / (Random(Round(Victim.TacticEffect(2) * 2)) + 1)));
+          // Для контратаки дамаг уменьшается
+          if CA = 1 then
+            dam := Round(dam / (1 + ((Random(Round(10 * TacticEffect(2))) + 1) / 10)));
+          // Попал, но не пробил
+          if dam <= 0 then
+            AddMsg(FullName(1, FALSE) + ' попал{/а} по ' + Victim.FullName(3, FALSE) + ', но не пробил{/а} броню.', id)
+          else
+          begin
+            if dam > 1000 then
+            begin
+              AddMsg('*W*#H#$A$T $T$#H#*E* *FUCK*?! ' + FloatToStr(closefight[CLOSE_ARM]) + ':' + IntToStr(attack) + ':' + IntToStr(str) + ':' +
+                FloatToStr(TacticEffect(1)), id);
+              More;
+            end;
+            // Отнять жизни
+            DoDamage(dam, Victim);
+            Victim.BloodStream(-(x - Victim.x), -(y - Victim.y));
+            AddMsg(FullName(1, FALSE) + ' попал{/а} по ' + Victim.FullName(3, FALSE) + '! (*' + IntToStr(dam) + '*)', id);
+            // Ранил
+            if Victim.Hp > 0 then
+            begin
+              if id = 1 then
+                AddMsg(Victim.FullName(1, FALSE) + ' ' + Victim.WoundDescription(FALSE) + '.', Victim.id);
+            end
+            else
+            // Убил
+            begin
+              // Увеличить навык этого оружия
+              d := (tempdam * 0.03) / dam;
+              if eq[6].id > 0 then
+                c := ItemsData[eq[6].id].kind
+              else
+                c := CLOSE_ARM;
+              if IsInNewAreaSkill(closefight[c], closefight[c] + d) then
+              begin
+                closefight[c] := closefight[c] + d;
+                AddMsg('#Теперь ты лучше владеешь навыком "#$' + CLOSEWPNNAME[c] + '$#"!#', id);
+                More;
+              end
+              else
+                closefight[c] := closefight[c] + d;
+              // У рандомного навыка отнять столько же
+              repeat
+                i := Random(CLOSEFIGHTAMOUNT) + 1;
+              until (i <> c);
+              if closefight[i] - d > 0 then
+              begin
+                if IsInNewAreaSkill(closefight[i], closefight[i] - d) then
+                begin
+                  closefight[i] := closefight[i] - d;
+                  AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренировок твой навык "*$' + CLOSEWPNNAME[c] + '$*" стал забываться.*', id);
+                  More;
+                end
+                else
+                  closefight[i] := closefight[i] - d;
+              end
+              else
+                closefight[i] := 0;
+              // Убить
+              KillSomeOne(Victim.idinlist);
+            end;
+          end;
         end;
+      end
+      else
+      begin
+        AddMsg(FullName(1, FALSE) + ' промахнул{ся/ась} по ' + Victim.FullName(3, FALSE) + '.', id);
+      end;
       // Если враг еще не умер
       if Victim.id > 0 then
       begin
         // Шанс контратаки!!!
-        if Round(Victim.TacticEffect(1)) * Random(Round(Victim.dex / 2) + (Victim.ability[abQUICKREACTION]) * Round(AbilitysData[abQUICKREACTION].koef)) + 1 > Random(100)+1 then
+        if Round(Victim.TacticEffect(1)) * Random(Round(Victim.dex / 2) + (Victim.Ability[abQUICKREACTION]) *
+          Round(AbilitysData[abQUICKREACTION].koef)) + 1 > Random(100) + 1 then
           Victim.Fight(Self, 1);
         // Шанс ударить еще раз!!!
-        if Round(TacticEffect(2)) * Random(Round(Victim.dex / 4) + (Victim.ability[abQUICKATTACK]) * Round(AbilitysData[abQUICKATTACK].koef)) + 1 > Random(100)+1 then
+        if Round(TacticEffect(2)) * Random(Round(Victim.dex / 4) + (Victim.Ability[abQUICKATTACK]) * Round(AbilitysData[abQUICKATTACK].koef)) + 1 >
+          Random(100) + 1 then
           Fight(Victim, 2);
       end;
     end;
     // Атаковать нейтрального
-    if  (id = 1) and (Victim.relation = 0)then
+    if (id = 1) and (Victim.relation = 0) then
     begin
-      if Ask('Точно напасть на '+Victim.FullName(2, TRUE)+'? #(Y/n)#') = 'Y' then
+      if Ask('Точно напасть на ' + Victim.FullName(2, TRUE) + '? #(Y/n)#') = 'Y' then
       begin
         Victim.relation := 1; // Агрессия!
         Fight(Victim, 0);
         AttackNeutral(Victim);
-      end else
-        AddMsg('Ты немного подумал{/а} и решил{/а} этого не делать.',0);
+      end
+      else
+        AddMsg('Ты немного подумал{/а} и решил{/а} этого не делать.', 0);
     end;
-  end else
-    AddMsg('Но здесь же никого нет!',0);
+  end
+  else
+    AddMsg('Но здесь же никого нет!', 0);
 end;
 
 { Стрелять }
-procedure TMonster.Fire(var Victim : TMonster);
+procedure TMonster.Fire(var Victim: TMonster);
 var
-  i,c : byte;
-  dam, tempdam : integer;
-  d : real;
-  Item : TItem;
+  i, c: byte;
+  dam, tempdam: integer;
+  d: real;
+  Item: TItem;
 begin
-  if M.MonP[Victim.x, victim.y] > 0 then
+  if M.MonP[Victim.x, Victim.y] > 0 then
   begin
     if Bow.id > 0 then
-      AddMsg(FullName(1, FALSE)+', используя '+ItemsData[Bow.id].name3+', выстрелил{/a} в '+Victim.FullName(2, FALSE)+'!',id) else
-        AddMsg(FullName(1, FALSE)+' швырнул{/a} '+ItemsData[Arrow.id].name3+' в '+Victim.FullName(2, FALSE)+'!',id);
+      AddMsg(FullName(1, FALSE) + ', используя ' + ItemsData[Bow.id].name3 + ', выстрелил{/a} в ' + Victim.FullName(2, FALSE) + '!', id)
+    else
+      AddMsg(FullName(1, FALSE) + ' швырнул{/a} ' + ItemsData[Arrow.id].name3 + ' в ' + Victim.FullName(2, FALSE) + '!', id);
     // Уклониться
-    if Random(Round(TacticEffect(2)*(dex+(ability[abACCURACY]*AbilitysData[abACCURACY].koef))))+1 > Random(Round(Victim.TacticEffect(1)*((Victim.dex/4)+(Victim.ability[abDODGER]*AbilitysData[abDODGER].koef))))+1 then
+    if Random(Round(TacticEffect(2) * (dex + (Ability[abACCURACY] * AbilitysData[abACCURACY].koef)))) + 1 >
+      Random(Round(Victim.TacticEffect(1) * ((Victim.dex / 4) + (Victim.Ability[abDODGER] * AbilitysData[abDODGER].koef)))) + 1 then
     begin
       // Отразить щитом (шанс меньше чем в ближнем бою)
-      if (Victim.eq[8].id > 0) and (Random(Round(Victim.dex*Victim.TacticEffect(1)) * 4)+1 = 1) then
+      if (Victim.eq[8].id > 0) and (Random(Round(Victim.dex * Victim.TacticEffect(1)) * 4) + 1 = 1) then
         if Victim.id = 1 then
-          AddMsg('#'+Victim.FullName(1, FALSE)+' блокировал{/а} '+ItemsData[pc.eq[13].id].name3+' своим щитом!#',Victim.id) else
-            AddMsg('*'+Victim.FullName(1, FALSE)+' блокировал{/а} '+ItemsData[pc.eq[13].id].name3+' своим щитом!*',Victim.id)
+          AddMsg('#' + Victim.FullName(1, FALSE) + ' блокировал{/а} ' + ItemsData[pc.eq[13].id].name3 + ' своим щитом!#', Victim.id)
+        else
+          AddMsg('*' + Victim.FullName(1, FALSE) + ' блокировал{/а} ' + ItemsData[pc.eq[13].id].name3 + ' своим щитом!*', Victim.id)
       else
-        // Попал
-        begin
-          Dam := 0;
-          // Рассчитать дамаг
-          if Bow.id > 0 then
-          begin
-            if farfight[ItemsData[Bow.id].kind] > 0 then
-              Dam := Round((Random(Round(ItemsData[Arrow.id].attack+(str/6)))+1) * (farfight[ItemsData[Bow.id].kind] / 100)) else
-                Dam := 0;
-          end else
-            // Бросок предета
-            begin
-              if farfight[FAR_THROW] > 0 then
-                Dam := Round(Random(Round(ItemsData[Arrow.id].attack+(str/3)))+1 * (farfight[FAR_THROW] / 100)) else
-                  Dam := 0;
-            end;
-          TempDam := Dam;
-          // Уменьшение дамага за счет брони
-          Dam := (Round(Dam/(Random(Round(TacticEffect(1)*2))+1))) - Random(Round(Victim.defense/(Random(Round(Victim.TacticEffect(2)*2))+1)));
-          // Попал, но не пробил
-          if Dam <= 0 then
-            AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+', но не пробил{/а} броню.',id) else
-              begin
-                // Отнять жизни
-                DoDamage(Dam, Victim);
-                Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
-                // Ранил
-                if Victim.hp > 0 then
-                begin
-                  AddMsg(FullName(1, FALSE)+' попал{/а} по '+Victim.FullName(3, FALSE)+'! (*'+IntToStr(Dam)+'*)',id);
-                  if id = 1 then AddMsg(Victim.FullName(1, FALSE)+' '+Victim.WoundDescription(False)+'.',Victim.id);
-                end else
-                  // Убил
-                  begin
-                    // Увеличить навык этого оружия
-                    d := (TempDam * 0.03) / Dam;
-                    if Bow.id > 0 then
-                      c := ItemsData[Bow.id].kind else
-                        c := FAR_THROW;
-                    if IsInNewAreaSkill(farfight[c], farfight[c] +  d) then
-                    begin
-                      farfight[c] := farfight[c] +  d;
-                      AddMsg('#Теперь ты лучше владеешь навыком "$'+FARWPNNAME[c]+'$"!#',id);
-                      More;
-                    end else
-                      farfight[c] := farfight[c] +  d;
-                    // У рандомного навыка отнять столько же
-                    repeat
-                      i := Random(FARFIGHTAMOUNT)+1;
-                    until
-                      (i <> c);
-                    if FarFight[i] - d > 0 then
-                    begin
-                      if IsInNewAreaSkill(Farfight[i], Farfight[i] -  d) then
-                      begin
-                        Farfight[c] := Farfight[c] +  d;
-                        AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренеровок твой навык "$'+FARWPNNAME[c]+'$" стал забываться.*',id);
-                        More;
-                      end else
-                        FarFight[i] := FarFight[i] - d;
-                    end else
-                        FarFight[i] := 0;
-                    // Убить
-                    KillSomeOne(Victim.idinlist);
-                  end;
-              end;
-        end;
-    end else
+      // Попал
       begin
-        AddMsg(FullName(1, FALSE)+' промахнул{ся/ась} по '+Victim.FullName(3, FALSE)+'.',id);
-        Item := Arrow;
-        Item.amount := 1;
-        PutItem(Victim.x, Victim.y, Item,1);
+        dam := 0;
+        // Рассчитать дамаг
+        if Bow.id > 0 then
+        begin
+          if farfight[ItemsData[Bow.id].kind] > 0 then
+            dam := Round((Random(Round(ItemsData[Arrow.id].attack + (str / 6))) + 1) * (farfight[ItemsData[Bow.id].kind] / 100))
+          else
+            dam := 0;
+        end
+        else
+        // Бросок предета
+        begin
+          if farfight[FAR_THROW] > 0 then
+            dam := Round(Random(Round(ItemsData[Arrow.id].attack + (str / 3))) + 1 * (farfight[FAR_THROW] / 100))
+          else
+            dam := 0;
+        end;
+        tempdam := dam;
+        // Уменьшение дамага за счет брони
+        dam := (Round(dam / (Random(Round(TacticEffect(1) * 2)) + 1))) -
+          Random(Round(Victim.defense / (Random(Round(Victim.TacticEffect(2) * 2)) + 1)));
+        // Попал, но не пробил
+        if dam <= 0 then
+          AddMsg(FullName(1, FALSE) + ' попал{/а} по ' + Victim.FullName(3, FALSE) + ', но не пробил{/а} броню.', id)
+        else
+        begin
+          // Отнять жизни
+          DoDamage(dam, Victim);
+          Victim.BloodStream(-(x - Victim.x), -(y - Victim.y));
+          // Ранил
+          if Victim.Hp > 0 then
+          begin
+            AddMsg(FullName(1, FALSE) + ' попал{/а} по ' + Victim.FullName(3, FALSE) + '! (*' + IntToStr(dam) + '*)', id);
+            if id = 1 then
+              AddMsg(Victim.FullName(1, FALSE) + ' ' + Victim.WoundDescription(FALSE) + '.', Victim.id);
+          end
+          else
+          // Убил
+          begin
+            // Увеличить навык этого оружия
+            d := (tempdam * 0.03) / dam;
+            if Bow.id > 0 then
+              c := ItemsData[Bow.id].kind
+            else
+              c := FAR_THROW;
+            if IsInNewAreaSkill(farfight[c], farfight[c] + d) then
+            begin
+              farfight[c] := farfight[c] + d;
+              AddMsg('#Теперь ты лучше владеешь навыком "$' + FARWPNNAME[c] + '$"!#', id);
+              More;
+            end
+            else
+              farfight[c] := farfight[c] + d;
+            // У рандомного навыка отнять столько же
+            repeat
+              i := Random(FARFIGHTAMOUNT) + 1;
+            until (i <> c);
+            if farfight[i] - d > 0 then
+            begin
+              if IsInNewAreaSkill(farfight[i], farfight[i] - d) then
+              begin
+                farfight[c] := farfight[c] + d;
+                AddMsg('*Ты вдруг понял, что из-за долгого отсутствия тренеровок твой навык "$' + FARWPNNAME[c] + '$" стал забываться.*', id);
+                More;
+              end
+              else
+                farfight[i] := farfight[i] - d;
+            end
+            else
+              farfight[i] := 0;
+            // Убить
+            KillSomeOne(Victim.idinlist);
+          end;
+        end;
       end;
+    end
+    else
+    begin
+      AddMsg(FullName(1, FALSE) + ' промахнул{ся/ась} по ' + Victim.FullName(3, FALSE) + '.', id);
+      Item := Arrow;
+      Item.amount := 1;
+      PutItem(Victim.x, Victim.y, Item, 1);
+    end;
     // Если пристрелен нейтральный
-    if  (id = 1) and (Victim.relation = 0)then
+    if (id = 1) and (Victim.relation = 0) then
     begin
       Victim.relation := 1; // Агрессия!
       AttackNeutral(Victim);
     end;
-  end else
-    AddMsg('Но здесь никого нет!',id);
+  end
+  else
+    AddMsg('Но здесь никого нет!', id);
 end;
 
 { Атаковать нейтрального }
-procedure TMonster.AttackNeutral(Victim : TMonster);
+procedure TMonster.AttackNeutral(Victim: TMonster);
 var
-  i : byte;
+  i: byte;
 begin
   if Victim.id = mdBREAKMT then
   begin
     More;
-    AddMsg('Ты почувствовал{/a}, что пол под твоими ногами развергся...',0);
+    AddMsg('Ты почувствовал{/a}, что пол под твоими ногами развергся...', 0);
     More;
-    AddMsg('И ты проваливаешься вниз!',0);
+    AddMsg('И ты проваливаешься вниз!', 0);
     More;
     pc.level := 3;
     M.MakeSpMap(pc.level);
-    pc.PlaceHere(30,23);
+    pc.PlaceHere(30, 23);
     pc.turn := 2;
-  end else
+  end
+  else
+  begin
+    AddMsg(Victim.FullName(1, FALSE) + ' в ярости!', Victim.id);
+    Victim.aim := 1;
+    // Если это произошло в деревеньке... то герою #!^&#@
+    if (pc.level = 1) and (pc.depth = 0) then
     begin
-      AddMsg(Victim.FullName(1, FALSE)+' в ярости!',Victim.id);
-      Victim.aim := 1;
-      // Если это произошло в деревеньке... то герою #!^&#@
-      if (pc.level = 1) and (pc.depth = 0) then
-      begin
-        for i:=1 to 255 do
-          if (M.MonL[i].id > 0) and (M.MonL[i].relation = 0) then
+      for i := 1 to 255 do
+        if (M.MonL[i].id > 0) and (M.MonL[i].relation = 0) then
+        begin
+          // Автор испаряется :))
+          if M.MonL[i].id = mdBREAKMT then
           begin
-            // Автор испаряется :))
-            if M.MonL[i].id = mdBREAKMT then
-            begin
-              M.MonP[M.MonL[i].x,M.MonL[i].y] := 0;
-              M.MonL[i].id := 0;
-            end else
-              begin
-                M.MonL[i].relation := 1;
-                M.MonL[i].aim := 1;
-              end;
+            M.MonP[M.MonL[i].x, M.MonL[i].y] := 0;
+            M.MonL[i].id := 0;
+          end
+          else
+          begin
+            M.MonL[i].relation := 1;
+            M.MonL[i].aim := 1;
           end;
-        More;
-        AddMsg('Ты видишь, что все посмотрели на тебя...',0);
-        More;
-        AddMsg('И в воздухе зависла недобрая тишина...',0);
-        More;
-        AddMsg('Которая в следущую секунду была прервана криками!',0);
-        More;
-        AddMsg('*Что ты наделал{/a}! Теперь вся деревня против тебя!*',0);
-        More;
-      end;
+        end;
+      More;
+      AddMsg('Ты видишь, что все посмотрели на тебя...', 0);
+      More;
+      AddMsg('И в воздухе зависла недобрая тишина...', 0);
+      More;
+      AddMsg('Которая в следущую секунду была прервана криками!', 0);
+      More;
+      AddMsg('*Что ты наделал{/a}! Теперь вся деревня против тебя!*', 0);
+      More;
     end;
+  end;
 end;
 
 { Убить }
-procedure TMonster.KillSomeOne(Victim : byte);
+procedure TMonster.KillSomeOne(Victim: byte);
 begin
   if Victim = 1 then
-    AddMsg('*'+FullName(1, TRUE)+' убил{/a} '+pc.FullName(2, TRUE)+'!*',id) else
-      AddMsg('*'+FullName(1, TRUE)+' убил{/a} '+M.MonL[Victim].FullName(2, TRUE)+'!*',id);
+    AddMsg('*' + FullName(1, TRUE) + ' убил{/a} ' + pc.FullName(2, TRUE) + '!*', id)
+  else
+    AddMsg('*' + FullName(1, TRUE) + ' убил{/a} ' + M.MonL[Victim].FullName(2, TRUE) + '!*', id);
   if id = 1 then
   begin
     inc(pc.exp, MonstersData[+M.MonL[Victim].id].exp);
@@ -1382,13 +1435,14 @@ begin
       pc.GainLevel;
     if (M.MonL[Victim].id = mdBLINDBEAST) and (PlayMode = AdventureMode) then
     begin
-      AddMsg('#Ты выполнил{/a} квест!!!#',0);
+      AddMsg('#Ты выполнил{/a} квест!!!#', 0);
       pc.quest[1] := 2;
       More;
     end;
     if M.MonL[Victim].id = mdKEYMAN then
     begin
-      if pc.quest[2] = 1 then pc.quest[2] := 2;
+      if pc.quest[2] = 1 then
+        pc.quest[2] := 2;
       More;
     end;
   end;
@@ -1398,219 +1452,239 @@ end;
 { Умереть }
 procedure TMonster.Death;
 var
-  i : byte;
+  i: byte;
 begin
   // Удалить указатель
-  M.MonP[x,y] := 0;
+  M.MonP[x, y] := 0;
   // Труп
   if idinlist = 1 then
-    PutItem(x,y,CreateItem(idCORPSE, 1, id),1) else
-      begin
-        if id = mdBLINDBEAST then
-          PutItem(x,y,CreateItem(idHEAD, 1, id),1) else
-          begin
-            // Тело
-            if Random(5)+1 = 1 then
-              PutItem(x,y,CreateItem(idCORPSE, 1, id),1);
-            // Голова  
-            if Random(15)+1 = 1 then
-              PutItem(x,y,CreateItem(idHEAD, 1, id),1);
-          end;
-      end;
+    PutItem(x, y, CreateItem(idCORPSE, 1, id), 1)
+  else
+  begin
+    if id = mdBLINDBEAST then
+      PutItem(x, y, CreateItem(idHEAD, 1, id), 1)
+    else
+    begin
+      // Тело
+      if Random(5) + 1 = 1 then
+        PutItem(x, y, CreateItem(idCORPSE, 1, id), 1);
+      // Голова
+      if Random(15) + 1 = 1 then
+        PutItem(x, y, CreateItem(idHEAD, 1, id), 1);
+    end;
+  end;
   // Выкинуть вещи
-  for i:=1 to EqAmount do
-    if Eq[i].id > 0 then
-      PutItem(x,y, Eq[i], Eq[i].amount);
-  for i:=1 to MaxHandle do
-    if Inv[i].id > 0 then
-      PutItem(x,y, Inv[i], Inv[i].amount);
+  for i := 1 to EqAmount do
+    if eq[i].id > 0 then
+      PutItem(x, y, eq[i], eq[i].amount);
+  for i := 1 to MaxHandle do
+    if inv[i].id > 0 then
+      PutItem(x, y, inv[i], inv[i].amount);
   // Если это герой, то
-  if idinlist = 1 then pc.AfterDeath;
+  if idinlist = 1 then
+    pc.AfterDeath;
   // Всё.
   id := 0;
   idinlist := 0;
 end;
 
 { Отдать вещь From Where 1 - ивентарь 2 - экипировка }
-procedure TMonster.GiveItem(ItemId : integer; FromWhere : byte; var Victim : TMonster);
+procedure TMonster.GiveItem(ItemId: integer; FromWhere: byte; var Victim: TMonster);
 var
-  GivenItem : TItem;
+  GivenItem: TItem;
 begin
   case FromWhere of
-    1 : GivenItem := Inv[ItemId];
-    2 : GivenItem := Eq[ItemID];
+    1:
+      GivenItem := inv[ItemId];
+    2:
+      GivenItem := eq[ItemId];
   end;
   if ((Victim.relation = 0) and (id = 1)) or (id > 1) then
   begin
-    if Ask('Точно отдать '+ItemName(GivenItem, 1, TRUE)+' '+Victim.FullName(3, TRUE)+'? #(Y/n)#') = 'Y' then
+    if Ask('Точно отдать ' + ItemName(GivenItem, 1, TRUE) + ' ' + Victim.FullName(3, TRUE) + '? #(Y/n)#') = 'Y' then
     begin
       // 0-успешно,1-ничего нет,2-нет места,3-перегружен
-      case Victim.PickUp(GivenItem, FALSE,GivenItem.amount) of
-        0 :
-        begin // Успешно отдал
-          AddMsg(FullName(1, TRUE)+' отдал{/а} '+Victim.FullName(3, TRUE)+' '+ItemName(GivenItem, 1, TRUE)+'.',id);
-          // Отдал башку старейшине
-          if (GivenItem.id = idHEAD) and (GivenItem.owner = mdBLINDBEAST) then
-            if pc.quest[1] > 1 then
-              pc.quest[1] := 3;
-          // Отдал ключ старейшине
-          if GivenItem.id = idGATESKEY then
-            if pc.quest[2] > 1 then
-              pc.quest[2] := 3;
-          // Отдал корень стражнику
-          if (GivenItem.id = idMANDAGORAROOT) then
-          begin
-            AddMsg('#Ты выполнил{/a} квест!!!#',0);
-            pc.quest[3] := 3;
+      case Victim.PickUp(GivenItem, FALSE, GivenItem.amount) of
+        0:
+          begin // Успешно отдал
+            AddMsg(FullName(1, TRUE) + ' отдал{/а} ' + Victim.FullName(3, TRUE) + ' ' + ItemName(GivenItem, 1, TRUE) + '.', id);
+            // Отдал башку старейшине
+            if (GivenItem.id = idHEAD) and (GivenItem.owner = mdBLINDBEAST) then
+              if pc.quest[1] > 1 then
+                pc.quest[1] := 3;
+            // Отдал ключ старейшине
+            if GivenItem.id = idGATESKEY then
+              if pc.quest[2] > 1 then
+                pc.quest[2] := 3;
+            // Отдал корень стражнику
+            if (GivenItem.id = idMANDAGORAROOT) then
+            begin
+              AddMsg('#Ты выполнил{/a} квест!!!#', 0);
+              pc.quest[3] := 3;
+            end;
+            case FromWhere of
+              1:
+                DeleteItemInv(ItemId, inv[ItemId].amount, 1);
+              2:
+                DeleteItemInv(ItemId, eq[ItemId].amount, 2);
+            end;
+            RefreshInventory;
           end;
-          case FromWhere of
-            1 : DeleteItemInv(ItemId, Inv[ItemID].amount, 1);
-            2 : DeleteItemInv(ItemId, Eq[ItemID].amount, 2);
-          end;
-          RefreshInventory;
-        end;
-        1 : AddMsg(FullName(1, TRUE)+' отдал{/а} '+Victim.FullName(3, TRUE)+' глюк!',id);
-        2 : AddMsg(Victim.FullName(1, TRUE)+' уже несет очень много вещей!',Victim.id);
-        3 : AddMsg(Victim.FullName(1, TRUE)+' перегружен{/а} вещами!',Victim.id);
+        1:
+          AddMsg(FullName(1, TRUE) + ' отдал{/а} ' + Victim.FullName(3, TRUE) + ' глюк!', id);
+        2:
+          AddMsg(Victim.FullName(1, TRUE) + ' уже несет очень много вещей!', Victim.id);
+        3:
+          AddMsg(Victim.FullName(1, TRUE) + ' перегружен{/а} вещами!', Victim.id);
       end;
-    end else
-      AddMsg('Немного подумав, ты решил{/a} этого не делать.',0);
-  end else
-    AddMsg('Кажется, это не совсем уместно...',0);
+    end
+    else
+      AddMsg('Немного подумав, ты решил{/a} этого не делать.', 0);
+  end
+  else
+    AddMsg('Кажется, это не совсем уместно...', 0);
 end;
 
 { Кровь! }
-procedure TMonster.BloodStream(dx,dy : shortint);
+procedure TMonster.BloodStream(dx, dy: shortint);
 var
-  i : shortint;
+  i: shortint;
 begin
-  if hp > 0  then
+  if Hp > 0 then
   begin
-    for i:=0 to Random(Random(3)+1)+1 do
+    for i := 0 to Random(Random(3) + 1) + 1 do
     begin
-      if TilesData[M.Tile[x+(dx*i),y+(dy*i)]].blood then
-        M.blood[x+(dx*i),y+(dy*i)] := Random(2)+1;
-      if not(TilesData[M.Tile[x+(dx*i),y+(dy*i)]].move) then
+      if TilesData[M.Tile[x + (dx * i), y + (dy * i)]].blood then
+        M.blood[x + (dx * i), y + (dy * i)] := Random(2) + 1;
+      if not(TilesData[M.Tile[x + (dx * i), y + (dy * i)]].Move) then
         break;
     end;
-  end else
-    M.blood[x,y] := Random(2)+1;
+  end
+  else
+    M.blood[x, y] := Random(2) + 1;
 end;
 
 { Поднять вещи }
-function TMonster.PickUp(Item : TItem; FromEq : boolean; amount : integer) : byte;
+function TMonster.PickUp(Item: TItem; FromEq: boolean; amount: integer): byte;
 var
-  i : byte;
-  f : boolean;
+  i: byte;
+  f: boolean;
 begin
   Result := 0;
   if Item.id = 0 then
-    Result := 1 else
+    Result := 1
+  else
+  begin
+    // Если поднимается аммуниция которая сейчас задействана в экипировке, то прибавить к ней
+    if (SameItems(eq[13], Item)) and not(FromEq) then
+    begin
+      if (invmass + (Item.mass * amount) < MaxMass) then
       begin
-        // Если поднимается аммуниция которая сейчас задействана в экипировке, то прибавить к ней
-        if (SameItems(Eq[13], Item)) and not (FromEq) then
+        inc(eq[13].amount, amount);
+        invmass := invmass + (Item.mass * amount);
+      end
+      else
+        Result := 3;
+    end
+    else
+    begin
+      f := FALSE;
+      for i := 1 to MaxHandle do
+        if SameItems(inv[i], Item) then
         begin
-          if (invmass + (Item.mass*amount) < MaxMass) then
+          if (invmass + (Item.mass * amount) < MaxMass) or (FromEq) then
           begin
-            inc(Eq[13].amount, amount);
-            invmass := invmass + (Item.mass*amount);
-          end else
-              Result := 3;
-        end else
+            inc(inv[i].amount, amount);
+            if not FromEq then
+              invmass := invmass + (Item.mass * amount);
+            f := TRUE;
+            break;
+          end
+          else
           begin
-            f := false;
-            for i:=1 to MaxHandle do
-              if SameItems(Inv[i], Item) then
-              begin
-                if (invmass + (Item.mass*amount) < MaxMass) or (FromEq) then
-                begin
-                  inc(Inv[i].amount, amount);
-                  if not FromEq then
-                    invmass := invmass + (Item.mass*amount);
-                  f := TRUE;
-                  break;
-                end else
-                  begin
-                    Result := 3;
-                    break;
-                  end;
-              end;
-            if f = false then
-              for i:=1 to MaxHandle do
-                if Inv[i].id = 0 then
-                begin
-                  if (invmass + (Item.mass*amount) < MaxMass) or (FromEq) then
-                  begin
-                    Inv[i] := Item;
-                    Inv[i].amount := amount;
-                    if not FromEq then
-                      invmass := invmass + (Item.mass*amount);
-                    break;
-                  end else
-                    begin
-                      Result := 3;
-                      break;
-                    end;
-                end else
-                  if (i = MaxHandle) and(Inv[i].id <> 0) then
-                    Result := 2;
+            Result := 3;
+            break;
           end;
-      end;
+        end;
+      if f = FALSE then
+        for i := 1 to MaxHandle do
+          if inv[i].id = 0 then
+          begin
+            if (invmass + (Item.mass * amount) < MaxMass) or (FromEq) then
+            begin
+              inv[i] := Item;
+              inv[i].amount := amount;
+              if not FromEq then
+                invmass := invmass + (Item.mass * amount);
+              break;
+            end
+            else
+            begin
+              Result := 3;
+              break;
+            end;
+          end
+          else if (i = MaxHandle) and (inv[i].id <> 0) then
+            Result := 2;
+    end;
+  end;
 end;
 
 { Сколько может нести монстр }
-function TMonster.MaxMass : real;
+function TMonster.MaxMass: real;
 begin
   Result := str * 25;
 end;
 
-{ Удалить предмет из инвентаря FromWhere 1 -  Инвентарь, 2 - Экипировка}
-procedure TMonster.DeleteItemInv(i : byte; amount : integer; FromWhere : byte);
+{ Удалить предмет из инвентаря FromWhere 1 -  Инвентарь, 2 - Экипировка }
+procedure TMonster.DeleteItemInv(i: byte; amount: integer; FromWhere: byte);
 begin
   case FromWhere of
-    1 :
-    begin
-      // Масса
-      invmass := invmass - (Inv[i].mass*Inv[i].amount);
-      // Удалить
-      if (Inv[i].amount > 1) and (amount > 0) then
+    1:
       begin
-        dec(Inv[i].amount,amount);
-        if Inv[i].amount < 1 then
-          FillMemory(@Inv[i], SizeOf(TItem), 0);
-      end else
-        FillMemory(@Inv[i], SizeOf(TItem), 0);
-      RefreshInventory;
-    end;
-    2 :
-    begin
-      // Масса
-      invmass := invmass - (Eq[i].mass*Eq[i].amount);
-      // Удалить
-      if (Eq[i].amount > 1) and (amount > 0) then
+        // Масса
+        invmass := invmass - (inv[i].mass * inv[i].amount);
+        // Удалить
+        if (inv[i].amount > 1) and (amount > 0) then
+        begin
+          dec(inv[i].amount, amount);
+          if inv[i].amount < 1 then
+            FillMemory(@inv[i], sizeof(TItem), 0);
+        end
+        else
+          FillMemory(@inv[i], sizeof(TItem), 0);
+        RefreshInventory;
+      end;
+    2:
       begin
-        dec(Eq[i].amount,amount);
-        if Eq[i].amount < 1 then
-          FillMemory(@Eq[i], SizeOf(TItem), 0);
-      end else
-        FillMemory(@Eq[i], SizeOf(TItem), 0);
-    end;
+        // Масса
+        invmass := invmass - (eq[i].mass * eq[i].amount);
+        // Удалить
+        if (eq[i].amount > 1) and (amount > 0) then
+        begin
+          dec(eq[i].amount, amount);
+          if eq[i].amount < 1 then
+            FillMemory(@eq[i], sizeof(TItem), 0);
+        end
+        else
+          FillMemory(@eq[i], sizeof(TItem), 0);
+      end;
   end;
 end;
 
 { Перебрать инвентарь }
 procedure TMonster.RefreshInventory;
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=1 to MaxHandle do
+  for i := 1 to MaxHandle do
     if inv[i].amount <= 0 then
-      FillMemory(@inv[i], SizeOf(TItem), 0);
-  for i:=1 to MaxHandle-1 do
+      FillMemory(@inv[i], sizeof(TItem), 0);
+  for i := 1 to MaxHandle - 1 do
     if inv[i].id = 0 then
     begin
-      inv[i] := inv[i+1];
-      FillMemory(@inv[i+1], SizeOf(TItem), 0);
+      inv[i] := inv[i + 1];
+      FillMemory(@inv[i + 1], sizeof(TItem), 0);
     end;
 end;
 
@@ -1619,34 +1693,40 @@ function TMonster.ColorOfTactic: longword;
 begin
   Result := 0;
   case tactic of
-    1 : Result := RGB(70,0,0);
-    2 : Result := RGB(0,70,0);
+    1:
+      Result := RGB(70, 0, 0);
+    2:
+      Result := RGB(0, 70, 0);
   end;
 end;
 
 { Вернуть множитель (0.5, 1 или 1.5 - эффект от тактики) }
-function TMonster.TacticEffect(situation : byte) : real;
+function TMonster.TacticEffect(situation: byte): real;
 begin
   Result := 1;
   case situation of
-    1 :
-    case tactic of
-      1 : Result := 0.5;
-      2 : Result := 1.5;
-    end;
-    2 :
-    case tactic of
-      1 : Result := 1.5;
-      2 : Result := 0.5;
-    end;
+    1:
+      case tactic of
+        1:
+          Result := 0.5;
+        2:
+          Result := 1.5;
+      end;
+    2:
+      case tactic of
+        1:
+          Result := 1.5;
+        2:
+          Result := 0.5;
+      end;
   end;
 end;
 
 { Снарядить предмет }
-function TMonster.EquipItem(Item : TItem; FromInv : boolean) : byte;
+function TMonster.EquipItem(Item: TItem; FromInv: boolean): byte;
 var
-  TempItem : TItem;
-  cell : byte;
+  TempItem: TItem;
+  cell: byte;
 begin
   Result := 0;
   cell := Vid2Eq(ItemsData[Item.id].vid);
@@ -1658,78 +1738,98 @@ begin
     eq[cell] := Item;
     DeleteItemInv(MenuSelected, inv[MenuSelected].amount, 1);
     if (id = 1) then
-      case PickUp(TempItem, TRUE,TempItem.amount) of
-        0 :
-        begin
-          if cell = 13 then
-            AddMsg('Теперь ты используешь '+ItemName(eq[cell], 1, TRUE)+', а '+ItemName(TempItem, 1, TRUE)+' ты убрал{/a} в инвентарь.',0) else
-              AddMsg('Теперь ты используешь '+ItemName(eq[cell], 1, FALSE)+', а '+ItemName(TempItem, 1, TRUE)+' ты убрал{/a} в инвентарь.',0);
-        end;
-        2 : // Нет места
-          AddMsg('К сожалению, в инвентаре не достаточно места для такой операции.',0);
+      case PickUp(TempItem, TRUE, TempItem.amount) of
+        0:
+          begin
+            if cell = 13 then
+              AddMsg('Теперь ты используешь ' + ItemName(eq[cell], 1, TRUE) + ', а ' + ItemName(TempItem, 1, TRUE) + ' ты убрал{/a} в инвентарь.', 0)
+            else
+              AddMsg('Теперь ты используешь ' + ItemName(eq[cell], 1, FALSE) + ', а ' + ItemName(TempItem, 1, TRUE) +
+                ' ты убрал{/a} в инвентарь.', 0);
+          end;
+        2: // Нет места
+          AddMsg('К сожалению, в инвентаре не достаточно места для такой операции.', 0);
       end;
     Result := 1;
-  end else
-    begin
-      eq[cell] := Item;
-      if not FromInv then
-        InvMass := InvMass + (eq[cell].mass*eq[cell].amount);
-    end;
+  end
+  else
+  begin
+    eq[cell] := Item;
+    if not FromInv then
+      invmass := invmass + (eq[cell].mass * eq[cell].amount);
+  end;
   if cell <> EqAmount then
-    if eq[cell].amount > 1 then eq[cell].amount := 1;
+    if eq[cell].amount > 1 then
+      eq[cell].amount := 1;
 end;
 
 { Вернуть описание состояние монстра (одержимый, проклятый и тд) }
-function TMonster.ExStatus(situation : byte) : string;
-var s : string;
+function TMonster.ExStatus(situation: byte): string;
+var
+  s: string;
 begin
   s := '';
   // Для героя эти состояния не распределяются
   if id > 1 then
   begin
     // Отрешенный
-    if (Relation = 0) and (not IsFlag(MonstersData[id].flags, M_NEUTRAL)) then
-      s := s + 'Отрешенн{ый/ая}' else
-    // Одержимый
-    if (Relation = 1) and (IsFlag(MonstersData[id].flags, M_NEUTRAL)) then
-      s := s + 'Одержим{ый/ая}';
+    if (relation = 0) and (not IsFlag(MonstersData[id].Flags, M_NEUTRAL)) then
+      s := s + 'Отрешенн{ый/ая}'
+    else
+      // Одержимый
+      if (relation = 1) and (IsFlag(MonstersData[id].Flags, M_NEUTRAL)) then
+        s := s + 'Одержим{ый/ая}';
   end;
   // Вернуть результат
   if s = '' then
-    Result := s else
-      Result := s+' ';
+    Result := s
+  else
+    Result := s + ' ';
 end;
 
 { Вернуть полное имя монстра }
-function TMonster.FullName(situation : byte; writename : boolean) : string;
-var s : string;
+function TMonster.FullName(situation: byte; writename: boolean): string;
+var
+  s: string;
 begin
   s := '';
-  {(1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи)}
+  { (1Кто,2Кого,3Кому,4Кем,5Чей,6Чьи) }
   // Статус монстра
   case situation of
-    1 : s := ExStatus(4);
-    2 : s := ExStatus(7);
-    3 : s := ExStatus(8);
-    4 : s := ExStatus(9);
-    5 : s := ExStatus(9);
-    6 : s := ExStatus(10);
+    1:
+      s := ExStatus(4);
+    2:
+      s := ExStatus(7);
+    3:
+      s := ExStatus(8);
+    4:
+      s := ExStatus(9);
+    5:
+      s := ExStatus(9);
+    6:
+      s := ExStatus(10);
   end;
   // Название монстра
   case situation of
-    1 : s := s + MonstersData[id].name1;
-    2 : s := s + MonstersData[id].name2;
-    3 : s := s + MonstersData[id].name3;
-    4 : s := s + MonstersData[id].name4;
-    5 : s := s + MonstersData[id].name5;
-    6 : s := s + MonstersData[id].name6;
+    1:
+      s := s + MonstersData[id].name1;
+    2:
+      s := s + MonstersData[id].name2;
+    3:
+      s := s + MonstersData[id].name3;
+    4:
+      s := s + MonstersData[id].name4;
+    5:
+      s := s + MonstersData[id].name5;
+    6:
+      s := s + MonstersData[id].name6;
   end;
   // Класс монстра
-  if ((IsFlag(MonstersData[id].flags, M_ClASS))) and (id > 1) then
+  if ((IsFlag(MonstersData[id].Flags, M_CLASS))) and (id > 1) then
     s := s + '-' + ClName(situation);
   // Если есть имя
   if id > 1 then
-    if ((IsFlag(MonstersData[id].flags, M_NAME))) and (writename) then
+    if ((IsFlag(MonstersData[id].Flags, M_NAME))) and (writename) then
       s := s + ' по имени ' + name;
   Result := s;
 end;
@@ -1737,124 +1837,159 @@ end;
 { Минус стрела }
 procedure TMonster.DecArrows;
 begin
-  dec(Eq[13].amount);
+  dec(eq[13].amount);
   if eq[13].amount = 0 then
   begin
     // Если ГГ
     if id = 1 then
-      AddMsg('*У тебя закончились '+ItemsData[eq[13].id].name2+'!*',0) else
-        if M.Saw[x,y] = 2 then
-          AddMsg('$Кажется у '+FullName(2, FALSE)+' закончились '+ItemsData[eq[13].id].name2+'!$',0);
+      AddMsg('*У тебя закончились ' + ItemsData[eq[13].id].name2 + '!*', 0)
+    else if M.Saw[x, y] = 2 then
+      AddMsg('$Кажется у ' + FullName(2, FALSE) + ' закончились ' + ItemsData[eq[13].id].name2 + '!$', 0);
     eq[13].id := 0;
   end;
 end;
 
 { Вернуть цифру класса героя }
-function TMonster.WhatClass : byte;
+function TMonster.WhatClass: byte;
 begin
   Result := 0;
   case atr[1] of
-    1 : // сила
-    case atr[2] of
-      1 : Result := 1;
-      2 : Result := 2;
-      3 : Result := 3;
-    end;
-    2 : // ловкость
-    case atr[2] of
-      1 : Result := 4;
-      2 : Result := 5;
-      3 : Result := 6;
-    end;
-    3 : // интеллект
-    case atr[2] of
-      1 : Result := 7;
-      2 : Result := 8;
-      3 : Result := 9;
-    end;
+    1: // сила
+      case atr[2] of
+        1:
+          Result := 1;
+        2:
+          Result := 2;
+        3:
+          Result := 3;
+      end;
+    2: // ловкость
+      case atr[2] of
+        1:
+          Result := 4;
+        2:
+          Result := 5;
+        3:
+          Result := 6;
+      end;
+    3: // интеллект
+      case atr[2] of
+        1:
+          Result := 7;
+        2:
+          Result := 8;
+        3:
+          Result := 9;
+      end;
   end;
 end;
 
 { Вернуть название расы }
-function TMonster.RCName(situation : byte) : string;
+function TMonster.RCName(situation: byte): string;
 var
-  g : byte;
+  g: byte;
 begin
   if id = 1 then
-    g := pc.gender else
-      g := MonstersData[id].gender;
+    g := pc.gender
+  else
+    g := MonstersData[id].gender;
   case situation of
-    1 :
+    1:
       case g of
-        1 : Result := 'Человек';
-        2 : Result := 'Человек';
+        1:
+          Result := 'Человек';
+        2:
+          Result := 'Человек';
       end;
-    2 :
+    2:
       case g of
-        1 : Result := 'Человека';
-        2 : Result := 'Человека';
+        1:
+          Result := 'Человека';
+        2:
+          Result := 'Человека';
       end;
-    3 :
+    3:
       case g of
-        1 : Result := 'Человеку';
-        2 : Result := 'Человеку';
+        1:
+          Result := 'Человеку';
+        2:
+          Result := 'Человеку';
       end;
-    4 :
+    4:
       case g of
-        1 : Result := 'Человеком';
-        2 : Result := 'Человеком';
+        1:
+          Result := 'Человеком';
+        2:
+          Result := 'Человеком';
       end;
-    5 :
+    5:
       case g of
-        1 : Result := 'Человека';
-        2 : Result := 'Человека';
+        1:
+          Result := 'Человека';
+        2:
+          Result := 'Человека';
       end;
-    6 :
+    6:
       case g of
-        1 : Result := 'Людей';
-        2 : Result := 'Людей';
+        1:
+          Result := 'Людей';
+        2:
+          Result := 'Людей';
       end;
   end;
 end;
 
 { Вернуть название класса }
-function TMonster.ClName(situation : byte) : string;
+function TMonster.ClName(situation: byte): string;
 var
-  g : byte;
+  g: byte;
 begin
   if id = 1 then
-    g := pc.gender else
-      g := MonstersData[id].gender;
+    g := pc.gender
+  else
+    g := MonstersData[id].gender;
   case situation of
-    1 :
+    1:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name1m;
-        2 : Result := MonsterClassName[WhatClass].name1f;
+        1:
+          Result := MonsterClassName[WhatClass].name1m;
+        2:
+          Result := MonsterClassName[WhatClass].name1f;
       end;
-    2 :
+    2:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name2m;
-        2 : Result := MonsterClassName[WhatClass].name2f;
+        1:
+          Result := MonsterClassName[WhatClass].name2m;
+        2:
+          Result := MonsterClassName[WhatClass].name2f;
       end;
-    3 :
+    3:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name3m;
-        2 : Result := MonsterClassName[WhatClass].name3f;
+        1:
+          Result := MonsterClassName[WhatClass].name3m;
+        2:
+          Result := MonsterClassName[WhatClass].name3f;
       end;
-    4 :
+    4:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name4m;
-        2 : Result := MonsterClassName[WhatClass].name4f;
+        1:
+          Result := MonsterClassName[WhatClass].name4m;
+        2:
+          Result := MonsterClassName[WhatClass].name4f;
       end;
-    5 :
+    5:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name5m;
-        2 : Result := MonsterClassName[WhatClass].name5f;
+        1:
+          Result := MonsterClassName[WhatClass].name5m;
+        2:
+          Result := MonsterClassName[WhatClass].name5f;
       end;
-    6 :
+    6:
       case g of
-        1 : Result := MonsterClassName[WhatClass].name6m;
-        2 : Result := MonsterClassName[WhatClass].name6f;
+        1:
+          Result := MonsterClassName[WhatClass].name6m;
+        2:
+          Result := MonsterClassName[WhatClass].name6f;
       end;
   end;
 end;
@@ -1862,150 +1997,152 @@ end;
 { Раставить очки умений и экипировать в зависимости от класса }
 procedure TMonster.PrepareSkills;
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=1 to CLOSEFIGHTAMOUNT do closefight[i] := 0;
-  for i:=1 to FARFIGHTAMOUNT do farfight[i] := 0;
+  for i := 1 to CLOSEFIGHTAMOUNT do
+    closefight[i] := 0;
+  for i := 1 to FARFIGHTAMOUNT do
+    farfight[i] := 0;
   case WhatClass of
-    1: //Воин
-    begin
-      closefight[CLOSE_TWO] := 60;
-      closefight[CLOSE_BLADE] := 60;
-      closefight[CLOSE_AXE] := 60;
-      closefight[CLOSE_ARM] := 60;
-      farfight[FAR_THROW] := 30;
-      farfight[FAR_BOW] := 30;
+    1: // Воин
+      begin
+        closefight[CLOSE_TWO] := 60;
+        closefight[CLOSE_BLADE] := 60;
+        closefight[CLOSE_AXE] := 60;
+        closefight[CLOSE_ARM] := 60;
+        farfight[FAR_THROW] := 30;
+        farfight[FAR_BOW] := 30;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
-      PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 60, 0), FALSE,60);
-    end;
-    2: //Варвар
-    begin
-      closefight[CLOSE_CLUB] := 50;
-      closefight[CLOSE_STAFF] := 30;
-      closefight[CLOSE_ARM] := 50;
-      farfight[FAR_THROW] := 30;
-      farfight[FAR_SLING] := 20;
-      farfight[FAR_PIPE] := 20;
+        EquipItem(CreateItem(idBOOTS, 1, 0), FALSE);
+        EquipItem(CreateItem(idCHAINARMOR, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 2), FALSE, 2);
+        PickUp(CreatePotion(lqHEAL, 1), FALSE, 1);
+        PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1);
+        PickUp(CreateItem(idLAVASH, 2, 0), FALSE, 2);
+        PickUp(CreateItem(idCOIN, 60, 0), FALSE, 60);
+      end;
+    2: // Варвар
+      begin
+        closefight[CLOSE_CLUB] := 50;
+        closefight[CLOSE_STAFF] := 30;
+        closefight[CLOSE_ARM] := 50;
+        farfight[FAR_THROW] := 30;
+        farfight[FAR_SLING] := 20;
+        farfight[FAR_PIPE] := 20;
 
-      EquipItem(CreateItem(idCAPE, 1, 0),FALSE);
-      PickUp(CreateItem(idMEAT, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 5, 0), FALSE,5);
-    end;
-    3: //Паладин
-    begin
-      closefight[CLOSE_TWO] := 60;
-      closefight[CLOSE_BLADE] := 60;
-      farfight[FAR_THROW] := 30;
-      farfight[FAR_BOW] := 30;
+        EquipItem(CreateItem(idCAPE, 1, 0), FALSE);
+        PickUp(CreateItem(idMEAT, 5, 0), FALSE, 5);
+        PickUp(CreateItem(idCOIN, 5, 0), FALSE, 5);
+      end;
+    3: // Паладин
+      begin
+        closefight[CLOSE_TWO] := 60;
+        closefight[CLOSE_BLADE] := 60;
+        farfight[FAR_THROW] := 30;
+        farfight[FAR_BOW] := 30;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
-      EquipItem(CreateItem(idCHAINARMOR , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
-      PickUp(CreatePotion(lqHEAL, 1), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 3, 0), FALSE,3);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
-    end;
-    4: //Странник
-    begin
-      closefight[CLOSE_BLADE] := 35;
-      closefight[CLOSE_STAFF] := 35;
-      closefight[CLOSE_ARM] := 35;
-      farfight[FAR_THROW] := 30;
-      farfight[FAR_SLING] := 30;
+        EquipItem(CreateItem(idBOOTS, 1, 0), FALSE);
+        EquipItem(CreateItem(idCHAINARMOR, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 2), FALSE, 2);
+        PickUp(CreatePotion(lqHEAL, 1), FALSE, 1);
+        PickUp(CreateItem(idLAVASH, 3, 0), FALSE, 3);
+        PickUp(CreateItem(idCOIN, 30, 0), FALSE, 30);
+      end;
+    4: // Странник
+      begin
+        closefight[CLOSE_BLADE] := 35;
+        closefight[CLOSE_STAFF] := 35;
+        closefight[CLOSE_ARM] := 35;
+        farfight[FAR_THROW] := 30;
+        farfight[FAR_SLING] := 30;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
-      EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 4), FALSE,4);
-      PickUp(CreatePotion(lqHEAL, 2), FALSE,1);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idCOIN, 70, 0), FALSE,70);
-    end;
-    5: //Воришка
-    begin
-      closefight[CLOSE_BLADE] := 30;
-      closefight[CLOSE_ARM] := 40;
-      farfight[FAR_THROW ] := 20;
-      farfight[FAR_BOW ] := 20;
-      farfight[FAR_SLING] := 20;
-      farfight[FAR_PIPE] := 20;
+        EquipItem(CreateItem(idBOOTS, 1, 0), FALSE);
+        EquipItem(CreateItem(idJACKET, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 4), FALSE, 4);
+        PickUp(CreatePotion(lqHEAL, 2), FALSE, 1);
+        PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1);
+        PickUp(CreateItem(idLAVASH, 4, 0), FALSE, 4);
+        PickUp(CreateItem(idCOIN, 70, 0), FALSE, 70);
+      end;
+    5: // Воришка
+      begin
+        closefight[CLOSE_BLADE] := 30;
+        closefight[CLOSE_ARM] := 40;
+        farfight[FAR_THROW] := 20;
+        farfight[FAR_BOW] := 20;
+        farfight[FAR_SLING] := 20;
+        farfight[FAR_PIPE] := 20;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
-      EquipItem(CreateItem(idJACKET , 1, 0),FALSE);
-      EquipItem(CreateItem(idDAGGER , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
-      PickUp(CreatePotion(lqCURE, 3), FALSE,3);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idCOIN, 90, 0), FALSE,90);
-    end;
-    6: //Монах
-    begin
-      closefight[CLOSE_ARM] := 65;
-      farfight[FAR_THROW] := 50;
-      farfight[FAR_PIPE ] := 25;
+        EquipItem(CreateItem(idLAPTI, 1, 0), FALSE);
+        EquipItem(CreateItem(idJACKET, 1, 0), FALSE);
+        EquipItem(CreateItem(idDAGGER, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 2), FALSE, 2);
+        PickUp(CreatePotion(lqCURE, 3), FALSE, 3);
+        PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1);
+        PickUp(CreateItem(idLAVASH, 5, 0), FALSE, 5);
+        PickUp(CreateItem(idCOIN, 90, 0), FALSE, 90);
+      end;
+    6: // Монах
+      begin
+        closefight[CLOSE_ARM] := 65;
+        farfight[FAR_THROW] := 50;
+        farfight[FAR_PIPE] := 25;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
-      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 3), FALSE,3);
-      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
-      PickUp(CreatePotion(lqKEFIR, 2), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 8, 0), FALSE,8);
-      PickUp(CreateItem(idCOIN, 25, 0), FALSE,25);
-    end;
-    7: //Жрец
-    begin
-      closefight[CLOSE_STAFF] := 40;
-      farfight[FAR_THROW] := 30;
-      farfight[FAR_SLING] := 30;
+        EquipItem(CreateItem(idBOOTS, 1, 0), FALSE);
+        EquipItem(CreateItem(idMANTIA, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 3), FALSE, 3);
+        PickUp(CreatePotion(lqHEAL, 2), FALSE, 2);
+        PickUp(CreatePotion(lqKEFIR, 2), FALSE, 2);
+        PickUp(CreateItem(idLAVASH, 8, 0), FALSE, 8);
+        PickUp(CreateItem(idCOIN, 25, 0), FALSE, 25);
+      end;
+    7: // Жрец
+      begin
+        closefight[CLOSE_STAFF] := 40;
+        farfight[FAR_THROW] := 30;
+        farfight[FAR_SLING] := 30;
 
-      EquipItem(CreateItem(idBOOTS, 1, 0),FALSE);
-      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 5), FALSE,5);
-      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 4, 0), FALSE,4);
-      PickUp(CreateItem(idMEAT, 2, 0), FALSE,2);
-      PickUp(CreateItem(idCOIN, 35, 0), FALSE,35);
-    end;
-    8: //Колдун
-    begin
-      closefight[CLOSE_STAFF] := 25;
-      farfight[FAR_SLING]   := 25;
+        EquipItem(CreateItem(idBOOTS, 1, 0), FALSE);
+        EquipItem(CreateItem(idMANTIA, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 5), FALSE, 5);
+        PickUp(CreatePotion(lqHEAL, 2), FALSE, 2);
+        PickUp(CreateItem(idLAVASH, 4, 0), FALSE, 4);
+        PickUp(CreateItem(idMEAT, 2, 0), FALSE, 2);
+        PickUp(CreateItem(idCOIN, 35, 0), FALSE, 35);
+      end;
+    8: // Колдун
+      begin
+        closefight[CLOSE_STAFF] := 25;
+        farfight[FAR_SLING] := 25;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
-      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 5), FALSE,5);
-      PickUp(CreatePotion(lqHEAL, 2), FALSE,2);
-      PickUp(CreateItem(idLAVASH, 5, 0), FALSE,5);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 30, 0), FALSE,30);
-    end;
-    9: //Мыслитель
-    begin
-      closefight[CLOSE_STAFF] := 25;
-      farfight[FAR_PIPE] := 25;
+        EquipItem(CreateItem(idLAPTI, 1, 0), FALSE);
+        EquipItem(CreateItem(idMANTIA, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 5), FALSE, 5);
+        PickUp(CreatePotion(lqHEAL, 2), FALSE, 2);
+        PickUp(CreateItem(idLAVASH, 5, 0), FALSE, 5);
+        PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1);
+        PickUp(CreateItem(idCOIN, 30, 0), FALSE, 30);
+      end;
+    9: // Мыслитель
+      begin
+        closefight[CLOSE_STAFF] := 25;
+        farfight[FAR_PIPE] := 25;
 
-      EquipItem(CreateItem(idLAPTI, 1, 0),FALSE);
-      EquipItem(CreateItem(idMANTIA , 1, 0),FALSE);
-      PickUp(CreatePotion(lqCURE, 2), FALSE,2);
-      PickUp(CreatePotion(lqHEAL, 2), FALSE,4);
-      PickUp(CreateItem(idLAVASH, 6, 0), FALSE,6);
-      PickUp(CreateItem(idMEAT, 1, 0), FALSE,1);
-      PickUp(CreateItem(idCOIN, 50, 0), FALSE,50);
-    end;
+        EquipItem(CreateItem(idLAPTI, 1, 0), FALSE);
+        EquipItem(CreateItem(idMANTIA, 1, 0), FALSE);
+        PickUp(CreatePotion(lqCURE, 2), FALSE, 2);
+        PickUp(CreatePotion(lqHEAL, 2), FALSE, 4);
+        PickUp(CreateItem(idLAVASH, 6, 0), FALSE, 6);
+        PickUp(CreateItem(idMEAT, 1, 0), FALSE, 1);
+        PickUp(CreateItem(idCOIN, 50, 0), FALSE, 50);
+      end;
   end;
 end;
 
 { Исходя из любимых оружейных навыков - их прокачать и дать соотв. оружие }
 procedure TMonster.FavWPNSkill;
 var
-  i : byte;
+  i: byte;
 begin
   // Если изначально прокачен только 1 оружейный навык, то он автоматически становится любимым
   if HowManyBestWPNCL = 1 then
@@ -2014,7 +2151,7 @@ begin
     f_choose := BestWPNFR;
   // Если 2 одинаковых и первое - двуручное оружие, то любимым становится второе
   if (HowManyBestWPNCL = 2) and (OneOfTheBestWPNCL(1)) then
-    for i:=2 to CLOSEFIGHTAMOUNT do
+    for i := 2 to CLOSEFIGHTAMOUNT do
       if OneOfTheBestWPNCL(i) then
       begin
         c_choose := i;
@@ -2022,7 +2159,7 @@ begin
       end;
   // Если 2 одинаковых и первое - кидать, то любимым становится второе
   if (HowManyBestWPNFR = 2) and (OneOfTheBestWPNFR(1)) then
-    for i:=2 to FARFIGHTAMOUNT do
+    for i := 2 to FARFIGHTAMOUNT do
       if OneOfTheBestWPNFR(i) then
       begin
         f_choose := i;
@@ -2033,164 +2170,176 @@ begin
   // Дать соответственное оружие
   case c_choose of
     // Двуручное
-    1 :
-    begin
-      EquipItem(CreateItem(idLONGSWORD, 1, 0),FALSE);
-    end;
+    1:
+      begin
+        EquipItem(CreateItem(idLONGSWORD, 1, 0), FALSE);
+      end;
     // Меч
-    2 :
-    begin
-      EquipItem(CreateItem(idSHORTSWORD, 1, 0),FALSE);
-    end;
+    2:
+      begin
+        EquipItem(CreateItem(idSHORTSWORD, 1, 0), FALSE);
+      end;
     // Дубина
-    3 :
-    begin
-      EquipItem(CreateItem(idDUBINA, 1, 0),FALSE);
-    end;
+    3:
+      begin
+        EquipItem(CreateItem(idDUBINA, 1, 0), FALSE);
+      end;
     // Посох
-    4 :
-    begin
-      EquipItem(CreateItem(idSTAFF, 1, 0),FALSE);
-    end;
+    4:
+      begin
+        EquipItem(CreateItem(idSTAFF, 1, 0), FALSE);
+      end;
     // Топор
-    5 :
-    begin
-      EquipItem(CreateItem(idAXE, 1, 0),FALSE);
-    end;
+    5:
+      begin
+        EquipItem(CreateItem(idAXE, 1, 0), FALSE);
+      end;
     // Рукопашный бой
-    6 :
-    begin
-      attack := attack * 2;
-    end;
+    6:
+      begin
+        attack := attack * 2;
+      end;
   end;
   // Повысить навык дальнего боя
   farfight[f_choose] := farfight[f_choose] + 15;
   // Дать соответственное оружие дальнего боя
   case f_choose of
     // Кидать
-    1 :
-    begin
-      EquipItem(CreateItem(idLITTLEROCK, 80, 0),FALSE);
-    end;
+    1:
+      begin
+        EquipItem(CreateItem(idLITTLEROCK, 80, 0), FALSE);
+      end;
     // Лук
-    2 :
-    begin
-      EquipItem(CreateItem(idBOW, 1, 0),FALSE);
-      EquipItem(CreateItem(idARROW, 30, 0),FALSE);
-    end;
+    2:
+      begin
+        EquipItem(CreateItem(idBOW, 1, 0), FALSE);
+        EquipItem(CreateItem(idARROW, 30, 0), FALSE);
+      end;
     // Праща
-    3 :
-    begin
-      EquipItem(CreateItem(idSLING, 1, 0),FALSE);
-      EquipItem(CreateItem(idLITTLEROCK, 50, 0),FALSE);
-    end;
+    3:
+      begin
+        EquipItem(CreateItem(idSLING, 1, 0), FALSE);
+        EquipItem(CreateItem(idLITTLEROCK, 50, 0), FALSE);
+      end;
     // Духовая трубка
-    4 :
-    begin
-      EquipItem(CreateItem(idBLOWPIPE, 1, 0),FALSE);
-      EquipItem(CreateItem(idIGLA, 40, 0),FALSE);
-    end;
+    4:
+      begin
+        EquipItem(CreateItem(idBLOWPIPE, 1, 0), FALSE);
+        EquipItem(CreateItem(idIGLA, 40, 0), FALSE);
+      end;
     // Арбалет
-    5 :
-    begin
-      EquipItem(CreateItem(idCROSSBOW, 1, 0),FALSE);
-      EquipItem(CreateItem(idBOLT, 25, 0),FALSE);
-    end;
+    5:
+      begin
+        EquipItem(CreateItem(idCROSSBOW, 1, 0), FALSE);
+        EquipItem(CreateItem(idBOLT, 25, 0), FALSE);
+      end;
   end;
 end;
 
 { Самый прокаченный навык в ближ. бою }
-function TMonster.BestWPNCL : byte;
+function TMonster.BestWPNCL: byte;
 var
-  best, i : byte;
+  best, i: byte;
 begin
   best := 1;
-  for i:=1 to CLOSEFIGHTAMOUNT do
+  for i := 1 to CLOSEFIGHTAMOUNT do
     if closefight[i] > closefight[best] then
       best := i;
   Result := best;
 end;
 
 { Сколько одинаковопрокаченных в ближ. бою }
-function TMonster.HowManyBestWPNCL : byte;
+function TMonster.HowManyBestWPNCL: byte;
 var
-  i, bestone, amount : byte;
+  i, bestone, amount: byte;
 begin
   bestone := BestWPNCL;
   amount := 1;
-  for i:=1 to CLOSEFIGHTAMOUNT do
+  for i := 1 to CLOSEFIGHTAMOUNT do
     if (i <> bestone) and (closefight[i] = closefight[bestone]) then
       inc(amount);
   Result := amount;
 end;
 
 { Один из лучше прок. навыков }
-function TMonster.OneOfTheBestWPNCL(i : byte): boolean;
+function TMonster.OneOfTheBestWPNCL(i: byte): boolean;
 begin
   Result := FALSE;
-  if closefight[i] = closefight[BestWPNCL] then Result := TRUE;
+  if closefight[i] = closefight[BestWPNCL] then
+    Result := TRUE;
 end;
 
 { Самый прокаченный навык в дальнем бою }
-function TMonster.BestWPNFR : byte;
+function TMonster.BestWPNFR: byte;
 var
-  best, i : byte;
+  best, i: byte;
 begin
   best := 1;
-  for i:=1 to FARFIGHTAMOUNT do
+  for i := 1 to FARFIGHTAMOUNT do
     if farfight[i] > farfight[best] then
       best := i;
   Result := best;
 end;
 
 { Сколько одинаковопрокаченных в дальнем бою }
-function TMonster.HowManyBestWPNFR : byte;
+function TMonster.HowManyBestWPNFR: byte;
 var
-  i, bestone, amount : byte;
+  i, bestone, amount: byte;
 begin
   bestone := BestWPNFR;
   amount := 1;
-  for i:=1 to FARFIGHTAMOUNT do
+  for i := 1 to FARFIGHTAMOUNT do
     if (i <> bestone) and (farfight[i] = farfight[bestone]) then
       inc(amount);
   Result := amount;
 end;
 
 { Один из лучше прок. навыков }
-function TMonster.OneOfTheBestWPNFR(i : byte): boolean;
+function TMonster.OneOfTheBestWPNFR(i: byte): boolean;
 begin
   Result := FALSE;
-  if farfight[i] = farfight[BestWPNFR] then Result := TRUE;
+  if farfight[i] = farfight[BestWPNFR] then
+    Result := TRUE;
 end;
 
 { Цвет класса }
-function TMonster.ClassColor : byte;
+function TMonster.ClassColor: byte;
 begin
   Result := 0;
-  if (id > 0) and (IsFlag(MonstersData[id].flags, M_CLASS)) then
+  if (id > 0) and (IsFlag(MonstersData[id].Flags, M_CLASS)) then
   begin
     // Цвет класса
     case WhatClass of
-      1 : Result := crLIGHTBLUE;
-      2 : Result := crORANGE;
-      3 : Result := crLIGHTGRAY;
-      4 : Result := crGREEN;
-      5 : Result := crGRAY;
-      6 : Result := crYELLOW;
-      7 : Result := crBROWN;
-      8 : Result := crPURPLE;
-      9 : Result := crCYAN;
+      1:
+        Result := crLIGHTBLUE;
+      2:
+        Result := crORANGE;
+      3:
+        Result := crLIGHTGRAY;
+      4:
+        Result := crGREEN;
+      5:
+        Result := crGRAY;
+      6:
+        Result := crYELLOW;
+      7:
+        Result := crBROWN;
+      8:
+        Result := crPURPLE;
+      9:
+        Result := crCYAN;
     end;
-  end else
+  end
+  else
     // Монстр без класса
     Result := MonstersData[id].color;
 end;
 
 { Отнять жизни }
-procedure TMonster.DoDamage(damage : integer; var Victim : TMonster);
+procedure TMonster.DoDamage(damage: integer; var Victim: TMonster);
 begin
-  Victim.hp := Victim.hp - Damage;
-  Victim.BloodStream( -(x - Victim.x), -(y - Victim.y));
+  Victim.Hp := Victim.Hp - damage;
+  Victim.BloodStream(-(x - Victim.x), -(y - Victim.y));
   if (UnderHitSpeed > 0) and (Victim.Hp > 0) then
   begin
     Victim.underhit := TRUE;
@@ -2199,26 +2348,27 @@ begin
   end;
 end;
 
-{ Стрельнуть / кинуть Mode 1 стрельнуть 2 швырнуть}
-procedure TMonster.StartShooting(mode : byte);
+{ Стрельнуть / кинуть Mode 1 стрельнуть 2 швырнуть }
+procedure TMonster.StartShooting(mode: byte);
 begin
-  if mode = 2 then Bow.id := 0;
-  MainForm.AnimFly(x,y,lx,ly, ItemTypeData[ItemsData[Arrow.id].vid].symbol, ItemsData[Arrow.id].color);
+  if mode = 2 then
+    Bow.id := 0;
+  MainForm.AnimFly(x, y, lx, ly, ItemTypeData[ItemsData[Arrow.id].vid].symbol, ItemsData[Arrow.id].color);
 end;
 
 { Видно ли данный тайл }
-function TMonster.LOSLine(a, b: Integer) : boolean;
+function TMonster.LOSLine(a, b: integer): boolean;
 var
-    i, l, ax, ay: Integer;
-    LR: Real;
+  i, l, ax, ay: integer;
+  LR: real;
 begin
   Result := TRUE;
-  if not ((a>0)and(a<=MapX)and(b>0)and(b<=MapY)) then
+  if not((a > 0) and (a <= MapX) and (b > 0) and (b <= MapY)) then
   begin
     Result := FALSE;
     exit;
   end;
-  l := Math.Max(Abs(x - a), Abs(y - b))+1;
+  l := Math.Max(Abs(x - a), Abs(y - b)) + 1;
   for i := 1 to l do
   begin
     LR := i / l;
@@ -2227,7 +2377,7 @@ begin
     if (TilesData[M.Tile[ax, ay]].void = FALSE) and (i < l) then
     begin
       Result := FALSE;
-      Break;
+      break;
     end;
   end;
 end;

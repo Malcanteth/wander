@@ -13,7 +13,7 @@ implementation
 uses
   Main, SysUtils, conf;
 
-{Показать список команд}
+{ Показать список команд }
 procedure ShowHelp;
 var
   Y: Byte;
@@ -58,7 +58,7 @@ begin
   Add('Благодарность: Харука-тян, Apromix *bees@meta.ua*');
 end;
 
-{Показать историю сообщений}
+{ Показать историю сообщений }
 procedure ShowHistory;
 var
   x, Y, c, t: Byte;
@@ -98,7 +98,7 @@ begin
           end
           else
           begin
-              // Цвет букв
+            // Цвет букв
             case c of
               0:
                 Font.Color := MyRGB(160, 160, 160); // Серый
@@ -109,17 +109,14 @@ begin
               3:
                 Font.Color := MyRGB(0, 200, 0); // Зеленый
             end;
-            Textout((t - 1) * CharX, (2 * CharY) + ((Y - 1) * CharY),
-              History[Y].Msg[x]);
+            Textout((t - 1) * CharX, (2 * CharY) + ((Y - 1) * CharY), History[Y].Msg[x]);
             Inc(t);
           end;
         end;
         if History[Y].amount > 1 then
         begin
           Font.Color := MyRGB(200, 255, 255);
-          Textout((Length(History[Y].Msg) + 1) * CharX,
-            (2 * CharY) + ((Y - 1) * CharY), IntToStr(History[Y].amount) +
-            ' раза.');
+          Textout((Length(History[Y].Msg) + 1) * CharX, (2 * CharY) + ((Y - 1) * CharY), IntToStr(History[Y].amount) + ' раза.');
         end;
       end;
   end;

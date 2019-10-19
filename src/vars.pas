@@ -61,7 +61,10 @@ var
   I: Integer;
 begin
   I := FID.IndexOf(AVar);
-  if I < 0 then Result := '' else Result := FValue[I];
+  if I < 0 then
+    Result := ''
+  else
+    Result := FValue[I];
 end;
 
 procedure TVars.SetStr(const AVar, AValue: String);
@@ -73,7 +76,9 @@ begin
   begin
     FID.Append(AVar);
     FValue.Append(AValue);
-  end else FValue[I] := AValue;
+  end
+  else
+    FValue[I] := AValue;
 end;
 
 function TVars.GetInt(const AVar: String): Integer;
@@ -81,7 +86,10 @@ var
   S: string;
 begin
   S := Trim(GetStr(AVar));
-  if S = '' then Result := 0 else Result := StrToInt(S);
+  if S = '' then
+    Result := 0
+  else
+    Result := StrToInt(S);
 end;
 
 procedure TVars.SetInt(const AVar: String; const AValue: Integer);
@@ -96,7 +104,10 @@ end;
 
 procedure TVars.SetBool(const AVar: String; const AValue: Boolean);
 begin
-  if AValue then SetStr(AVar, 'TRUE') else SetStr(AVar, 'FALSE');
+  if AValue then
+    SetStr(AVar, 'TRUE')
+  else
+    SetStr(AVar, 'FALSE');
 end;
 
 procedure TVars.SaveToFile(const AFileName: String);
@@ -123,14 +134,15 @@ end;
 
 procedure TVars.ClearGameVars;
 var
-  I: Integer;  
+  I: Integer;
   S: string;
 begin
   for I := FID.Count - 1 downto 0 do
   begin
     S := Copy(Trim(FID[I]), 1, 5);
-    if (S = 'Game.') then Continue;
-    //FValue[I] := '';   
+    if (S = 'Game.') then
+      Continue;
+    // FValue[I] := '';
     FID.Delete(I);
     FValue.Delete(I);
   end;
@@ -140,7 +152,8 @@ procedure TVars.Dec(const VarName: String; Count: Integer);
 var
   I: Integer;
 begin
-  if (Count < 1) then Exit;
+  if (Count < 1) then
+    Exit;
   I := GetInt(VarName);
   System.Dec(I, Count);
   SetInt(VarName, I);
@@ -150,7 +163,8 @@ procedure TVars.Inc(const VarName: String; Count: Integer);
 var
   I: Integer;
 begin
-  if (Count < 1) then Exit;
+  if (Count < 1) then
+    Exit;
   I := GetInt(VarName);
   System.Inc(I, Count);
   SetInt(VarName, I);
@@ -162,13 +176,18 @@ var
   S: string;
 begin
   I := FID.IndexOf(Var2);
-  if I < 0 then S := '' else S := FValue[I];
+  if I < 0 then
+    S := ''
+  else
+    S := FValue[I];
   I := FID.IndexOf(Var1);
   if I < 0 then
   begin
     FID.Append(Var1);
     FValue.Append(S);
-  end else FValue[I] := S;
+  end
+  else
+    FValue[I] := S;
 end;
 
 procedure TVars.LoadFromFile(const AFileName: String);
@@ -198,15 +217,17 @@ var
   I: Integer;
 begin
   I := FID.IndexOf(AVar);
-  if (I < 0) then Exit;
+  if (I < 0) then
+    Exit;
   FValue[I] := '';
 end;
 
 initialization
-  V := TVars.Create;
+
+V := TVars.Create;
 
 finalization
-  V.Free;
+
+V.Free;
 
 end.
-

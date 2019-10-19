@@ -41,10 +41,17 @@ const
   { Описание жидкостей }
   LiquidAmount = 4;
 
-  AllLiquid: array [1 .. LiquidAmount] of TAllLiquid = ((name: 'лечения'; state: 0; color: 0; effect: leHEAL; power: 15; chance: 40;
-    Flags: NOF or L_RANDOMPOWER;), (name: 'исцеления'; state: 0; color: 0; effect: leHEAL; power: 100; chance: 15; Flags: NOF;
-    ), (name: 'дешевого пива'; state: lsGAS; color: crBROWN; effect: leDRUNK; power: 130; chance: 20; Flags: NOF or L_LITTLEHEAL;
-    ), (name: 'кефира'; state: lsDENSE; color: crWHITE; effect: leDRUNK; power: 10; chance: 25; Flags: NOF or L_LITTLEHEAL or L_WSATURATION;));
+  AllLiquid: array [1 .. LiquidAmount] of TAllLiquid = (
+    //
+    (name: 'лечения'; state: 0; color: 0; effect: leHEAL; power: 15; chance: 40; Flags: NOF or L_RANDOMPOWER;),
+    //
+    (name: 'исцеления'; state: 0; color: 0; effect: leHEAL; power: 100; chance: 15; Flags: NOF;),
+    //
+    (name: 'дешевого пива'; state: lsGAS; color: crBROWN; effect: leDRUNK; power: 130; chance: 20; Flags: NOF or L_LITTLEHEAL;),
+    //
+    (name: 'кефира'; state: lsDENSE; color: crWHITE; effect: leDRUNK; power: 10; chance: 25; Flags: NOF or L_LITTLEHEAL or L_WSATURATION;)
+    //
+    );
 
   { Обычное насыщение жидкостью и ее масса }
   LiquidSaturation = 40;

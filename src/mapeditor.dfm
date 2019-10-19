@@ -20,7 +20,7 @@ object MainEdForm: TMainEdForm
   OnMouseMove = FormMouseMove
   OnPaint = FormPaint
   PixelsPerInch = 96
-  TextHeight = 22
+  TextHeight = 23
   object GroupBox2: TGroupBox
     Left = 84
     Top = -8
@@ -30,8 +30,8 @@ object MainEdForm: TMainEdForm
     object coord: TLabel
       Left = 15
       Top = 497
-      Width = 27
-      Height = 22
+      Width = 22
+      Height = 23
       Caption = '0:0'
     end
     object SpeedButton1: TSpeedButton
@@ -142,7 +142,7 @@ object MainEdForm: TMainEdForm
         Font.Height = -17
         Font.Name = 'Arial Narrow'
         Font.Style = []
-        ItemHeight = 19
+        ItemHeight = 22
         ParentFont = False
         TabOrder = 0
       end
@@ -158,7 +158,7 @@ object MainEdForm: TMainEdForm
         Left = 15
         Top = 31
         Width = 216
-        Height = 30
+        Height = 31
         TabOrder = 0
         Text = #1053#1072#1079#1074#1072#1085#1080#1077' '#1082#1072#1088#1090#1099
       end
@@ -198,15 +198,15 @@ object MainEdForm: TMainEdForm
       object Label3: TLabel
         Left = 8
         Top = 130
-        Width = 58
-        Height = 22
+        Width = 48
+        Height = 23
         Caption = 'Label3'
       end
       object up: TEdit
         Left = 84
         Top = 23
         Width = 70
-        Height = 30
+        Height = 31
         TabOrder = 0
         Text = '0'
       end
@@ -214,7 +214,7 @@ object MainEdForm: TMainEdForm
         Left = 84
         Top = 92
         Width = 70
-        Height = 30
+        Height = 31
         TabOrder = 1
         Text = '0'
       end
@@ -222,7 +222,7 @@ object MainEdForm: TMainEdForm
         Left = 8
         Top = 54
         Width = 69
-        Height = 30
+        Height = 31
         TabOrder = 2
         Text = '0'
       end
@@ -230,7 +230,7 @@ object MainEdForm: TMainEdForm
         Left = 161
         Top = 54
         Width = 70
-        Height = 30
+        Height = 31
         TabOrder = 3
         Text = '0'
       end
@@ -253,7 +253,7 @@ object MainEdForm: TMainEdForm
         Font.Height = -17
         Font.Name = 'Arial Narrow'
         Font.Style = []
-        ItemHeight = 19
+        ItemHeight = 22
         ParentFont = False
         TabOrder = 0
         OnClick = MapListClick
@@ -288,7 +288,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ItemIndex = 0
       ParentFont = False
       TabOrder = 7
@@ -307,7 +306,7 @@ object MainEdForm: TMainEdForm
       Font.Height = -11
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 14
+      ItemHeight = 15
       ParentFont = False
       TabOrder = 8
       OnClick = ListBox1Click
@@ -333,22 +332,22 @@ object MainEdForm: TMainEdForm
     object Label1: TLabel
       Left = 176
       Top = 23
-      Width = 44
-      Height = 22
+      Width = 36
+      Height = 23
       Caption = #1050#1088#1091#1090'.'
     end
     object Label2: TLabel
       Left = 230
       Top = 23
-      Width = 36
-      Height = 22
+      Width = 30
+      Height = 23
       Caption = #1058#1080#1087' '
     end
     object number: TLabel
       Left = 8
       Top = 28
-      Width = 9
-      Height = 19
+      Width = 8
+      Height = 22
       Caption = '1'
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clRed
@@ -387,7 +386,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 2
     end
@@ -395,7 +393,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 54
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -409,7 +407,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 54
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -440,7 +438,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 6
     end
@@ -448,7 +445,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 115
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -462,7 +459,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 115
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -493,7 +490,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 10
     end
@@ -501,7 +497,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 145
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -515,7 +511,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 145
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -546,7 +542,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 14
     end
@@ -554,7 +549,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 176
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -568,7 +563,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 176
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -599,7 +594,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 18
     end
@@ -607,7 +601,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 207
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -621,7 +615,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 207
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -652,7 +646,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 22
     end
@@ -660,7 +653,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 237
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -674,7 +667,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 237
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -705,7 +698,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 26
     end
@@ -713,7 +705,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 298
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -727,7 +719,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 298
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -758,7 +750,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 30
     end
@@ -766,7 +757,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 84
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -780,7 +771,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 84
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -811,7 +802,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 34
     end
@@ -819,7 +809,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 268
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -833,7 +823,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 268
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -864,7 +854,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 38
     end
@@ -872,7 +861,7 @@ object MainEdForm: TMainEdForm
       Left = 176
       Top = 329
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -886,7 +875,7 @@ object MainEdForm: TMainEdForm
       Left = 230
       Top = 329
       Width = 39
-      Height = 26
+      Height = 28
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
@@ -928,7 +917,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 42
     end
@@ -987,7 +975,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ParentFont = False
       TabOrder = 1
     end
@@ -1003,15 +990,15 @@ object MainEdForm: TMainEdForm
     object Label4: TLabel
       Left = 8
       Top = 23
-      Width = 13
-      Height = 22
+      Width = 10
+      Height = 23
       Caption = 'X'
     end
     object Label5: TLabel
       Left = 31
       Top = 23
-      Width = 12
-      Height = 22
+      Width = 9
+      Height = 23
       Caption = 'Y'
     end
     object Button3: TButton
@@ -1035,7 +1022,6 @@ object MainEdForm: TMainEdForm
       Font.Height = -13
       Font.Name = 'Arial Narrow'
       Font.Style = []
-      ItemHeight = 16
       ItemIndex = 0
       ParentFont = False
       TabOrder = 1

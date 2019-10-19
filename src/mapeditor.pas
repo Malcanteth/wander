@@ -105,17 +105,15 @@ type
     procedure DrawMap;
     procedure SaveClick(Sender: TObject);
     procedure MapListClick(Sender: TObject);
-    function LoadSpecialMaps : boolean;
-    function SaveSpecialMaps : boolean;
+    function LoadSpecialMaps: boolean;
+    function SaveSpecialMaps: boolean;
     procedure AddInfo;
     procedure TakeInfo;
-    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure RefreshItemList;
     procedure SetTilesClick(Sender: TObject);
     procedure SetMonstersClick(Sender: TObject);
-    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure FormMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure RefreshMapList;
     procedure Button5Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
@@ -141,36 +139,35 @@ const
 
 type
   TLevel = record
-    IsHere      : boolean; // Нужен ли здесь уровень вообще
-    PregenLevel : byte;    // Если > 0, значит это спец. уровень и вся остальная инфа не нужна
-    CoolLevel   : byte;    // Уровень крутости
-    DungeonType : byte;    // Тип генерируемого уровня
-    Reserv      : array[1..20] of byte; // Резерв
+    IsHere: boolean; // Нужен ли здесь уровень вообще
+    PregenLevel: byte; // Если > 0, значит это спец. уровень и вся остальная инфа не нужна
+    CoolLevel: byte; // Уровень крутости
+    DungeonType: byte; // Тип генерируемого уровня
+    Reserv: array [1 .. 20] of byte; // Резерв
   end;
 
   TLadder = record
-    Name   : string[17];                    // Название подзмелья
-    X, Y   : byte;                          // Расположение лестницы
-    Levels : array[1..MaxDepth] of TLevel;  // Характеристики каждого уровня
+    Name: string[17]; // Название подзмелья
+    X, Y: byte; // Расположение лестницы
+    Levels: array [1 .. MaxDepth] of TLevel; // Характеристики каждого уровня
   end;
 
   TMaps = record
-    name : string[40];         // Название карты
-    ShowName : boolean;        // Отображать название спец. карты
-    Map : TMap;                // Сама карта
-    Loc : array[1..4] of byte; // Окружающие ее карты (1-Вверх,2-Вниз,3-Влево,4-Вправо)
-    Ladders : array[1..MaxLadders] of TLadder;  // Свойства лестниц вниз
-    LadderUp : byte;           // Куда ведет лестница вверх
+    Name: string[40]; // Название карты
+    ShowName: boolean; // Отображать название спец. карты
+    Map: TMap; // Сама карта
+    Loc: array [1 .. 4] of byte; // Окружающие ее карты (1-Вверх,2-Вниз,3-Влево,4-Вправо)
+    Ladders: array [1 .. MaxLadders] of TLadder; // Свойства лестниц вниз
+    LadderUp: byte; // Куда ведет лестница вверх
   end;
 
 var
   MainEdForm: TMainEdForm;
   EdScreen: TBitmap;
-  SpecialMaps: array[1..MaxMaps] of TMaps;
+  SpecialMaps: array [1 .. MaxMaps] of TMaps;
   NowMap, NowElement, N: byte;
-  CurX, CurY: integer;
-  WaitForLadderClick,
-  WaitForMonsterClick: boolean;
+  CurX, CurY: Integer;
+  WaitForLadderClick, WaitForMonsterClick: boolean;
   NowLadder: byte;
 
 implementation
@@ -196,7 +193,7 @@ begin
   ClientWidth := MapX * CharX + VW;
   ClientHeight := MapY * CharY;
   // Создаем картинку
-  EdScreen := TBitMap.Create;
+  EdScreen := TBitmap.Create;
   with EdScreen do
   begin
     Width := MapX * CharX;
@@ -204,18 +201,22 @@ begin
     Canvas.Font.Name := FontMsg;
     Canvas.Font.Size := FontSize;
     case FontStyle of
-      1:   Canvas.Font.Style := [fsBold];
-      2:   Canvas.Font.Style := [fsItalic];
-      3:   Canvas.Font.Style := [fsBold, fsItalic];
-      else Canvas.Font.Style := [];
+      1:
+        Canvas.Font.Style := [fsBold];
+      2:
+        Canvas.Font.Style := [fsItalic];
+      3:
+        Canvas.Font.Style := [fsBold, fsItalic];
+    else
+      Canvas.Font.Style := [];
     end;
   end;
   // Компоненты
   GroupBox2.Top := 0;
-  GroupBox2.Left := MapX * CharX + 10;
-  GroupBox6.Left := GroupBox2.Left;
-  GroupBox7.Left := GroupBox2.Left;
-  GroupBox8.Left := GroupBox2.Left;
+  GroupBox2.left := MapX * CharX + 10;
+  GroupBox6.left := GroupBox2.left;
+  GroupBox7.left := GroupBox2.left;
+  GroupBox8.left := GroupBox2.left;
 
   // Обновить список
   RefreshItemList;
@@ -230,20 +231,20 @@ begin
   EdScreen.Canvas.FillRect(Rect(0, 0, MapX * CharX, MapY * CharY));
   // Выводим карту
   DrawMap;
-  // Отобразить    
+  // Отобразить
   Canvas.StretchDraw(Rect(0, 0, MapX * CharX, MapY * CharY), EdScreen);
 end;
 
 { Залить }
 procedure TMainEdForm.FillClick(Sender: TObject);
 var
-  x, y: Byte;
+  X, Y: byte;
 begin
   if NowElement = 1 then
   begin
-    for x:=1 to MapX do
-      for y:=1 to MapY do
-        M.Tile[x,y] := ItemsBox.ItemIndex + 1;
+    for X := 1 to MapX do
+      for Y := 1 to MapY do
+        M.Tile[X, Y] := ItemsBox.ItemIndex + 1;
     OnPaint(Sender);
   end;
 end;
@@ -251,51 +252,58 @@ end;
 { Вывести карту }
 procedure TMainEdForm.DrawMap;
 var
-  x, y    : integer;
-  color,back      : longword;
-  char       : string[1];
+  X, Y: Integer;
+  Color, back: longword;
+  char: string[1];
 begin
-  for x:=1 to MapX do
-    for y:=1 to MapY do
+  for X := 1 to MapX do
+    for Y := 1 to MapY do
       with EdScreen.Canvas do
       begin
-        color := 255;
+        Color := 255;
         back := 0;
         Brush.Color := 0;
         // Тайл
-        case M.Blood[x,y] of
-          0 : color := RealColor(TilesData[M.Tile[x,y]].color);
-          1 : color := cLIGHTRED;
-          2 : color := cRED;
+        case M.Blood[X, Y] of
+          0:
+            Color := RealColor(TilesData[M.Tile[X, Y]].Color);
+          1:
+            Color := cLIGHTRED;
+          2:
+            Color := cRED;
         end;
-        char := TilesData[M.Tile[x,y]].char;
-        back := Darker(RealColor(TilesData[M.Tile[x,y]].color), 92);
+        char := TilesData[M.Tile[X, Y]].char;
+        back := Darker(RealColor(TilesData[M.Tile[X, Y]].Color), 92);
         // Предметы
-        if M.Item[x,y].id > 0 then
+        if M.Item[X, Y].id > 0 then
         begin
-          color := RealColor(ItemsData[M.Item[x,y].id].color);
-          char := ItemTypeData[ItemsData[M.Item[x,y].id].vid].symbol;
+          Color := RealColor(ItemsData[M.Item[X, Y].id].Color);
+          char := ItemTypeData[ItemsData[M.Item[X, Y].id].vid].symbol;
         end;
         // Монстры
-        if M.MonP[x,y] > 0 then
+        if M.MonP[X, Y] > 0 then
         begin
-          if M.MonP[x,y] = 1 then
-            begin
-              color := cLIGHTBLUE;
-              char := '@';
-              if pc.felldown then color:= cGRAY;
-            end else
-              begin
-                color := RealColor(MonstersData[M.MonL[M.MonP[x,y]].id].color);
-                if M.MonL[M.MonP[x,y]].felldown then color:= cGRAY;
-                if M.MonP[x,y] = ListBox1.ItemIndex+1 then back := MyRGB(150,0,0);
-                char := MonstersData[M.MonL[M.MonP[x,y]].id].char;
-              end;
+          if M.MonP[X, Y] = 1 then
+          begin
+            Color := cLIGHTBLUE;
+            char := '@';
+            if pc.felldown then
+              Color := cGRAY;
+          end
+          else
+          begin
+            Color := RealColor(MonstersData[M.MonL[M.MonP[X, Y]].id].Color);
+            if M.MonL[M.MonP[X, Y]].felldown then
+              Color := cGRAY;
+            if M.MonP[X, Y] = ListBox1.ItemIndex + 1 then
+              back := MyRGB(150, 0, 0);
+            char := MonstersData[M.MonL[M.MonP[X, Y]].id].char;
+          end;
         end;
         // Вывести символ
         Brush.Color := back;
-        Font.Color := color;
-        TextOut((x-1)*CharX, (y-1)*CharY, char);  
+        Font.Color := Color;
+        TextOut((X - 1) * CharX, (Y - 1) * CharY, char);
 
         Pen.Color := clYellow;
         Brush.Style := bsClear;
@@ -307,22 +315,23 @@ end;
 procedure TMainEdForm.Button5Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    MsgBox('Не выбрана карта!') else
-    begin
-      SpecialMaps[NowMap].Map.Special := NowMap;
-      SpecialMaps[NowMap].Map := M;
-      AddInfo;
-      SaveSpecialMaps;
-      RefreshMapList;
-    end;
+    MsgBox('Не выбрана карта!')
+  else
+  begin
+    SpecialMaps[NowMap].Map.Special := NowMap;
+    SpecialMaps[NowMap].Map := M;
+    AddInfo;
+    SaveSpecialMaps;
+    RefreshMapList;
+  end;
 end;
 
 { Добавить карту }
 procedure TMainEdForm.SaveClick(Sender: TObject);
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=1 to MaxMaps do
+  for i := 1 to MaxMaps do
     if SpecialMaps[i].Map.Special = 0 then
       break;
   NowMap := i;
@@ -336,42 +345,42 @@ end;
 { Выбрать карту }
 procedure TMainEdForm.MapListClick(Sender: TObject);
 var
-  i : byte;
+  i: byte;
 begin
-  NowMap := MapList.ItemIndex+1;
+  NowMap := MapList.ItemIndex + 1;
   M.Clear;
   M := SpecialMaps[NowMap].Map;
   TakeInfo;
   OnPaint(Sender);
   ListBox1.Clear;
-  for i:=1 to 255 do
-    ListBox1.Items.Add(IntToStr(i) +' - '+IntToStr(M.MonL[i].id));
+  for i := 1 to 255 do
+    ListBox1.items.Add(IntToStr(i) + ' - ' + IntToStr(M.MonL[i].id));
 end;
 
 { Загрузить карты }
-function TMainEdForm.LoadSpecialMaps : boolean;
+function TMainEdForm.LoadSpecialMaps: boolean;
 var
-  f : file;
-  i,kol,m,k,x,y,z : byte;
+  f: file;
+  i, kol, M, k, X, Y, z: byte;
 begin
-  Result := FALSE;
-  AssignFile(f,'data/maps.dm');
-  {$I-}
-  Reset(f,1);
-  {$I+}
-  if IOResult = 0 then  
+  Result := False;
+  AssignFile(f, 'data/maps.dm');
+{$I-}
+  Reset(f, 1);
+{$I+}
+  if IOResult = 0 then
   begin
     Result := TRUE;
-    BlockRead(f, kol, SizeOf(kol));  
-    for i:=1 to kol do
+    BlockRead(f, kol, SizeOf(kol));
+    for i := 1 to kol do
     begin
       // Номер и название карты
       BlockRead(f, SpecialMaps[i].Map.Special, SizeOf(SpecialMaps[i].Map.Special));
-      BlockRead(f, SpecialMaps[i].name, SizeOf(SpecialMaps[i].name));
+      BlockRead(f, SpecialMaps[i].Name, SizeOf(SpecialMaps[i].Name));
       BlockRead(f, SpecialMaps[i].ShowName, SizeOf(SpecialMaps[i].ShowName));
       // Карта - тайлы, кровь, монстры, предметы
-      BlockRead(f, SpecialMaps[i].map.Tile, SizeOf(SpecialMaps[i].map.Tile));
-      BlockRead(f, SpecialMaps[i].map.Blood, SizeOf(SpecialMaps[i].map.Blood));
+      BlockRead(f, SpecialMaps[i].Map.Tile, SizeOf(SpecialMaps[i].Map.Tile));
+      BlockRead(f, SpecialMaps[i].Map.Blood, SizeOf(SpecialMaps[i].Map.Blood));
       // Лестницы
       BlockRead(f, SpecialMaps[i].Ladders, SizeOf(SpecialMaps[i].Ladders));
       BlockRead(f, SpecialMaps[i].LadderUp, SizeOf(SpecialMaps[i].LadderUp));
@@ -381,79 +390,83 @@ begin
     CloseFile(f);
   end;
   // Монстры
-  AssignFile(f,'data/monsters.dm');
-  {$I-}
-  Reset(f,1);
-  {$I+}
+  AssignFile(f, 'data/monsters.dm');
+{$I-}
+  Reset(f, 1);
+{$I+}
   if IOResult = 0 then
   begin
-    if Result = TRUE then Result := TRUE;
-    for i:=1 to kol do
+    if Result = TRUE then
+      Result := TRUE;
+    for i := 1 to kol do
     begin
       // Читаем кол-во монстров
       BlockRead(f, k, SizeOf(k));
-      BlockRead(f, SpecialMaps[i].map.MonP, SizeOf(SpecialMaps[i].map.MonP));
+      BlockRead(f, SpecialMaps[i].Map.MonP, SizeOf(SpecialMaps[i].Map.MonP));
       if k > 0 then
-        for m:=1 to k do
-          with SpecialMaps[i].map.MonL[m] do
+        for M := 1 to k do
+          with SpecialMaps[i].Map.MonL[M] do
           begin
             BlockRead(f, id, SizeOf(id));
             BlockRead(f, relation, SizeOf(relation));
           end;
     end;
     CloseFile(f);
-  end else
-    Result := FALSE;
+  end
+  else
+    Result := False;
   // Предметы
-  AssignFile(f,'data/items.dm');
-  {$I-}
-  Reset(f,1);
-  {$I+}
+  AssignFile(f, 'data/items.dm');
+{$I-}
+  Reset(f, 1);
+{$I+}
   if IOResult = 0 then
   begin
-    if Result = TRUE then Result := TRUE;
-    for i:=1 to kol do
+    if Result = TRUE then
+      Result := TRUE;
+    for i := 1 to kol do
     begin
       z := 0;
-      for x:=1 to MapX do
-        for y:=1 to MapY do
+      for X := 1 to MapX do
+        for Y := 1 to MapY do
         begin
-          BlockRead(f, z ,1);
+          BlockRead(f, z, 1);
           if z > 0 then
-            BlockRead(f, SpecialMaps[i].map.Item, SizeOf(SpecialMaps[i].map.Item));
+            BlockRead(f, SpecialMaps[i].Map.Item, SizeOf(SpecialMaps[i].Map.Item));
         end;
     end;
     CloseFile(f);
-  end else
-    Result := FALSE;
+  end
+  else
+    Result := False;
 end;
 
 { Сохранить карты }
-function TMainEdForm.SaveSpecialMaps : boolean;
+function TMainEdForm.SaveSpecialMaps: boolean;
 var
-  f : file;
-  i,kol,m,k,x,y,z,b : byte;
+  f: file;
+  i, kol, M, k, X, Y, z, b: byte;
 begin
   CreateDir('data');
   // Локации
-  AssignFile(f,'data/maps.dm');
-  {$I-}
-  Rewrite(f,1);
-  for kol:=1 to MaxMaps do
+  AssignFile(f, 'data/maps.dm');
+{$I-}
+  Rewrite(f, 1);
+  for kol := 1 to MaxMaps do
     if SpecialMaps[kol].Map.Special = 0 then
       break;
   kol := kol - 1;
   BlockWrite(f, kol, SizeOf(kol));
   if kol > 0 then
-    for i:=1 to kol do
+    for i := 1 to kol do
     begin
       // Номер и название карты
       BlockWrite(f, SpecialMaps[i].Map.Special, SizeOf(SpecialMaps[i].Map.Special));
-      BlockWrite(f, SpecialMaps[i].name, SizeOf(SpecialMaps[i].name));
+      BlockWrite(f, SpecialMaps[i].Name, SizeOf(SpecialMaps[i].Name));
       BlockWrite(f, SpecialMaps[i].ShowName, SizeOf(SpecialMaps[i].ShowName));
       // Карта - тайлы, кровь, монстры, предметы
-      BlockWrite(f, SpecialMaps[i].map.Tile, SizeOf(SpecialMaps[i].map.Tile));
-      BlockWrite(f, SpecialMaps[i].map.Blood, SizeOf(SpecialMaps[i].map.Blood));
+      BlockWrite(f, SpecialMaps[i].Map.Tile, SizeOf(SpecialMaps[i].Map.Tile));
+      BlockWrite(f, SpecialMaps[i].Map.Blood, SizeOf(SpecialMaps[i].Map.Blood));
       // Лестницы
       BlockWrite(f, SpecialMaps[i].Ladders, SizeOf(SpecialMaps[i].Ladders));
       BlockWrite(f, SpecialMaps[i].LadderUp, SizeOf(SpecialMaps[i].LadderUp));
@@ -461,29 +474,30 @@ begin
       BlockWrite(f, SpecialMaps[i].Loc, SizeOf(SpecialMaps[i].Loc));
     end;
   CloseFile(f);
-  {$I+}
+{$I+}
   if IOResult <> 0 then
-    Result := false else
-      Result := true;
+    Result := False
+  else
+    Result := TRUE;
   // Монстры
-  AssignFile(f,'data/monsters.dm');
-  {$I-}
-  Rewrite(f,1);
+  AssignFile(f, 'data/monsters.dm');
+{$I-}
+  Rewrite(f, 1);
   if kol > 0 then
-    for i:=1 to kol do
+    for i := 1 to kol do
     begin
       // Определяем кол-во монстров
-      for k:=2 to 255 do
-        if SpecialMaps[i].map.MonL[k].id = 0 then
+      for k := 2 to 255 do
+        if SpecialMaps[i].Map.MonL[k].id = 0 then
           break;
       k := k - 1;
       BlockWrite(f, k, SizeOf(k));
-      BlockWrite(f, SpecialMaps[i].map.MonP, SizeOf(SpecialMaps[i].map.MonP));
+      BlockWrite(f, SpecialMaps[i].Map.MonP, SizeOf(SpecialMaps[i].Map.MonP));
       // Монстров записываем поочереди
       if k > 0 then
-        for m:=1 to k do
+        for M := 1 to k do
         begin
-          with SpecialMaps[i].map.MonL[m] do
+          with SpecialMaps[i].Map.MonL[M] do
           begin
             BlockWrite(f, id, SizeOf(id));
             BlockWrite(f, relation, SizeOf(relation));
@@ -491,29 +505,32 @@ begin
         end;
     end;
   CloseFile(f);
-  {$I+}
+{$I+}
   if IOResult <> 0 then
-    Result := false else
-      Result := true;
+    Result := False
+  else
+    Result := TRUE;
   // Предметы
-  AssignFile(f,'data/items.dm');
-  {$I-}
-  Rewrite(f,1);
+  AssignFile(f, 'data/items.dm');
+{$I-}
+  Rewrite(f, 1);
   if kol > 0 then
-    for i:=1 to kol do
+    for i := 1 to kol do
     begin
       z := 0;
-      for x:=1 to MapX do
-        for y:=1 to MapY do
-          if SpecialMaps[i].map.Item[x,y].id = 0 then
-            BlockWrite(f, z, 1) else
-              BlockWrite(f, SpecialMaps[i].map.Item, SizeOf(SpecialMaps[i].map.Item));
+      for X := 1 to MapX do
+        for Y := 1 to MapY do
+          if SpecialMaps[i].Map.Item[X, Y].id = 0 then
+            BlockWrite(f, z, 1)
+          else
+            BlockWrite(f, SpecialMaps[i].Map.Item, SizeOf(SpecialMaps[i].Map.Item));
     end;
   CloseFile(f);
-  {$I+}
+{$I+}
   if IOResult <> 0 then
-    Result := false else
-      Result := true;
+    Result := False
+  else
+    Result := TRUE;
 end;
 
 { Добавить инфу в текущую карту }
@@ -523,10 +540,10 @@ begin
   begin
     name := mapname.Text;
     ShowName := CheckBox11.Checked;
-    loc[1] := StrToInt(up.Text);
-    loc[2] := StrToInt(down.Text);
-    loc[3] := StrToInt(left.Text);
-    loc[4] := StrToInt(right.Text);
+    Loc[1] := StrToInt(up.Text);
+    Loc[2] := StrToInt(down.Text);
+    Loc[3] := StrToInt(left.Text);
+    Loc[4] := StrToInt(right.Text);
   end;
 end;
 
@@ -537,25 +554,24 @@ begin
   begin
     mapname.Text := name;
     CheckBox11.Checked := ShowName;
-    up.Text := IntToStr(loc[1]);
-    down.Text := IntToStr(loc[2]);
-    left.Text := IntToStr(loc[3]);
-    right.Text := IntToStr(loc[4]);
+    up.Text := IntToStr(Loc[1]);
+    down.Text := IntToStr(Loc[2]);
+    left.Text := IntToStr(Loc[3]);
+    right.Text := IntToStr(Loc[4]);
   end;
 end;
 
 { При движении мышки }
-procedure TMainEdForm.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
+procedure TMainEdForm.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   // Изменить координаты
   CurX := (X div CharX) + 1;
   CurY := (Y div CharY) + 1;
-  coord.Caption := IntToStr(CurX)+':'+IntToStr(CurY);
+  coord.Caption := IntToStr(CurX) + ':' + IntToStr(CurY);
   if M.MonP[CurX, CurY] > 0 then
     Label3.Caption := IntToStr(M.MonL[M.MonP[CurX, CurY]].id);
   // Рисовать
-  if not WaitForLadderClick  then
+  if not WaitForLadderClick then
     if (CurX > 0) and (CurX <= MapX) and (CurY > 0) and (CurY <= MapY) then
     begin
       // Поместить (ЛКМ)
@@ -563,50 +579,51 @@ begin
       begin
         // Кровь
         if BloodMode.ItemIndex = 1 then
-          M.Blood[CurX, CurY] := Random(2)+1 else
-            case NowElement of
-              1 : //Тайл
-              M.Tile[CurX, CurY] := ItemsBox.ItemIndex+1;
-              2 : //Монстр
-              CreateMonster(ItemsBox.ItemIndex+1,CurX,CurY);
-              3: // Предмет
+          M.Blood[CurX, CurY] := Random(2) + 1
+        else
+          case NowElement of
+            1: // Тайл
+              M.Tile[CurX, CurY] := ItemsBox.ItemIndex + 1;
+            2: // Монстр
+              CreateMonster(ItemsBox.ItemIndex + 1, CurX, CurY);
+            3: // Предмет
               begin
-                PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex+1, 1, 0), 1);
+                PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex + 1, 1, 0), 1);
               end;
-            end;
+          end;
       end;
       // Удалить? (ПКМ)
       if ssRight in Shift then
       begin
         // Кровь
         if BloodMode.ItemIndex = 1 then
-          M.Blood[CurX, CurY] := 0 else
-            case NowElement of
-              1 : //Тайл
+          M.Blood[CurX, CurY] := 0
+        else
+          case NowElement of
+            1: // Тайл
               begin
                 M.Tile[CurX, CurY] := 0;
               end;
-              2 : //Монстр
+            2: // Монстр
               begin
                 FillMemory(@M.MonL[M.MonP[CurX, CurY]], SizeOf(M.MonL[M.MonP[CurX, CurY]]), 0);
                 M.MonP[CurX, CurY] := 0;
               end;
-              3: // Предмет
+            3: // Предмет
               begin
                 M.Item[CurX, CurY].id := 0;
               end;
-            end;
+          end;
       end;
     end;
-    // Обновить
+  // Обновить
   OnPaint(Sender);
 end;
 
 { При нажатии кнопки на мышки }
-procedure TMainEdForm.FormMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TMainEdForm.FormMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
-  i : byte;
+  i: byte;
 begin
   // Рисовать
   if (CurX > 0) and (CurX <= MapX) and (CurY > 0) and (CurY <= MapY) then
@@ -623,227 +640,233 @@ begin
           with GroupBox8 do
           begin
             GroupBox2.Visible := False;
-            Visible := True;
+            Visible := TRUE;
             relation.ItemIndex := M.MonL[M.MonP[CurX, CurY]].relation;
-            label4.Caption := IntToStr(CurX);
-            label5.Caption := IntToStr(CurY);
+            Label4.Caption := IntToStr(CurX);
+            Label5.Caption := IntToStr(CurY);
           end;
-        end else
+        end
+        else
           WaitForMonsterClick := False;
-      end else
-      // Сделать тайл лестницой или просто зайти в ее конфигурацию
-      if WaitForLadderClick then
-      begin
-        // Свойства лестницы вниз
-        if (M.Tile[CurX, CurY] = tdDSTAIRS) or (M.Tile[CurX, CurY] = tdCHATCH) or
-           (M.Tile[CurX, CurY] = tdDUNENTER) then
+      end
+      else
+        // Сделать тайл лестницой или просто зайти в ее конфигурацию
+        if WaitForLadderClick then
         begin
-          n := 0;
-          // Проверка на наличие такой лестницы
-          for i:=1 to MaxLadders do
-            if (SpecialMaps[NowMap].Ladders[i].x = CurX) and (SpecialMaps[NowMap].Ladders[i].y = CurY) then
-            begin
-              n := i;
-              break;
-            end;
-          // Если лестница не найдена - создать
-          if n = 0 then
-            for i:=1 to MaxLadders do
-              if (SpecialMaps[NowMap].Ladders[i].x = 0) and (SpecialMaps[NowMap].Ladders[i].y = 0) then
+          // Свойства лестницы вниз
+          if (M.Tile[CurX, CurY] = tdDSTAIRS) or (M.Tile[CurX, CurY] = tdCHATCH) or (M.Tile[CurX, CurY] = tdDUNENTER) then
+          begin
+            N := 0;
+            // Проверка на наличие такой лестницы
+            for i := 1 to MaxLadders do
+              if (SpecialMaps[NowMap].Ladders[i].X = CurX) and (SpecialMaps[NowMap].Ladders[i].Y = CurY) then
               begin
-                SpecialMaps[NowMap].Ladders[i].x := CurX;
-                SpecialMaps[NowMap].Ladders[i].y := CurY;
-                n := i;
+                N := i;
                 break;
               end;
-          // Открыть окно свойств
-          with GroupBox6 do
-          begin
-            GroupBox2.Visible := False;
-            Visible := True;
-            NumberChange.Clear;
-            NumberChange.Items.Add('Сменить на:');
-            for i:=1 to MaxLadders do
-              if (SpecialMaps[NowMap].Ladders[i].x > 0) then
-                NumberChange.Items.Add(IntToStr(i) + '-' + 'занято') else
-                  NumberChange.Items.Add(IntToStr(i) + '-' + 'свободно!');
-            NumberChange.ItemIndex := 0;
-            Number.Caption := '№'+IntToStr(n);
-            if SpecialMaps[NowMap].Ladders[n].name = '' then
-              RandomName.Checked := TRUE else
+            // Если лестница не найдена - создать
+            if N = 0 then
+              for i := 1 to MaxLadders do
+                if (SpecialMaps[NowMap].Ladders[i].X = 0) and (SpecialMaps[NowMap].Ladders[i].Y = 0) then
                 begin
-                  RandomName.Checked := FALSE;
-                  DungeonName.Enabled := TRUE;
-                  DungeonName.Text := SpecialMaps[NowMap].Ladders[n].name;
+                  SpecialMaps[NowMap].Ladders[i].X := CurX;
+                  SpecialMaps[NowMap].Ladders[i].Y := CurY;
+                  N := i;
+                  break;
                 end;
-            { Забыл как делать поиск компонента, а тот что вспомнил почему-то не работает...
-                                                                         Короче, сделал тупо :)}
-            with Pregen1 do
+            // Открыть окно свойств
+            with GroupBox6 do
             begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
+              GroupBox2.Visible := False;
+              Visible := TRUE;
+              numberchange.Clear;
+              numberchange.items.Add('Сменить на:');
+              for i := 1 to MaxLadders do
+                if (SpecialMaps[NowMap].Ladders[i].X > 0) then
+                  numberchange.items.Add(IntToStr(i) + '-' + 'занято')
+                else
+                  numberchange.items.Add(IntToStr(i) + '-' + 'свободно!');
+              numberchange.ItemIndex := 0;
+              number.Caption := '№' + IntToStr(N);
+              if SpecialMaps[NowMap].Ladders[N].Name = '' then
+                RandomName.Checked := TRUE
+              else
+              begin
+                RandomName.Checked := False;
+                DungeonName.Enabled := TRUE;
+                DungeonName.Text := SpecialMaps[NowMap].Ladders[N].Name;
+              end;
+              { Забыл как делать поиск компонента, а тот что вспомнил почему-то не работает...
+                Короче, сделал тупо :) }
+              with pregen1 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen2 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen3 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen4 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen5 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen6 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen7 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen8 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen9 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              with pregen10 do
+              begin
+                items.Clear;
+                items.Add('- Рандомная -');
+                for i := 1 to MaxMaps do
+                  if SpecialMaps[i].Map.Special > 0 then
+                    items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+              end;
+              //
+              CheckBox1.Checked := SpecialMaps[NowMap].Ladders[N].Levels[1].IsHere;
+              pregen1.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[1].PregenLevel;
+              cool1.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[1].CoolLevel);
+              type1.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[1].DungeonType);
+              //
+              CheckBox2.Checked := SpecialMaps[NowMap].Ladders[N].Levels[2].IsHere;
+              pregen2.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[2].PregenLevel;
+              cool2.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[2].CoolLevel);
+              type2.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[2].DungeonType);
+              //
+              CheckBox3.Checked := SpecialMaps[NowMap].Ladders[N].Levels[3].IsHere;
+              pregen3.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[3].PregenLevel;
+              cool3.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[3].CoolLevel);
+              type3.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[3].DungeonType);
+              //
+              CheckBox4.Checked := SpecialMaps[NowMap].Ladders[N].Levels[4].IsHere;
+              pregen4.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[4].PregenLevel;
+              cool4.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[4].CoolLevel);
+              type4.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[4].DungeonType);
+              //
+              CheckBox5.Checked := SpecialMaps[NowMap].Ladders[N].Levels[5].IsHere;
+              pregen5.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[5].PregenLevel;
+              cool5.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[5].CoolLevel);
+              type5.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[5].DungeonType);
+              //
+              CheckBox6.Checked := SpecialMaps[NowMap].Ladders[N].Levels[6].IsHere;
+              pregen6.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[6].PregenLevel;
+              cool6.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[6].CoolLevel);
+              type6.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[6].DungeonType);
+              //
+              CheckBox7.Checked := SpecialMaps[NowMap].Ladders[N].Levels[7].IsHere;
+              pregen7.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[7].PregenLevel;
+              cool7.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[7].CoolLevel);
+              type7.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[7].DungeonType);
+              //
+              CheckBox8.Checked := SpecialMaps[NowMap].Ladders[N].Levels[8].IsHere;
+              pregen8.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[8].PregenLevel;
+              cool8.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[8].CoolLevel);
+              type8.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[8].DungeonType);
+              //
+              CheckBox9.Checked := SpecialMaps[NowMap].Ladders[N].Levels[9].IsHere;
+              pregen9.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[9].PregenLevel;
+              cool9.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[9].CoolLevel);
+              type9.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[9].DungeonType);
+              //
+              CheckBox10.Checked := SpecialMaps[NowMap].Ladders[N].Levels[10].IsHere;
+              pregen10.ItemIndex := SpecialMaps[NowMap].Ladders[N].Levels[10].PregenLevel;
+              cool10.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[10].CoolLevel);
+              type10.Text := IntToStr(SpecialMaps[NowMap].Ladders[N].Levels[10].DungeonType);
             end;
-            with Pregen2 do
+          end
+          else
+            // Свойства лестницы вверх
+            if M.Tile[CurX, CurY] = tdUSTAIRS then
             begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
+              // Открыть окно свойств
+              with GroupBox7 do
+              begin
+                GroupBox2.Visible := False;
+                Visible := TRUE;
+                with Pregen do
+                begin
+                  ItemIndex := 0;
+                  items.Clear;
+                  items.Add('- Рандомная -');
+                  for i := 1 to MaxMaps do
+                    if SpecialMaps[i].Map.Special > 0 then
+                      items.Add(IntToStr(i) + ' - ' + SpecialMaps[i].Name);
+                  ItemIndex := SpecialMaps[NowMap].LadderUp;
+                end;
+              end;
             end;
-            with Pregen3 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen4 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen5 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen6 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen7 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen8 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen9 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            with Pregen10 do
-            begin
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-            end;
-            //
-            CheckBox1.Checked := SpecialMaps[NowMap].Ladders[n].Levels[1].IsHere;
-            Pregen1.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[1].PregenLevel;
-            Cool1.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[1].CoolLevel);
-            Type1.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[1].DungeonType);
-            //
-            CheckBox2.Checked := SpecialMaps[NowMap].Ladders[n].Levels[2].IsHere;
-            Pregen2.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[2].PregenLevel;
-            Cool2.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[2].CoolLevel);
-            Type2.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[2].DungeonType);
-            //
-            CheckBox3.Checked := SpecialMaps[NowMap].Ladders[n].Levels[3].IsHere;
-            Pregen3.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[3].PregenLevel;
-            Cool3.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[3].CoolLevel);
-            Type3.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[3].DungeonType);
-            //
-            CheckBox4.Checked := SpecialMaps[NowMap].Ladders[n].Levels[4].IsHere;
-            Pregen4.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[4].PregenLevel;
-            Cool4.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[4].CoolLevel);
-            Type4.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[4].DungeonType);
-            //
-            CheckBox5.Checked := SpecialMaps[NowMap].Ladders[n].Levels[5].IsHere;
-            Pregen5.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[5].PregenLevel;
-            Cool5.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[5].CoolLevel);
-            Type5.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[5].DungeonType);
-            //
-            CheckBox6.Checked := SpecialMaps[NowMap].Ladders[n].Levels[6].IsHere;
-            Pregen6.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[6].PregenLevel;
-            Cool6.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[6].CoolLevel);
-            Type6.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[6].DungeonType);
-            //
-            CheckBox7.Checked := SpecialMaps[NowMap].Ladders[n].Levels[7].IsHere;
-            Pregen7.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[7].PregenLevel;
-            Cool7.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[7].CoolLevel);
-            Type7.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[7].DungeonType);
-            //
-            CheckBox8.Checked := SpecialMaps[NowMap].Ladders[n].Levels[8].IsHere;
-            Pregen8.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[8].PregenLevel;
-            Cool8.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[8].CoolLevel);
-            Type8.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[8].DungeonType);
-            //
-            CheckBox9.Checked := SpecialMaps[NowMap].Ladders[n].Levels[9].IsHere;
-            Pregen9.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[9].PregenLevel;
-            Cool9.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[9].CoolLevel);
-            Type9.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[9].DungeonType);
-            //
-            CheckBox10.Checked := SpecialMaps[NowMap].Ladders[n].Levels[10].IsHere;
-            Pregen10.ItemIndex := SpecialMaps[NowMap].Ladders[n].Levels[10].PregenLevel;
-            Cool10.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[10].CoolLevel);
-            Type10.Text := IntToStr(SpecialMaps[NowMap].Ladders[n].Levels[10].DungeonType);
-          end;
-        end else
-        // Свойства лестницы вверх
-        if M.Tile[CurX, CurY] = tdUSTAIRS then
-        begin
-          // Открыть окно свойств
-          with GroupBox7 do
-          begin
-            GroupBox2.Visible := False;
-            Visible := True;
-            with Pregen do
-            begin
-              ItemIndex := 0;
-              Items.Clear;
-              Items.Add('- Рандомная -');
-              for i:=1 to MaxMaps do
-                if SpecialMaps[i].Map.Special > 0 then
-                  Items.Add(IntToStr(i) + ' - '+SpecialMaps[i].name);
-              ItemIndex := SpecialMaps[NowMap].LadderUp;
-            end;
-          end;
-        end;
-      end else
-        // Кровь
-        if BloodMode.ItemIndex = 1 then
-          M.Blood[CurX, CurY] := Random(2)+1 else
+        end
+        else
+          // Кровь
+          if BloodMode.ItemIndex = 1 then
+            M.Blood[CurX, CurY] := Random(2) + 1
+          else
             // Тайл монстр
             case NowElement of
-              1 : //Тайл
-              M.Tile[CurX, CurY] := ItemsBox.ItemIndex+1;
-              2 : //Монстр
-              CreateMonster(ItemsBox.ItemIndex+1,CurX,CurY);
+              1: // Тайл
+                M.Tile[CurX, CurY] := ItemsBox.ItemIndex + 1;
+              2: // Монстр
+                CreateMonster(ItemsBox.ItemIndex + 1, CurX, CurY);
               3: // Предмет
-              begin
-                PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex+1, 1, 0), 1);
-              end;
+                begin
+                  PutItem(CurX, CurY, CreateItem(ItemsBox.ItemIndex + 1, 1, 0), 1);
+                end;
             end;
     end;
     // Удалить? (ПКМ)
@@ -851,20 +874,21 @@ begin
     begin
       // Кровь
       if BloodMode.ItemIndex = 1 then
-        M.Blood[CurX, CurY] := 0 else
-          case NowElement of
-            1 : //Тайл
+        M.Blood[CurX, CurY] := 0
+      else
+        case NowElement of
+          1: // Тайл
             M.Tile[CurX, CurY] := 0;
-            2 : //Монстр
+          2: // Монстр
             begin
-                FillMemory(@M.MonL[M.MonP[CurX, CurY]], SizeOf(M.MonL[M.MonP[CurX, CurY]]), 0);
-                M.MonP[CurX, CurY] := 0;
+              FillMemory(@M.MonL[M.MonP[CurX, CurY]], SizeOf(M.MonL[M.MonP[CurX, CurY]]), 0);
+              M.MonP[CurX, CurY] := 0;
             end;
-            3: // Предмет
+          3: // Предмет
             begin
               M.Item[CurX, CurY].id := 0;
             end;
-          end;
+        end;
     end;
   end;
   // Обновить
@@ -874,35 +898,44 @@ end;
 { Обновить список элементов }
 procedure TMainEdForm.RefreshItemList;
 var
-  i : integer;
+  i: Integer;
 begin
   case NowElement of
-    1 : //Тайлы
-    begin
-      GroupBox1.Caption := 'Тайлы';
-      ItemsBox.Items.Clear;
-      for i:=1 to LevelTilesAmount do
-        ItemsBox.Items.Add(TilesData[i].name);
-      
-    end;
-    2 : //Монстры
-    begin
-      GroupBox1.Caption := 'Монстры';
-      ItemsBox.Items.Clear;
-      for i:=1 to MonstersAmount do
-        ItemsBox.Items.Add(MonstersData[i].name1);
-    end;
-    3 : //Предметы
-    begin
-      GroupBox1.Caption := 'Предметы';
-      ItemsBox.Items.Clear;
-      for i:=1 to ItemsAmount do
-        ItemsBox.Items.Add(ItemsData[i].name1);
-    end;
+    1: // Тайлы
+      begin
+        GroupBox1.Caption := 'Тайлы';
+        ItemsBox.items.Clear;
+        for i := 1 to LevelTilesAmount do
+          ItemsBox.items.Add(TilesData[i].Name);
+
+      end;
+    2: // Монстры
+      begin
+        GroupBox1.Caption := 'Монстры';
+        ItemsBox.items.Clear;
+        for i := 1 to MonstersAmount do
+          ItemsBox.items.Add(MonstersData[i].name1);
+      end;
+    3: // Предметы
+      begin
+        GroupBox1.Caption := 'Предметы';
+        ItemsBox.items.Clear;
+        for i := 1 to ItemsAmount do
+          ItemsBox.items.Add(ItemsData[i].name1);
+      end;
   end;
-  if (NowElement = 1) then SetTiles.Font.Style := [fsBold] else SetTiles.Font.Style := [];
-  if (NowElement = 2) then SetMonsters.Font.Style := [fsBold] else SetMonsters.Font.Style := [];
-  if (NowElement = 3) then SetItems.Font.Style := [fsBold] else SetItems.Font.Style := [];
+  if (NowElement = 1) then
+    SetTiles.Font.Style := [fsBold]
+  else
+    SetTiles.Font.Style := [];
+  if (NowElement = 2) then
+    SetMonsters.Font.Style := [fsBold]
+  else
+    SetMonsters.Font.Style := [];
+  if (NowElement = 3) then
+    SetItems.Font.Style := [fsBold]
+  else
+    SetItems.Font.Style := [];
 end;
 
 { Выбрал тайлы }
@@ -926,40 +959,40 @@ begin
 end;
 
 { Список карт }
-procedure TMainEdForm.refreshMapList;
+procedure TMainEdForm.RefreshMapList;
 var
-  i : byte;
+  i: byte;
 begin
-  MapList.Items.Clear;
-  for i:=1 to MaxMaps do
+  MapList.items.Clear;
+  for i := 1 to MaxMaps do
     if SpecialMaps[i].Map.Special > 0 then
     begin
       if SpecialMaps[i].Map.Special <> i then
         SpecialMaps[i].Map.Special := i;
-      MapList.Items.Add(IntToStr(SpecialMaps[i].Map.Special) + ' - '+SpecialMaps[i].name);
+      MapList.items.Add(IntToStr(SpecialMaps[i].Map.Special) + ' - ' + SpecialMaps[i].Name);
     end;
-  MapList.Items.Add('-- Создать новую --');
-  MapList.ItemIndex := NowMap-1;
+  MapList.items.Add('-- Создать новую --');
+  MapList.ItemIndex := NowMap - 1;
 end;
 
 procedure TMainEdForm.N2Click(Sender: TObject);
 var
-  x,y,i : byte;
-  h : boolean;
+  X, Y, i: byte;
+  h: boolean;
 begin
   SaveSpecialMaps;
   // Проверка
-  for i:=1 to MaxMaps do
+  for i := 1 to MaxMaps do
     if SpecialMaps[i].Map.Special > 0 then
     begin
-      h := false;
-      for x:=1 to MapX do
-        for y:=1 to MapY do
-          If SpecialMaps[i].Map.Tile[x,y] = tdUSTAIRS then
-            h := true;
+      h := False;
+      for X := 1 to MapX do
+        for Y := 1 to MapY do
+          If SpecialMaps[i].Map.Tile[X, Y] = tdUSTAIRS then
+            h := TRUE;
       if (h) and (SpecialMaps[i].LadderUp = 0) then
-        MsgBox('В локации "'+SpecialMaps[i].name+'" не определены свойства лестницы вверх!');
-     end;
+        MsgBox('В локации "' + SpecialMaps[i].Name + '" не определены свойства лестницы вверх!');
+    end;
 end;
 
 procedure TMainEdForm.N3Click(Sender: TObject);
@@ -975,8 +1008,9 @@ end;
 procedure TMainEdForm.Button6Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    MsgBox('Для начала необходимо выбрать карту!') else
-      WaitForLadderClick := True;
+    MsgBox('Для начала необходимо выбрать карту!')
+  else
+    WaitForLadderClick := TRUE;
 end;
 
 { Применить изменения в свойствах лестницы }
@@ -986,67 +1020,68 @@ begin
   with GroupBox6 do
   begin
     if (RandomName.Checked) or (DungeonName.Text = '') then
-      SpecialMaps[NowMap].Ladders[n].name := '' else
-        SpecialMaps[NowMap].Ladders[n].name := DungeonName.Text;
+      SpecialMaps[NowMap].Ladders[N].Name := ''
+    else
+      SpecialMaps[NowMap].Ladders[N].Name := DungeonName.Text;
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[1].IsHere := CheckBox1.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[1].PregenLevel := Pregen1.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[1].CoolLevel := StrToInt(Cool1.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[1].DungeonType := StrToInt(Type1.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[1].IsHere := CheckBox1.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[1].PregenLevel := pregen1.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[1].CoolLevel := StrToInt(cool1.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[1].DungeonType := StrToInt(type1.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[2].IsHere := CheckBox2.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[2].PregenLevel := Pregen2.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[2].CoolLevel := StrToInt(Cool2.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[2].DungeonType := StrToInt(Type2.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[2].IsHere := CheckBox2.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[2].PregenLevel := pregen2.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[2].CoolLevel := StrToInt(cool2.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[2].DungeonType := StrToInt(type2.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[3].IsHere := CheckBox3.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[3].PregenLevel := Pregen3.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[3].CoolLevel := StrToInt(Cool3.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[3].DungeonType := StrToInt(Type3.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[3].IsHere := CheckBox3.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[3].PregenLevel := pregen3.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[3].CoolLevel := StrToInt(cool3.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[3].DungeonType := StrToInt(type3.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[4].IsHere := CheckBox4.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[4].PregenLevel := Pregen4.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[4].CoolLevel := StrToInt(Cool4.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[4].DungeonType := StrToInt(Type4.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[4].IsHere := CheckBox4.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[4].PregenLevel := pregen4.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[4].CoolLevel := StrToInt(cool4.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[4].DungeonType := StrToInt(type4.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[5].IsHere := CheckBox5.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[5].PregenLevel := Pregen5.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[5].CoolLevel := StrToInt(Cool5.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[5].DungeonType := StrToInt(Type5.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[5].IsHere := CheckBox5.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[5].PregenLevel := pregen5.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[5].CoolLevel := StrToInt(cool5.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[5].DungeonType := StrToInt(type5.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[6].IsHere := CheckBox6.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[6].PregenLevel := Pregen6.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[6].CoolLevel := StrToInt(Cool6.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[6].DungeonType := StrToInt(Type6.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[6].IsHere := CheckBox6.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[6].PregenLevel := pregen6.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[6].CoolLevel := StrToInt(cool6.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[6].DungeonType := StrToInt(type6.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[7].IsHere := CheckBox7.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[7].PregenLevel := Pregen7.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[7].CoolLevel := StrToInt(Cool7.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[7].DungeonType := StrToInt(Type7.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[7].IsHere := CheckBox7.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[7].PregenLevel := pregen7.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[7].CoolLevel := StrToInt(cool7.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[7].DungeonType := StrToInt(type7.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[8].IsHere := CheckBox8.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[8].PregenLevel := Pregen8.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[8].CoolLevel := StrToInt(Cool8.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[8].DungeonType := StrToInt(Type8.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[8].IsHere := CheckBox8.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[8].PregenLevel := pregen8.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[8].CoolLevel := StrToInt(cool8.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[8].DungeonType := StrToInt(type8.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[9].IsHere := CheckBox9.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[9].PregenLevel := Pregen9.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[9].CoolLevel := StrToInt(Cool9.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[9].DungeonType := StrToInt(Type9.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[9].IsHere := CheckBox9.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[9].PregenLevel := pregen9.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[9].CoolLevel := StrToInt(cool9.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[9].DungeonType := StrToInt(type9.Text);
     //
-    SpecialMaps[NowMap].Ladders[n].Levels[10].IsHere := CheckBox10.Checked;
-    SpecialMaps[NowMap].Ladders[n].Levels[10].PregenLevel := Pregen10.ItemIndex;
-    SpecialMaps[NowMap].Ladders[n].Levels[10].CoolLevel := StrToInt(Cool10.Text);
-    SpecialMaps[NowMap].Ladders[n].Levels[10].DungeonType := StrToInt(Type10.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[10].IsHere := CheckBox10.Checked;
+    SpecialMaps[NowMap].Ladders[N].Levels[10].PregenLevel := pregen10.ItemIndex;
+    SpecialMaps[NowMap].Ladders[N].Levels[10].CoolLevel := StrToInt(cool10.Text);
+    SpecialMaps[NowMap].Ladders[N].Levels[10].DungeonType := StrToInt(type10.Text);
     //
-    if NumberChange.ItemIndex > 0 then
-      if SpecialMaps[NowMap].Ladders[NumberChange.ItemIndex].x = 0 then
+    if numberchange.ItemIndex > 0 then
+      if SpecialMaps[NowMap].Ladders[numberchange.ItemIndex].X = 0 then
       begin
-        SpecialMaps[NowMap].Ladders[NumberChange.ItemIndex] := SpecialMaps[NowMap].Ladders[n];
-        FillMemory(@SpecialMaps[NowMap].Ladders[n], SizeOf(SpecialMaps[NowMap].Ladders[n]), 0);
+        SpecialMaps[NowMap].Ladders[numberchange.ItemIndex] := SpecialMaps[NowMap].Ladders[N];
+        FillMemory(@SpecialMaps[NowMap].Ladders[N], SizeOf(SpecialMaps[NowMap].Ladders[N]), 0);
       end;
     Visible := False;
-    GroupBox2.Visible := True;
+    GroupBox2.Visible := TRUE;
   end;
 end;
 
@@ -1058,7 +1093,7 @@ begin
     SpecialMaps[NowMap].LadderUp := Pregen.ItemIndex;
     Visible := False;
   end;
-  GroupBox2.Visible := True;
+  GroupBox2.Visible := TRUE;
 end;
 
 procedure TMainEdForm.ListBox1Click(Sender: TObject);
@@ -1068,20 +1103,21 @@ end;
 
 procedure TMainEdForm.SpeedButton1Click(Sender: TObject);
 var
-  i,x,y : byte;
+  i, X, Y: byte;
 begin
-  for x:=1 to MapX do
-    for y:=1 to MapY do
-      M.MonP[x,y] := 0;
-  for i:=1 to 255 do
+  for X := 1 to MapX do
+    for Y := 1 to MapY do
+      M.MonP[X, Y] := 0;
+  for i := 1 to 255 do
     FillMemory(@M.MonL[i], SizeOf(M.MonL[i]), 0);
 end;
 
 procedure TMainEdForm.Button2Click(Sender: TObject);
 begin
   if NowMap = 0 then
-    MsgBox('Для начала необходимо выбрать карту!') else
-      WaitForMonsterClick := True; 
+    MsgBox('Для начала необходимо выбрать карту!')
+  else
+    WaitForMonsterClick := TRUE;
 end;
 
 { Свойства монстра }
@@ -1090,32 +1126,34 @@ begin
   WaitForMonsterClick := False;
   with GroupBox8 do
   begin
-    M.MonL[M.MonP[StrToInt(label4.Caption), StrToInt(label5.Caption)]].relation := relation.ItemIndex;
+    M.MonL[M.MonP[StrToInt(Label4.Caption), StrToInt(Label5.Caption)]].relation := relation.ItemIndex;
     Visible := False;
   end;
-  GroupBox2.Visible := True;
+  GroupBox2.Visible := TRUE;
 end;
 
 // Обновить лестницы, удалить несуществующие
 procedure TMainEdForm.SpeedButton2Click(Sender: TObject);
 var
-  i : byte;
+  i: byte;
 begin
-  for i:=1 to MaxLadders do
+  for i := 1 to MaxLadders do
     with SpecialMaps[NowMap].Ladders[i] do
     begin
-      if (M.Tile[X, Y] <> tdDSTAIRS) and (M.Tile[X, Y] <> tdCHATCH) and
-           (M.Tile[X, Y] <> tdDUNENTER) then
-             begin
-                x := 0;
-                y := 0;
-             end;
+      if (M.Tile[X, Y] <> tdDSTAIRS) and (M.Tile[X, Y] <> tdCHATCH) and (M.Tile[X, Y] <> tdDUNENTER) then
+      begin
+        X := 0;
+        Y := 0;
+      end;
     end;
 end;
 
 procedure TMainEdForm.RandomNameClick(Sender: TObject);
 begin
-  if RandomName.Checked then DungeonName.Enabled := FALSE else DungeonName.Enabled := TRUE;
+  if RandomName.Checked then
+    DungeonName.Enabled := False
+  else
+    DungeonName.Enabled := TRUE;
 end;
 
 procedure TMainEdForm.Timer1Timer(Sender: TObject);
